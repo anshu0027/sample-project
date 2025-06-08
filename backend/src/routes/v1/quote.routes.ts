@@ -279,7 +279,35 @@ router.put('/:quoteNumber', async (req: Request, res: Response) => {
       fields.totalPremium = fields.basePremium + fields.liabilityPremium + fields.liquorLiabilityPremium;
     }
 
-    quoteRepository.merge(quoteToUpdate, fields);
+    // Merge updated fields into the quote object
+    quoteRepository.merge(quoteToUpdate, {
+      ...fields,
+      // Add the new venue fields if they exist in the request body
+      ...(fields.receptionVenueName !== undefined && { receptionVenueName: fields.receptionVenueName }),
+      ...(fields.receptionVenueAddress1 !== undefined && { receptionVenueAddress1: fields.receptionVenueAddress1 }),
+      ...(fields.receptionVenueAddress2 !== undefined && { receptionVenueAddress2: fields.receptionVenueAddress2 }),
+      ...(fields.receptionVenueCountry !== undefined && { receptionVenueCountry: fields.receptionVenueCountry }),
+      ...(fields.receptionVenueCity !== undefined && { receptionVenueCity: fields.receptionVenueCity }),
+      ...(fields.receptionVenueState !== undefined && { receptionVenueState: fields.receptionVenueState }),
+      ...(fields.receptionVenueZip !== undefined && { receptionVenueZip: fields.receptionVenueZip }),
+      ...(fields.receptionVenueAsInsured !== undefined && { receptionVenueAsInsured: fields.receptionVenueAsInsured }),
+      ...(fields.brunchVenueName !== undefined && { brunchVenueName: fields.brunchVenueName }),
+      ...(fields.brunchVenueAddress1 !== undefined && { brunchVenueAddress1: fields.brunchVenueAddress1 }),
+      ...(fields.brunchVenueAddress2 !== undefined && { brunchVenueAddress2: fields.brunchVenueAddress2 }),
+      ...(fields.brunchVenueCountry !== undefined && { brunchVenueCountry: fields.brunchVenueCountry }),
+      ...(fields.brunchVenueCity !== undefined && { brunchVenueCity: fields.brunchVenueCity }),
+      ...(fields.brunchVenueState !== undefined && { brunchVenueState: fields.brunchVenueState }),
+      ...(fields.brunchVenueZip !== undefined && { brunchVenueZip: fields.brunchVenueZip }),
+      ...(fields.brunchVenueAsInsured !== undefined && { brunchVenueAsInsured: fields.brunchVenueAsInsured }),
+      ...(fields.rehearsalVenueName !== undefined && { rehearsalVenueName: fields.rehearsalVenueName }),
+      ...(fields.rehearsalVenueAddress1 !== undefined && { rehearsalVenueAddress1: fields.rehearsalVenueAddress1 }),
+      ...(fields.rehearsalVenueAddress2 !== undefined && { rehearsalVenueAddress2: fields.rehearsalVenueAddress2 }),
+      ...(fields.rehearsalVenueCountry !== undefined && { rehearsalVenueCountry: fields.rehearsalVenueCountry }),
+      ...(fields.rehearsalVenueCity !== undefined && { rehearsalVenueCity: fields.rehearsalVenueCity }),
+      ...(fields.rehearsalVenueState !== undefined && { rehearsalVenueState: fields.rehearsalVenueState }),
+      ...(fields.rehearsalVenueZip !== undefined && { rehearsalVenueZip: fields.rehearsalVenueZip }),
+      ...(fields.rehearsalVenueAsInsured !== undefined && { rehearsalVenueAsInsured: fields.rehearsalVenueAsInsured }),
+    });
 
     const eventRepository = AppDataSource.getRepository(Event);
     if (fields.eventType || fields.eventDate || fields.maxGuests) {

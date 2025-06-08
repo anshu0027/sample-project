@@ -94,4 +94,101 @@ export class Quote {
 
   @OneToMany(() => Payment, (payment) => payment.quote)
   Payment: Payment[];
+
+  // Additional Venue Information for Weddings (Step 2)
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  receptionVenueName: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  receptionVenueAddress1: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  receptionVenueAddress2: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  receptionVenueCountry: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  receptionVenueCity: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  receptionVenueState: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  receptionVenueZip: string;
+
+  @Column({ type: 'boolean', default: false, nullable: true })
+  receptionVenueAsInsured: boolean;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  brunchVenueName: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  brunchVenueAddress1: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  brunchVenueAddress2: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  brunchVenueCountry: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  brunchVenueCity: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  brunchVenueState: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  brunchVenueZip: string;
+
+  @Column({ type: 'boolean', default: false, nullable: true })
+  brunchVenueAsInsured: boolean;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  rehearsalVenueName: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  rehearsalVenueAddress1: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  rehearsalVenueAddress2: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  rehearsalVenueCountry: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  rehearsalVenueCity: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  rehearsalVenueState: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  rehearsalVenueZip: string;
+
+  @Column({ type: 'boolean', default: false, nullable: true })
+  rehearsalVenueAsInsured: boolean;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  rehearsalDinnerVenueName: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  rehearsalDinnerVenueAddress1: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  rehearsalDinnerVenueAddress2: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  rehearsalDinnerVenueCountry: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  rehearsalDinnerVenueCity: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  rehearsalDinnerVenueState: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  rehearsalDinnerVenueZip: string;
+
+  @Column({ type: 'boolean', default: false, nullable: true })
+  rehearsalDinnerVenueAsInsured: boolean;
 }

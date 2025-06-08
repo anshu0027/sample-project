@@ -41,6 +41,38 @@ export interface QuoteState {
   venueCity: string;
   venueState: string;
   venueZip: string;
+ receptionVenueName: string;
+ receptionVenueAddress1: string;
+ receptionVenueAddress2: string;
+ receptionVenueCountry: string;
+ receptionVenueCity: string;
+ receptionVenueState: string;
+ receptionVenueZip: string;
+ receptionVenueAsInsured: boolean;
+ brunchVenueName: string;
+ brunchVenueAddress1: string;
+ brunchVenueAddress2: string;
+ brunchVenueCountry: string;
+ brunchVenueCity: string;
+ brunchVenueState: string;
+ brunchVenueZip: string;
+ brunchVenueAsInsured: boolean;
+ rehearsalVenueName: string;
+ rehearsalVenueAddress1: string;
+ rehearsalVenueAddress2: string;
+ rehearsalVenueCountry: string;
+ rehearsalVenueCity: string;
+ rehearsalVenueState: string;
+ rehearsalVenueZip: string;
+ rehearsalVenueAsInsured: boolean;
+ rehearsalDinnerVenueName: string;
+ rehearsalDinnerVenueAddress1: string;
+ rehearsalDinnerVenueAddress2: string;
+ rehearsalDinnerVenueCountry: string;
+ rehearsalDinnerVenueCity: string;
+ rehearsalDinnerVenueState: string;
+ rehearsalDinnerVenueZip: string;
+ rehearsalDinnerVenueAsInsured: boolean;
   venueAsInsured: boolean;
 
   // Step 3 - Policy Holder
@@ -97,6 +129,38 @@ const initialState: QuoteState = {
   venueCity: '',
   venueState: '',
   venueZip: '',
+ receptionVenueName: '',
+ receptionVenueAddress1: '',
+ receptionVenueAddress2: '',
+ receptionVenueCountry: 'United States',
+ receptionVenueCity: '',
+ receptionVenueState: '',
+ receptionVenueZip: '',
+ receptionVenueAsInsured: false,
+ brunchVenueName: '',
+ brunchVenueAddress1: '',
+ brunchVenueAddress2: '',
+ brunchVenueCountry: 'United States',
+ brunchVenueCity: '',
+ brunchVenueState: '',
+ brunchVenueZip: '',
+ brunchVenueAsInsured: false,
+ rehearsalVenueName: '',
+ rehearsalVenueAddress1: '',
+ rehearsalVenueAddress2: '',
+ rehearsalVenueCountry: 'United States',
+ rehearsalVenueCity: '',
+ rehearsalVenueState: '',
+ rehearsalVenueZip: '',
+ rehearsalVenueAsInsured: false,
+ rehearsalDinnerVenueName: '',
+ rehearsalDinnerVenueAddress1: '',
+ rehearsalDinnerVenueAddress2: '',
+ rehearsalDinnerVenueCountry: 'United States',
+ rehearsalDinnerVenueCity: '',
+ rehearsalDinnerVenueState: '',
+ rehearsalDinnerVenueZip: '',
+ rehearsalDinnerVenueAsInsured: false,
   venueAsInsured: false,
 
   // Step 3 - Policy Holder

@@ -169,6 +169,72 @@ export default function EventInformation() {
     else if (!isValidZip(state.venueZip))
       newErrors.venueZip = "Please enter a valid ZIP code";
     setErrors(newErrors);
+
+ if (state.eventType === 'wedding') {
+ // Validate Reception Venue if name is provided
+ if (!isEmpty(state.receptionVenueName)) {
+ if (isEmpty(state.receptionVenueAddress1))
+ newErrors.receptionVenueAddress1 = "Please enter the reception venue address";
+ if (isEmpty(state.receptionVenueCountry))
+ newErrors.receptionVenueCountry = "Please select the reception venue country";
+ if (isEmpty(state.receptionVenueCity))
+ newErrors.receptionVenueCity = "Please enter the reception venue city";
+ if (isEmpty(state.receptionVenueState))
+ newErrors.receptionVenueState = "Please select the reception venue state";
+ if (isEmpty(state.receptionVenueZip))
+ newErrors.receptionVenueZip = "Please enter the reception venue ZIP code";
+ else if (!isValidZip(state.receptionVenueZip))
+ newErrors.receptionVenueZip = "Please enter a valid reception venue ZIP code";
+ }
+
+ // Validate Brunch Venue if name is provided
+ if (!isEmpty(state.brunchVenueName)) {
+ if (isEmpty(state.brunchVenueAddress1))
+ newErrors.brunchVenueAddress1 = "Please enter the brunch venue address";
+ if (isEmpty(state.brunchVenueCountry))
+ newErrors.brunchVenueCountry = "Please select the brunch venue country";
+ if (isEmpty(state.brunchVenueCity))
+ newErrors.brunchVenueCity = "Please enter the brunch venue city";
+ if (isEmpty(state.brunchVenueState))
+ newErrors.brunchVenueState = "Please select the brunch venue state";
+ if (isEmpty(state.brunchVenueZip))
+ newErrors.brunchVenueZip = "Please enter the brunch venue ZIP code";
+ else if (!isValidZip(state.brunchVenueZip))
+ newErrors.brunchVenueZip = "Please enter a valid brunch venue ZIP code";
+ }
+
+ // Validate Rehearsal Venue if name is provided
+ if (!isEmpty(state.rehearsalVenueName)) {
+ if (isEmpty(state.rehearsalVenueAddress1))
+ newErrors.rehearsalVenueAddress1 = "Please enter the rehearsal venue address";
+ if (isEmpty(state.rehearsalVenueCountry))
+ newErrors.rehearsalVenueCountry = "Please select the rehearsal venue country";
+ if (isEmpty(state.rehearsalVenueCity))
+ newErrors.rehearsalVenueCity = "Please enter the rehearsal venue city";
+ if (isEmpty(state.rehearsalVenueState))
+ newErrors.rehearsalVenueState = "Please select the rehearsal venue state";
+ if (isEmpty(state.rehearsalVenueZip))
+ newErrors.rehearsalVenueZip = "Please enter the rehearsal venue ZIP code";
+ else if (!isValidZip(state.rehearsalVenueZip))
+ newErrors.rehearsalVenueZip = "Please enter a valid rehearsal venue ZIP code";
+ }
+
+ // Validate Rehearsal Dinner Venue if name is provided
+ if (!isEmpty(state.rehearsalDinnerVenueName)) {
+ if (isEmpty(state.rehearsalDinnerVenueAddress1))
+ newErrors.rehearsalDinnerVenueAddress1 = "Please enter the rehearsal dinner venue address";
+ if (isEmpty(state.rehearsalDinnerVenueCountry))
+ newErrors.rehearsalDinnerVenueCountry = "Please select the rehearsal dinner venue country";
+ if (isEmpty(state.rehearsalDinnerVenueCity))
+ newErrors.rehearsalDinnerVenueCity = "Please enter the rehearsal dinner venue city";
+ if (isEmpty(state.rehearsalDinnerVenueState))
+ newErrors.rehearsalDinnerVenueState = "Please select the rehearsal dinner venue state";
+ if (isEmpty(state.rehearsalDinnerVenueZip))
+ newErrors.rehearsalDinnerVenueZip = "Please enter the rehearsal dinner venue ZIP code";
+ else if (!isValidZip(state.rehearsalDinnerVenueZip))
+ newErrors.rehearsalDinnerVenueZip = "Please enter a valid rehearsal dinner venue ZIP code";
+ }
+ }
     return Object.keys(newErrors).length === 0;
   };
 
@@ -179,6 +245,26 @@ export default function EventInformation() {
   const handleContinue = () => {
     if (validateForm()) {
       dispatch({ type: "COMPLETE_STEP", step: 2 });
+      // Optionally, dispatch an action to save the current state to local storage or backend
+      // This is good practice if the user might leave and come back later
+      // dispatch({ type: 'SAVE_QUOTE', payload: state }); // Example save action
+
+      // Prepare payload for API if saving to backend at this step is desired,
+      // or ensure the global state has the necessary data for the next step/save
+      const payload = {
+ honoree1FirstName: state.honoree1FirstName,
+ honoree1LastName: state.honoree1LastName,
+ honoree2FirstName: state.honoree2FirstName,
+ honoree2LastName: state.honoree2LastName,
+ ceremonyLocationType: state.ceremonyLocationType,
+ indoorOutdoor: state.indoorOutdoor,
+ venueName: state.venueName,
+ venueAddress1: state.venueAddress1,
+ venueAddress2: state.venueAddress2,
+ venueCountry: state.venueCountry,
+ venueCity: state.venueCity,
+ venueState: state.venueState,
+ venueZip: state.venueZip,
       router.push("/admin/create-quote/step3");
     } else {
       // Show toast for each missing field
