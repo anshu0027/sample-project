@@ -9,6 +9,7 @@ import { Venue } from '../../entities/venue.entity';
 import { PolicyHolder } from '../../entities/policy-holder.entity';
 import { Payment } from '../../entities/payment.entity';
 import { QuoteSource, StepStatus, PaymentStatus } from '../../entities/enums';
+import { createPolicyFromQuote } from '../../services/policy.service';
 
 const router = Router();
 
@@ -89,6 +90,48 @@ router.post('/', async (req: Request, res: Response) => {
                 city: fields.venueCity,
                 state: fields.venueState,
                 zip: fields.venueZip,
+                locationType: fields.locationType,
+                ceremonyLocationType: fields.ceremonyLocationType,
+                indoorOutdoor: fields.indoorOutdoor,
+                venueAsInsured: fields.venueAsInsured,
+                receptionLocationType: fields.receptionLocationType,
+                receptionIndoorOutdoor: fields.receptionIndoorOutdoor,
+                receptionVenueName: fields.receptionVenueName,
+                receptionVenueAddress1: fields.receptionVenueAddress1,
+                receptionVenueAddress2: fields.receptionVenueAddress2,
+                receptionVenueCountry: fields.receptionVenueCountry,
+                receptionVenueCity: fields.receptionVenueCity,
+                receptionVenueState: fields.receptionVenueState,
+                receptionVenueZip: fields.receptionVenueZip,
+                receptionVenueAsInsured: fields.receptionVenueAsInsured,
+                brunchLocationType: fields.brunchLocationType,
+                brunchIndoorOutdoor: fields.brunchIndoorOutdoor,
+                brunchVenueName: fields.brunchVenueName,
+                brunchVenueAddress1: fields.brunchVenueAddress1,
+                brunchVenueAddress2: fields.brunchVenueAddress2,
+                brunchVenueCountry: fields.brunchVenueCountry,
+                brunchVenueCity: fields.brunchVenueCity,
+                brunchVenueState: fields.brunchVenueState,
+                brunchVenueZip: fields.brunchVenueZip,
+                brunchVenueAsInsured: fields.brunchVenueAsInsured,
+                rehearsalLocationType: fields.rehearsalLocationType,
+                rehearsalIndoorOutdoor: fields.rehearsalIndoorOutdoor,
+                rehearsalVenueName: fields.rehearsalVenueName,
+                rehearsalVenueAddress1: fields.rehearsalVenueAddress1,
+                rehearsalVenueAddress2: fields.rehearsalVenueAddress2,
+                rehearsalVenueCountry: fields.rehearsalVenueCountry,
+                rehearsalVenueCity: fields.rehearsalVenueCity,
+                rehearsalVenueState: fields.rehearsalVenueState,
+                rehearsalVenueZip: fields.rehearsalVenueZip,
+                rehearsalVenueAsInsured: fields.rehearsalVenueAsInsured,
+                rehearsalDinnerLocationType: fields.rehearsalDinnerLocationType,
+                rehearsalDinnerIndoorOutdoor: fields.rehearsalDinnerIndoorOutdoor,
+                rehearsalDinnerVenueName: fields.rehearsalDinnerVenueName,
+                rehearsalDinnerVenueAddress1: fields.rehearsalDinnerVenueAddress1,
+                rehearsalDinnerVenueAddress2: fields.rehearsalDinnerVenueAddress2,
+                rehearsalDinnerVenueCountry: fields.rehearsalDinnerVenueCountry,
+                rehearsalDinnerVenueCity: fields.rehearsalDinnerVenueCity,
+                rehearsalDinnerVenueState: fields.rehearsalDinnerVenueState,
             }),
         });
 
@@ -297,10 +340,6 @@ router.post('/from-quote', async (req: Request, res: Response) => {
             return;
         }
 
-        function createPolicyFromQuote(id: number) {
-            throw new Error('Function not implemented.');
-        }
-        // The rest of the logic uses the createPolicyFromQuote service, which is perfect.
         const policy = await createPolicyFromQuote(quote.id);
 
         res.status(201).json({

@@ -170,71 +170,71 @@ export default function EventInformation() {
       newErrors.venueZip = "Please enter a valid ZIP code";
     setErrors(newErrors);
 
- if (state.eventType === 'wedding') {
- // Validate Reception Venue if name is provided
- if (!isEmpty(state.receptionVenueName)) {
- if (isEmpty(state.receptionVenueAddress1))
- newErrors.receptionVenueAddress1 = "Please enter the reception venue address";
- if (isEmpty(state.receptionVenueCountry))
- newErrors.receptionVenueCountry = "Please select the reception venue country";
- if (isEmpty(state.receptionVenueCity))
- newErrors.receptionVenueCity = "Please enter the reception venue city";
- if (isEmpty(state.receptionVenueState))
- newErrors.receptionVenueState = "Please select the reception venue state";
- if (isEmpty(state.receptionVenueZip))
- newErrors.receptionVenueZip = "Please enter the reception venue ZIP code";
- else if (!isValidZip(state.receptionVenueZip))
- newErrors.receptionVenueZip = "Please enter a valid reception venue ZIP code";
- }
+    if (state.eventType === 'wedding') {
+      // Validate Reception Venue if name is provided
+      if (!isEmpty(state.receptionVenueName)) {
+        if (isEmpty(state.receptionVenueAddress1))
+          newErrors.receptionVenueAddress1 = "Please enter the reception venue address";
+        if (isEmpty(state.receptionVenueCountry))
+          newErrors.receptionVenueCountry = "Please select the reception venue country";
+        if (isEmpty(state.receptionVenueCity))
+          newErrors.receptionVenueCity = "Please enter the reception venue city";
+        if (isEmpty(state.receptionVenueState))
+          newErrors.receptionVenueState = "Please select the reception venue state";
+        if (isEmpty(state.receptionVenueZip))
+          newErrors.receptionVenueZip = "Please enter the reception venue ZIP code";
+        else if (!isValidZip(state.receptionVenueZip))
+          newErrors.receptionVenueZip = "Please enter a valid reception venue ZIP code";
+      }
 
- // Validate Brunch Venue if name is provided
- if (!isEmpty(state.brunchVenueName)) {
- if (isEmpty(state.brunchVenueAddress1))
- newErrors.brunchVenueAddress1 = "Please enter the brunch venue address";
- if (isEmpty(state.brunchVenueCountry))
- newErrors.brunchVenueCountry = "Please select the brunch venue country";
- if (isEmpty(state.brunchVenueCity))
- newErrors.brunchVenueCity = "Please enter the brunch venue city";
- if (isEmpty(state.brunchVenueState))
- newErrors.brunchVenueState = "Please select the brunch venue state";
- if (isEmpty(state.brunchVenueZip))
- newErrors.brunchVenueZip = "Please enter the brunch venue ZIP code";
- else if (!isValidZip(state.brunchVenueZip))
- newErrors.brunchVenueZip = "Please enter a valid brunch venue ZIP code";
- }
+      // Validate Brunch Venue if name is provided
+      if (!isEmpty(state.brunchVenueName)) {
+        if (isEmpty(state.brunchVenueAddress1))
+          newErrors.brunchVenueAddress1 = "Please enter the brunch venue address";
+        if (isEmpty(state.brunchVenueCountry))
+          newErrors.brunchVenueCountry = "Please select the brunch venue country";
+        if (isEmpty(state.brunchVenueCity))
+          newErrors.brunchVenueCity = "Please enter the brunch venue city";
+        if (isEmpty(state.brunchVenueState))
+          newErrors.brunchVenueState = "Please select the brunch venue state";
+        if (isEmpty(state.brunchVenueZip))
+          newErrors.brunchVenueZip = "Please enter the brunch venue ZIP code";
+        else if (!isValidZip(state.brunchVenueZip))
+          newErrors.brunchVenueZip = "Please enter a valid brunch venue ZIP code";
+      }
 
- // Validate Rehearsal Venue if name is provided
- if (!isEmpty(state.rehearsalVenueName)) {
- if (isEmpty(state.rehearsalVenueAddress1))
- newErrors.rehearsalVenueAddress1 = "Please enter the rehearsal venue address";
- if (isEmpty(state.rehearsalVenueCountry))
- newErrors.rehearsalVenueCountry = "Please select the rehearsal venue country";
- if (isEmpty(state.rehearsalVenueCity))
- newErrors.rehearsalVenueCity = "Please enter the rehearsal venue city";
- if (isEmpty(state.rehearsalVenueState))
- newErrors.rehearsalVenueState = "Please select the rehearsal venue state";
- if (isEmpty(state.rehearsalVenueZip))
- newErrors.rehearsalVenueZip = "Please enter the rehearsal venue ZIP code";
- else if (!isValidZip(state.rehearsalVenueZip))
- newErrors.rehearsalVenueZip = "Please enter a valid rehearsal venue ZIP code";
- }
+      // Validate Rehearsal Venue if name is provided
+      if (!isEmpty(state.rehearsalVenueName)) {
+        if (isEmpty(state.rehearsalVenueAddress1))
+          newErrors.rehearsalVenueAddress1 = "Please enter the rehearsal venue address";
+        if (isEmpty(state.rehearsalVenueCountry))
+          newErrors.rehearsalVenueCountry = "Please select the rehearsal venue country";
+        if (isEmpty(state.rehearsalVenueCity))
+          newErrors.rehearsalVenueCity = "Please enter the rehearsal venue city";
+        if (isEmpty(state.rehearsalVenueState))
+          newErrors.rehearsalVenueState = "Please select the rehearsal venue state";
+        if (isEmpty(state.rehearsalVenueZip))
+          newErrors.rehearsalVenueZip = "Please enter the rehearsal venue ZIP code";
+        else if (!isValidZip(state.rehearsalVenueZip))
+          newErrors.rehearsalVenueZip = "Please enter a valid rehearsal venue ZIP code";
+      }
 
- // Validate Rehearsal Dinner Venue if name is provided
- if (!isEmpty(state.rehearsalDinnerVenueName)) {
- if (isEmpty(state.rehearsalDinnerVenueAddress1))
- newErrors.rehearsalDinnerVenueAddress1 = "Please enter the rehearsal dinner venue address";
- if (isEmpty(state.rehearsalDinnerVenueCountry))
- newErrors.rehearsalDinnerVenueCountry = "Please select the rehearsal dinner venue country";
- if (isEmpty(state.rehearsalDinnerVenueCity))
- newErrors.rehearsalDinnerVenueCity = "Please enter the rehearsal dinner venue city";
- if (isEmpty(state.rehearsalDinnerVenueState))
- newErrors.rehearsalDinnerVenueState = "Please select the rehearsal dinner venue state";
- if (isEmpty(state.rehearsalDinnerVenueZip))
- newErrors.rehearsalDinnerVenueZip = "Please enter the rehearsal dinner venue ZIP code";
- else if (!isValidZip(state.rehearsalDinnerVenueZip))
- newErrors.rehearsalDinnerVenueZip = "Please enter a valid rehearsal dinner venue ZIP code";
- }
- }
+      // Validate Rehearsal Dinner Venue if name is provided
+      if (!isEmpty(state.rehearsalDinnerVenueName)) {
+        if (isEmpty(state.rehearsalDinnerVenueAddress1))
+          newErrors.rehearsalDinnerVenueAddress1 = "Please enter the rehearsal dinner venue address";
+        if (isEmpty(state.rehearsalDinnerVenueCountry))
+          newErrors.rehearsalDinnerVenueCountry = "Please select the rehearsal dinner venue country";
+        if (isEmpty(state.rehearsalDinnerVenueCity))
+          newErrors.rehearsalDinnerVenueCity = "Please enter the rehearsal dinner venue city";
+        if (isEmpty(state.rehearsalDinnerVenueState))
+          newErrors.rehearsalDinnerVenueState = "Please select the rehearsal dinner venue state";
+        if (isEmpty(state.rehearsalDinnerVenueZip))
+          newErrors.rehearsalDinnerVenueZip = "Please enter the rehearsal dinner venue ZIP code";
+        else if (!isValidZip(state.rehearsalDinnerVenueZip))
+          newErrors.rehearsalDinnerVenueZip = "Please enter a valid rehearsal dinner venue ZIP code";
+      }
+    }
     return Object.keys(newErrors).length === 0;
   };
 
@@ -251,24 +251,139 @@ export default function EventInformation() {
 
       // Prepare payload for API if saving to backend at this step is desired,
       // or ensure the global state has the necessary data for the next step/save
-      const payload = {
- honoree1FirstName: state.honoree1FirstName,
- honoree1LastName: state.honoree1LastName,
- honoree2FirstName: state.honoree2FirstName,
- honoree2LastName: state.honoree2LastName,
- ceremonyLocationType: state.ceremonyLocationType,
- indoorOutdoor: state.indoorOutdoor,
- venueName: state.venueName,
- venueAddress1: state.venueAddress1,
- venueAddress2: state.venueAddress2,
- venueCountry: state.venueCountry,
- venueCity: state.venueCity,
- venueState: state.venueState,
- venueZip: state.venueZip,
+      const payload: {
+        honoree1FirstName: string;
+        honoree1LastName: string;
+        honoree2FirstName: string;
+        honoree2LastName: string;
+        ceremonyLocationType: string;
+        indoorOutdoor: string;
+        venueName: string;
+        venueAddress1: string;
+        venueAddress2: string;
+        venueCountry: string;
+        venueCity: string;
+        venueState: string;
+        venueZip: string;
+        receptionLocationType?: string;
+        receptionIndoorOutdoor?: string;
+        receptionVenueName?: string;
+        receptionVenueAddress1?: string;
+        receptionVenueAddress2?: string;
+        receptionVenueCountry?: string;
+        receptionVenueCity?: string;
+        receptionVenueState?: string;
+        receptionVenueZip?: string;
+        receptionVenueAsInsured?: boolean;
+        brunchLocationType?: string;
+        brunchIndoorOutdoor?: string;
+        brunchVenueName?: string;
+        brunchVenueAddress1?: string;
+        brunchVenueAddress2?: string;
+        brunchVenueCountry?: string;
+        brunchVenueCity?: string;
+        brunchVenueState?: string;
+        brunchVenueZip?: string;
+        brunchVenueAsInsured?: boolean;
+        rehearsalLocationType?: string;
+        rehearsalIndoorOutdoor?: string;
+        rehearsalVenueName?: string;
+        rehearsalVenueAddress1?: string;
+        rehearsalVenueAddress2?: string;
+        rehearsalVenueCountry?: string;
+        rehearsalVenueCity?: string;
+        rehearsalVenueState?: string;
+        rehearsalVenueZip?: string;
+        rehearsalVenueAsInsured?: boolean;
+        rehearsalDinnerLocationType?: string;
+        rehearsalDinnerIndoorOutdoor?: string;
+        rehearsalDinnerVenueName?: string;
+        rehearsalDinnerVenueAddress1?: string;
+        rehearsalDinnerVenueAddress2?: string;
+        rehearsalDinnerVenueCountry?: string;
+        rehearsalDinnerVenueCity?: string;
+        rehearsalDinnerVenueState?: string;
+        rehearsalDinnerVenueZip?: string;
+        rehearsalDinnerVenueAsInsured?: boolean;
+      } = {
+        honoree1FirstName: state.honoree1FirstName,
+        honoree1LastName: state.honoree1LastName,
+        honoree2FirstName: state.honoree2FirstName,
+        honoree2LastName: state.honoree2LastName,
+        ceremonyLocationType: state.ceremonyLocationType,
+        indoorOutdoor: state.indoorOutdoor,
+        venueName: state.venueName,
+        venueAddress1: state.venueAddress1,
+        venueAddress2: state.venueAddress2,
+        venueCountry: state.venueCountry,
+        venueCity: state.venueCity,
+        venueState: state.venueState,
+        venueZip: state.venueZip
+      };
+
+      if (state.eventType === 'wedding') {
+        // Reception Venue (only if name is provided)
+        if (!isEmpty(state.receptionVenueName)) {
+          payload.receptionLocationType = state.receptionLocationType;
+          payload.receptionIndoorOutdoor = state.receptionIndoorOutdoor;
+          payload.receptionVenueName = state.receptionVenueName;
+          payload.receptionVenueAddress1 = state.receptionVenueAddress1;
+          payload.receptionVenueAddress2 = state.receptionVenueAddress2;
+          payload.receptionVenueCountry = state.receptionVenueCountry;
+          payload.receptionVenueCity = state.receptionVenueCity;
+          payload.receptionVenueState = state.receptionVenueState;
+          payload.receptionVenueZip = state.receptionVenueZip;
+          payload.receptionVenueAsInsured = state.receptionVenueAsInsured;
+        }
+
+        // Brunch Venue (only if name is provided)
+        if (!isEmpty(state.brunchVenueName)) {
+          payload.brunchLocationType = state.brunchLocationType;
+          payload.brunchIndoorOutdoor = state.brunchIndoorOutdoor;
+          payload.brunchVenueName = state.brunchVenueName;
+          payload.brunchVenueAddress1 = state.brunchVenueAddress1;
+          payload.brunchVenueAddress2 = state.brunchVenueAddress2;
+          payload.brunchVenueCountry = state.brunchVenueCountry;
+          payload.brunchVenueCity = state.brunchVenueCity;
+          payload.brunchVenueState = state.brunchVenueState;
+          payload.brunchVenueZip = state.brunchVenueZip;
+          payload.brunchVenueAsInsured = state.brunchVenueAsInsured;
+        }
+
+        // Rehearsal Venue (only if name is provided)
+        if (!isEmpty(state.rehearsalVenueName)) {
+          payload.rehearsalLocationType = state.rehearsalLocationType;
+          payload.rehearsalIndoorOutdoor = state.rehearsalIndoorOutdoor;
+          payload.rehearsalVenueName = state.rehearsalVenueName;
+          payload.rehearsalVenueAddress1 = state.rehearsalVenueAddress1;
+          payload.rehearsalVenueAddress2 = state.rehearsalVenueAddress2;
+          payload.rehearsalVenueCountry = state.rehearsalVenueCountry;
+          payload.rehearsalVenueCity = state.rehearsalVenueCity;
+          payload.rehearsalVenueState = state.rehearsalVenueState;
+          payload.rehearsalVenueZip = state.rehearsalVenueZip;
+          payload.rehearsalVenueAsInsured = state.rehearsalVenueAsInsured;
+        }
+
+        // Rehearsal Dinner Venue (only if name is provided)
+        if (!isEmpty(state.rehearsalDinnerVenueName)) {
+          // Cast payload to any to avoid TypeScript errors
+          payload.rehearsalDinnerLocationType = state.rehearsalDinnerLocationType;
+          payload.rehearsalDinnerIndoorOutdoor = state.rehearsalDinnerIndoorOutdoor;
+          payload.rehearsalDinnerVenueName = state.rehearsalDinnerVenueName;
+          payload.rehearsalDinnerVenueAddress1 = state.rehearsalDinnerVenueAddress1;
+          payload.rehearsalDinnerVenueAddress2 = state.rehearsalDinnerVenueAddress2;
+          payload.rehearsalDinnerVenueCountry = state.rehearsalDinnerVenueCountry;
+          payload.rehearsalDinnerVenueCity = state.rehearsalDinnerVenueCity;
+          payload.rehearsalDinnerVenueState = state.rehearsalDinnerVenueState;
+          payload.rehearsalDinnerVenueZip = state.rehearsalDinnerVenueZip;
+          payload.rehearsalDinnerVenueAsInsured = state.rehearsalDinnerVenueAsInsured;
+        }
+      }
+
       router.push("/admin/create-quote/step3");
     } else {
       // Show toast for each missing field
-      Object.entries(errors).forEach(([field, message]) => {
+      (Object as any).entries(errors).forEach(([field, message]: [string, string]) => {
         toast.error(message);
       });
       const firstErrorField = Object.keys(errors)[0];
@@ -448,11 +563,10 @@ export default function EventInformation() {
                     onChange={(e) =>
                       handleInputChange("ceremonyLocationType", e.target.value)
                     }
-                    className={`block w-full rounded-md shadow-sm pl-3 pr-10 py-2 text-base border appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                      errors.ceremonyLocationType
+                    className={`block w-full rounded-md shadow-sm pl-3 pr-10 py-2 text-base border appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.ceremonyLocationType
                         ? "border-red-500 text-red-900"
                         : "border-gray-300 text-gray-900"
-                    } text-left`}
+                      } text-left`}
                   >
                     <option value="">Select venue type</option>
                     {VENUE_TYPES.map((option) => (
@@ -486,11 +600,10 @@ export default function EventInformation() {
                     onChange={(e) =>
                       handleInputChange("indoorOutdoor", e.target.value)
                     }
-                    className={`block w-full rounded-md shadow-sm pl-3 pr-10 py-2 text-base border appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                      errors.indoorOutdoor
+                    className={`block w-full rounded-md shadow-sm pl-3 pr-10 py-2 text-base border appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.indoorOutdoor
                         ? "border-red-500 text-red-900"
                         : "border-gray-300 text-gray-900"
-                    } text-left`}
+                      } text-left`}
                   >
                     <option value="">Select option</option>
                     {INDOOR_OUTDOOR_OPTIONS.map((option) => (
@@ -645,11 +758,10 @@ export default function EventInformation() {
                         onChange={(e) =>
                           handleInputChange("venueCountry", e.target.value)
                         }
-                        className={`block w-full rounded-md shadow-sm pl-3 pr-10 py-2 text-base border appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                          errors.venueCountry
+                        className={`block w-full rounded-md shadow-sm pl-3 pr-10 py-2 text-base border appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.venueCountry
                             ? "border-red-500 text-red-900"
                             : "border-gray-300 text-gray-900"
-                        } text-left`}
+                          } text-left`}
                       >
                         <option value="">Select country</option>
                         {COUNTRIES.map((option) => (
@@ -708,11 +820,10 @@ export default function EventInformation() {
                         onChange={(e) =>
                           handleInputChange("venueState", e.target.value)
                         }
-                        className={`block w-full rounded-md shadow-sm pl-3 pr-10 py-2 text-base border appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                          errors.venueState
+                        className={`block w-full rounded-md shadow-sm pl-3 pr-10 py-2 text-base border appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.venueState
                             ? "border-red-500 text-red-900"
                             : "border-gray-300 text-gray-900"
-                        } text-left`}
+                          } text-left`}
                       >
                         <option value="">Select state</option>
                         {US_STATES.map((option) => (
@@ -759,18 +870,711 @@ export default function EventInformation() {
             {/* Checkbox for "Add venue as Additional Insured" */}
             <div className="mb-4 text-left">
               <div className="w-full flex justify-start"> {/* Align checkbox to the left */}
-              <Checkbox
-                id="venueAsInsured"
-                label={<span className="font-medium text-left">Add this venue as an Additional Insured on my policy</span>}
-                checked={state.venueAsInsured}
-                onChange={(checked) =>
-                  handleInputChange("venueAsInsured", checked)
-                }
-              />
-            </div>
+                <Checkbox
+                  id="venueAsInsured"
+                  label={<span className="font-medium text-left">Add this venue as an Additional Insured on my policy</span>}
+                  checked={state.venueAsInsured}
+                  onChange={(checked) =>
+                    handleInputChange("venueAsInsured", checked)
+                  }
+                />
+              </div>
             </div>
           </div>
         </div>
+        {/* Additional Venue Sections for Weddings */}
+        {state.eventType === 'wedding' && (
+          <>
+            {/* Reception Venue */}
+            <div className="mb-8 shadow-lg border-0 bg-white p-8 sm:p-10 md:p-12 rounded-2xl w-full">
+              <div className="flex items-center justify-center text-left mb-4 gap-4">
+                <div className="flex-shrink-0">
+                  <MapPin size={28} className="text-blue-600" />
+                </div>
+                <div>
+                  <div className="text-xl md:text-2xl font-extrabold leading-tight mb-1">
+                    Reception Venue Information
+                  </div>
+                  <div className="text-base text-gray-500 font-medium leading-tight">
+                    Details about where your reception will be held
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-8 w-full px-2 sm:px-4 md:px-2">
+                <div className="mb-4 text-left">
+                  <label htmlFor="receptionVenueName" className="block mb-1 font-medium text-gray-800">
+                    Venue Name
+                  </label>
+                  <div className="w-full">
+                    <Input
+                      id="receptionVenueName"
+                      value={state.receptionVenueName}
+                      onChange={(e) => handleInputChange("receptionVenueName", e.target.value)}
+                      error={!!errors.receptionVenueName}
+                      className="text-left w-full"
+                    />
+                  </div>
+                  {errors.receptionVenueName && (
+                    <p className="text-sm text-red-500 mt-1">{errors.receptionVenueName}</p>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+                  <div className="mb-4 text-left">
+                    <label htmlFor="receptionVenueAddress1" className="block mb-1 font-medium text-gray-800">
+                      Address Line 1
+                    </label>
+                    <div className="w-full">
+                      <Input
+                        id="receptionVenueAddress1"
+                        value={state.receptionVenueAddress1}
+                        onChange={(e) => handleInputChange("receptionVenueAddress1", e.target.value)}
+                        error={!!errors.receptionVenueAddress1}
+                        className="text-left w-full"
+                      />
+                    </div>
+                    {errors.receptionVenueAddress1 && (
+                      <p className="text-sm text-red-500 mt-1">{errors.receptionVenueAddress1}</p>
+                    )}
+                  </div>
+                  <div className="mb-4 text-left">
+                    <label htmlFor="receptionVenueAddress2" className="block mb-1 font-medium text-gray-800">
+                      Address Line 2
+                    </label>
+                    <div className="w-full">
+                      <Input
+                        id="receptionVenueAddress2"
+                        value={state.receptionVenueAddress2}
+                        onChange={(e) => handleInputChange("receptionVenueAddress2", e.target.value)}
+                        className="text-left w-full"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+                  <div className="mb-4 text-left">
+                    <label htmlFor="receptionVenueCountry" className="block mb-1 font-medium text-gray-800">
+                      Country
+                    </label>
+                    <div className="relative w-full">
+                      <select
+                        id="receptionVenueCountry"
+                        value={state.receptionVenueCountry}
+                        onChange={(e) => handleInputChange("receptionVenueCountry", e.target.value)}
+                        className={`block w-full rounded-md shadow-sm pl-3 pr-10 py-2 text-base border appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                          errors.receptionVenueCountry ? "border-red-500 text-red-900" : "border-gray-300 text-gray-900"
+                        } text-left`}
+                      >
+                        <option value="">Select country</option>
+                        {COUNTRIES.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" size={16} />
+                    </div>
+                    {errors.receptionVenueCountry && (
+                      <p className="text-sm text-red-500 mt-1">{errors.receptionVenueCountry}</p>
+                    )}
+                  </div>
+                  <div className="mb-4 text-left">
+                    <label htmlFor="receptionVenueCity" className="block mb-1 font-medium text-gray-800">
+                      City
+                    </label>
+                    <div className="w-full">
+                      <Input
+                        id="receptionVenueCity"
+                        value={state.receptionVenueCity}
+                        onChange={(e) => handleInputChange("receptionVenueCity", e.target.value)}
+                        error={!!errors.receptionVenueCity}
+                        className="text-left w-full"
+                      />
+                    </div>
+                    {errors.receptionVenueCity && (
+                      <p className="text-sm text-red-500 mt-1">{errors.receptionVenueCity}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+                  <div className="mb-4 text-left">
+                    <label htmlFor="receptionVenueState" className="block mb-1 font-medium text-gray-800">
+                      State
+                    </label>
+                    <div className="relative w-full">
+                      <select
+                        id="receptionVenueState"
+                        value={state.receptionVenueState}
+                        onChange={(e) => handleInputChange("receptionVenueState", e.target.value)}
+                        className={`block w-full rounded-md shadow-sm pl-3 pr-10 py-2 text-base border appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                          errors.receptionVenueState ? "border-red-500 text-red-900" : "border-gray-300 text-gray-900"
+                        } text-left`}
+                      >
+                        <option value="">Select state</option>
+                        {US_STATES.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" size={16} />
+                    </div>
+                    {errors.receptionVenueState && (
+                      <p className="text-sm text-red-500 mt-1">{errors.receptionVenueState}</p>
+                    )}
+                  </div>
+                  <div className="mb-4 text-left">
+                    <label htmlFor="receptionVenueZip" className="block mb-1 font-medium text-gray-800">
+                      ZIP Code
+                    </label>
+                    <div className="w-full">
+                      <Input
+                        id="receptionVenueZip"
+                        value={state.receptionVenueZip}
+                        onChange={(e) => handleInputChange("receptionVenueZip", e.target.value)}
+                        error={!!errors.receptionVenueZip}
+                        className="text-left w-full"
+                      />
+                    </div>
+                    {errors.receptionVenueZip && (
+                      <p className="text-sm text-red-500 mt-1">{errors.receptionVenueZip}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mb-4 text-left">
+                  <div className="w-full flex justify-start">
+                    <Checkbox
+                      id="receptionVenueAsInsured"
+                      label={<span className="font-medium text-left">Add this venue as an Additional Insured on my policy</span>}
+                      checked={state.receptionVenueAsInsured}
+                      onChange={(checked) => handleInputChange("receptionVenueAsInsured", checked)}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Brunch Venue */}
+            <div className="mb-8 shadow-lg border-0 bg-white p-8 sm:p-10 md:p-12 rounded-2xl w-full">
+              <div className="flex items-center justify-center text-left mb-4 gap-4">
+                <div className="flex-shrink-0">
+                  <MapPin size={28} className="text-blue-600" />
+                </div>
+                <div>
+                  <div className="text-xl md:text-2xl font-extrabold leading-tight mb-1">
+                    Brunch Venue Information
+                  </div>
+                  <div className="text-base text-gray-500 font-medium leading-tight">
+                    Details about where your brunch will be held
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-8 w-full px-2 sm:px-4 md:px-2">
+                <div className="mb-4 text-left">
+                  <label htmlFor="brunchVenueName" className="block mb-1 font-medium text-gray-800">
+                    Venue Name
+                  </label>
+                  <div className="w-full">
+                    <Input
+                      id="brunchVenueName"
+                      value={state.brunchVenueName}
+                      onChange={(e) => handleInputChange("brunchVenueName", e.target.value)}
+                      error={!!errors.brunchVenueName}
+                      className="text-left w-full"
+                    />
+                  </div>
+                  {errors.brunchVenueName && (
+                    <p className="text-sm text-red-500 mt-1">{errors.brunchVenueName}</p>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+                  <div className="mb-4 text-left">
+                    <label htmlFor="brunchVenueAddress1" className="block mb-1 font-medium text-gray-800">
+                      Address Line 1
+                    </label>
+                    <div className="w-full">
+                      <Input
+                        id="brunchVenueAddress1"
+                        value={state.brunchVenueAddress1}
+                        onChange={(e) => handleInputChange("brunchVenueAddress1", e.target.value)}
+                        error={!!errors.brunchVenueAddress1}
+                        className="text-left w-full"
+                      />
+                    </div>
+                    {errors.brunchVenueAddress1 && (
+                      <p className="text-sm text-red-500 mt-1">{errors.brunchVenueAddress1}</p>
+                    )}
+                  </div>
+                  <div className="mb-4 text-left">
+                    <label htmlFor="brunchVenueAddress2" className="block mb-1 font-medium text-gray-800">
+                      Address Line 2
+                    </label>
+                    <div className="w-full">
+                      <Input
+                        id="brunchVenueAddress2"
+                        value={state.brunchVenueAddress2}
+                        onChange={(e) => handleInputChange("brunchVenueAddress2", e.target.value)}
+                        className="text-left w-full"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+                  <div className="mb-4 text-left">
+                    <label htmlFor="brunchVenueCountry" className="block mb-1 font-medium text-gray-800">
+                      Country
+                    </label>
+                    <div className="relative w-full">
+                      <select
+                        id="brunchVenueCountry"
+                        value={state.brunchVenueCountry}
+                        onChange={(e) => handleInputChange("brunchVenueCountry", e.target.value)}
+                        className={`block w-full rounded-md shadow-sm pl-3 pr-10 py-2 text-base border appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                          errors.brunchVenueCountry ? "border-red-500 text-red-900" : "border-gray-300 text-gray-900"
+                        } text-left`}
+                      >
+                        <option value="">Select country</option>
+                        {COUNTRIES.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" size={16} />
+                    </div>
+                    {errors.brunchVenueCountry && (
+                      <p className="text-sm text-red-500 mt-1">{errors.brunchVenueCountry}</p>
+                    )}
+                  </div>
+                  <div className="mb-4 text-left">
+                    <label htmlFor="brunchVenueCity" className="block mb-1 font-medium text-gray-800">
+                      City
+                    </label>
+                    <div className="w-full">
+                      <Input
+                        id="brunchVenueCity"
+                        value={state.brunchVenueCity}
+                        onChange={(e) => handleInputChange("brunchVenueCity", e.target.value)}
+                        error={!!errors.brunchVenueCity}
+                        className="text-left w-full"
+                      />
+                    </div>
+                    {errors.brunchVenueCity && (
+                      <p className="text-sm text-red-500 mt-1">{errors.brunchVenueCity}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+                  <div className="mb-4 text-left">
+                    <label htmlFor="brunchVenueState" className="block mb-1 font-medium text-gray-800">
+                      State
+                    </label>
+                    <div className="relative w-full">
+                      <select
+                        id="brunchVenueState"
+                        value={state.brunchVenueState}
+                        onChange={(e) => handleInputChange("brunchVenueState", e.target.value)}
+                        className={`block w-full rounded-md shadow-sm pl-3 pr-10 py-2 text-base border appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                          errors.brunchVenueState ? "border-red-500 text-red-900" : "border-gray-300 text-gray-900"
+                        } text-left`}
+                      >
+                        <option value="">Select state</option>
+                        {US_STATES.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" size={16} />
+                    </div>
+                    {errors.brunchVenueState && (
+                      <p className="text-sm text-red-500 mt-1">{errors.brunchVenueState}</p>
+                    )}
+                  </div>
+                  <div className="mb-4 text-left">
+                    <label htmlFor="brunchVenueZip" className="block mb-1 font-medium text-gray-800">
+                      ZIP Code
+                    </label>
+                    <div className="w-full">
+                      <Input
+                        id="brunchVenueZip"
+                        value={state.brunchVenueZip}
+                        onChange={(e) => handleInputChange("brunchVenueZip", e.target.value)}
+                        error={!!errors.brunchVenueZip}
+                        className="text-left w-full"
+                      />
+                    </div>
+                    {errors.brunchVenueZip && (
+                      <p className="text-sm text-red-500 mt-1">{errors.brunchVenueZip}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mb-4 text-left">
+                  <div className="w-full flex justify-start">
+                    <Checkbox
+                      id="brunchVenueAsInsured"
+                      label={<span className="font-medium text-left">Add this venue as an Additional Insured on my policy</span>}
+                      checked={state.brunchVenueAsInsured}
+                      onChange={(checked) => handleInputChange("brunchVenueAsInsured", checked)}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Rehearsal Venue */}
+            <div className="mb-8 shadow-lg border-0 bg-white p-8 sm:p-10 md:p-12 rounded-2xl w-full">
+              <div className="flex items-center justify-center text-left mb-4 gap-4">
+                <div className="flex-shrink-0">
+                  <MapPin size={28} className="text-blue-600" />
+                </div>
+                <div>
+                  <div className="text-xl md:text-2xl font-extrabold leading-tight mb-1">
+                    Rehearsal Venue Information
+                  </div>
+                  <div className="text-base text-gray-500 font-medium leading-tight">
+                    Details about where your rehearsal will be held
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-8 w-full px-2 sm:px-4 md:px-2">
+                <div className="mb-4 text-left">
+                  <label htmlFor="rehearsalVenueName" className="block mb-1 font-medium text-gray-800">
+                    Venue Name
+                  </label>
+                  <div className="w-full">
+                    <Input
+                      id="rehearsalVenueName"
+                      value={state.rehearsalVenueName}
+                      onChange={(e) => handleInputChange("rehearsalVenueName", e.target.value)}
+                      error={!!errors.rehearsalVenueName}
+                      className="text-left w-full"
+                    />
+                  </div>
+                  {errors.rehearsalVenueName && (
+                    <p className="text-sm text-red-500 mt-1">{errors.rehearsalVenueName}</p>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+                  <div className="mb-4 text-left">
+                    <label htmlFor="rehearsalVenueAddress1" className="block mb-1 font-medium text-gray-800">
+                      Address Line 1
+                    </label>
+                    <div className="w-full">
+                      <Input
+                        id="rehearsalVenueAddress1"
+                        value={state.rehearsalVenueAddress1}
+                        onChange={(e) => handleInputChange("rehearsalVenueAddress1", e.target.value)}
+                        error={!!errors.rehearsalVenueAddress1}
+                        className="text-left w-full"
+                      />
+                    </div>
+                    {errors.rehearsalVenueAddress1 && (
+                      <p className="text-sm text-red-500 mt-1">{errors.rehearsalVenueAddress1}</p>
+                    )}
+                  </div>
+                  <div className="mb-4 text-left">
+                    <label htmlFor="rehearsalVenueAddress2" className="block mb-1 font-medium text-gray-800">
+                      Address Line 2
+                    </label>
+                    <div className="w-full">
+                      <Input
+                        id="rehearsalVenueAddress2"
+                        value={state.rehearsalVenueAddress2}
+                        onChange={(e) => handleInputChange("rehearsalVenueAddress2", e.target.value)}
+                        className="text-left w-full"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+                  <div className="mb-4 text-left">
+                    <label htmlFor="rehearsalVenueCountry" className="block mb-1 font-medium text-gray-800">
+                      Country
+                    </label>
+                    <div className="relative w-full">
+                      <select
+                        id="rehearsalVenueCountry"
+                        value={state.rehearsalVenueCountry}
+                        onChange={(e) => handleInputChange("rehearsalVenueCountry", e.target.value)}
+                        className={`block w-full rounded-md shadow-sm pl-3 pr-10 py-2 text-base border appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                          errors.rehearsalVenueCountry ? "border-red-500 text-red-900" : "border-gray-300 text-gray-900"
+                        } text-left`}
+                      >
+                        <option value="">Select country</option>
+                        {COUNTRIES.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" size={16} />
+                    </div>
+                    {errors.rehearsalVenueCountry && (
+                      <p className="text-sm text-red-500 mt-1">{errors.rehearsalVenueCountry}</p>
+                    )}
+                  </div>
+                  <div className="mb-4 text-left">
+                    <label htmlFor="rehearsalVenueCity" className="block mb-1 font-medium text-gray-800">
+                      City
+                    </label>
+                    <div className="w-full">
+                      <Input
+                        id="rehearsalVenueCity"
+                        value={state.rehearsalVenueCity}
+                        onChange={(e) => handleInputChange("rehearsalVenueCity", e.target.value)}
+                        error={!!errors.rehearsalVenueCity}
+                        className="text-left w-full"
+                      />
+                    </div>
+                    {errors.rehearsalVenueCity && (
+                      <p className="text-sm text-red-500 mt-1">{errors.rehearsalVenueCity}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+                  <div className="mb-4 text-left">
+                    <label htmlFor="rehearsalVenueState" className="block mb-1 font-medium text-gray-800">
+                      State
+                    </label>
+                    <div className="relative w-full">
+                      <select
+                        id="rehearsalVenueState"
+                        value={state.rehearsalVenueState}
+                        onChange={(e) => handleInputChange("rehearsalVenueState", e.target.value)}
+                        className={`block w-full rounded-md shadow-sm pl-3 pr-10 py-2 text-base border appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                          errors.rehearsalVenueState ? "border-red-500 text-red-900" : "border-gray-300 text-gray-900"
+                        } text-left`}
+                      >
+                        <option value="">Select state</option>
+                        {US_STATES.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" size={16} />
+                    </div>
+                    {errors.rehearsalVenueState && (
+                      <p className="text-sm text-red-500 mt-1">{errors.rehearsalVenueState}</p>
+                    )}
+                  </div>
+                  <div className="mb-4 text-left">
+                    <label htmlFor="rehearsalVenueZip" className="block mb-1 font-medium text-gray-800">
+                      ZIP Code
+                    </label>
+                    <div className="w-full">
+                      <Input
+                        id="rehearsalVenueZip"
+                        value={state.rehearsalVenueZip}
+                        onChange={(e) => handleInputChange("rehearsalVenueZip", e.target.value)}
+                        error={!!errors.rehearsalVenueZip}
+                        className="text-left w-full"
+                      />
+                    </div>
+                    {errors.rehearsalVenueZip && (
+                      <p className="text-sm text-red-500 mt-1">{errors.rehearsalVenueZip}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mb-4 text-left">
+                  <div className="w-full flex justify-start">
+                    <Checkbox
+                      id="rehearsalVenueAsInsured"
+                      label={<span className="font-medium text-left">Add this venue as an Additional Insured on my policy</span>}
+                      checked={state.rehearsalVenueAsInsured}
+                      onChange={(checked) => handleInputChange("rehearsalVenueAsInsured", checked)}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Rehearsal Dinner Venue */}
+            <div className="mb-8 shadow-lg border-0 bg-white p-8 sm:p-10 md:p-12 rounded-2xl w-full">
+              <div className="flex items-center justify-center text-left mb-4 gap-4">
+                <div className="flex-shrink-0">
+                  <MapPin size={28} className="text-blue-600" />
+                </div>
+                <div>
+                  <div className="text-xl md:text-2xl font-extrabold leading-tight mb-1">
+                    Rehearsal Dinner Venue Information
+                  </div>
+                  <div className="text-base text-gray-500 font-medium leading-tight">
+                    Details about where your rehearsal dinner will be held
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-8 w-full px-2 sm:px-4 md:px-2">
+                <div className="mb-4 text-left">
+                  <label htmlFor="rehearsalDinnerVenueName" className="block mb-1 font-medium text-gray-800">
+                    Venue Name
+                  </label>
+                  <div className="w-full">
+                    <Input
+                      id="rehearsalDinnerVenueName"
+                      value={state.rehearsalDinnerVenueName}
+                      onChange={(e) => handleInputChange("rehearsalDinnerVenueName", e.target.value)}
+                      error={!!errors.rehearsalDinnerVenueName}
+                      className="text-left w-full"
+                    />
+                  </div>
+                  {errors.rehearsalDinnerVenueName && (
+                    <p className="text-sm text-red-500 mt-1">{errors.rehearsalDinnerVenueName}</p>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+                  <div className="mb-4 text-left">
+                    <label htmlFor="rehearsalDinnerVenueAddress1" className="block mb-1 font-medium text-gray-800">
+                      Address Line 1
+                    </label>
+                    <div className="w-full">
+                      <Input
+                        id="rehearsalDinnerVenueAddress1"
+                        value={state.rehearsalDinnerVenueAddress1}
+                        onChange={(e) => handleInputChange("rehearsalDinnerVenueAddress1", e.target.value)}
+                        error={!!errors.rehearsalDinnerVenueAddress1}
+                        className="text-left w-full"
+                      />
+                    </div>
+                    {errors.rehearsalDinnerVenueAddress1 && (
+                      <p className="text-sm text-red-500 mt-1">{errors.rehearsalDinnerVenueAddress1}</p>
+                    )}
+                  </div>
+                  <div className="mb-4 text-left">
+                    <label htmlFor="rehearsalDinnerVenueAddress2" className="block mb-1 font-medium text-gray-800">
+                      Address Line 2
+                    </label>
+                    <div className="w-full">
+                      <Input
+                        id="rehearsalDinnerVenueAddress2"
+                        value={state.rehearsalDinnerVenueAddress2}
+                        onChange={(e) => handleInputChange("rehearsalDinnerVenueAddress2", e.target.value)}
+                        className="text-left w-full"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+                  <div className="mb-4 text-left">
+                    <label htmlFor="rehearsalDinnerVenueCountry" className="block mb-1 font-medium text-gray-800">
+                      Country
+                    </label>
+                    <div className="relative w-full">
+                      <select
+                        id="rehearsalDinnerVenueCountry"
+                        value={state.rehearsalDinnerVenueCountry}
+                        onChange={(e) => handleInputChange("rehearsalDinnerVenueCountry", e.target.value)}
+                        className={`block w-full rounded-md shadow-sm pl-3 pr-10 py-2 text-base border appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                          errors.rehearsalDinnerVenueCountry ? "border-red-500 text-red-900" : "border-gray-300 text-gray-900"
+                        } text-left`}
+                      >
+                        <option value="">Select country</option>
+                        {COUNTRIES.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" size={16} />
+                    </div>
+                    {errors.rehearsalDinnerVenueCountry && (
+                      <p className="text-sm text-red-500 mt-1">{errors.rehearsalDinnerVenueCountry}</p>
+                    )}
+                  </div>
+                  <div className="mb-4 text-left">
+                    <label htmlFor="rehearsalDinnerVenueCity" className="block mb-1 font-medium text-gray-800">
+                      City
+                    </label>
+                    <div className="w-full">
+                      <Input
+                        id="rehearsalDinnerVenueCity"
+                        value={state.rehearsalDinnerVenueCity}
+                        onChange={(e) => handleInputChange("rehearsalDinnerVenueCity", e.target.value)}
+                        error={!!errors.rehearsalDinnerVenueCity}
+                        className="text-left w-full"
+                      />
+                    </div>
+                    {errors.rehearsalDinnerVenueCity && (
+                      <p className="text-sm text-red-500 mt-1">{errors.rehearsalDinnerVenueCity}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+                  <div className="mb-4 text-left">
+                    <label htmlFor="rehearsalDinnerVenueState" className="block mb-1 font-medium text-gray-800">
+                      State
+                    </label>
+                    <div className="relative w-full">
+                      <select
+                        id="rehearsalDinnerVenueState"
+                        value={state.rehearsalDinnerVenueState}
+                        onChange={(e) => handleInputChange("rehearsalDinnerVenueState", e.target.value)}
+                        className={`block w-full rounded-md shadow-sm pl-3 pr-10 py-2 text-base border appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                          errors.rehearsalDinnerVenueState ? "border-red-500 text-red-900" : "border-gray-300 text-gray-900"
+                        } text-left`}
+                      >
+                        <option value="">Select state</option>
+                        {US_STATES.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" size={16} />
+                    </div>
+                    {errors.rehearsalDinnerVenueState && (
+                      <p className="text-sm text-red-500 mt-1">{errors.rehearsalDinnerVenueState}</p>
+                    )}
+                  </div>
+                  <div className="mb-4 text-left">
+                    <label htmlFor="rehearsalDinnerVenueZip" className="block mb-1 font-medium text-gray-800">
+                      ZIP Code
+                    </label>
+                    <div className="w-full">
+                      <Input
+                        id="rehearsalDinnerVenueZip"
+                        value={state.rehearsalDinnerVenueZip}
+                        onChange={(e) => handleInputChange("rehearsalDinnerVenueZip", e.target.value)}
+                        error={!!errors.rehearsalDinnerVenueZip}
+                        className="text-left w-full"
+                      />
+                    </div>
+                    {errors.rehearsalDinnerVenueZip && (
+                      <p className="text-sm text-red-500 mt-1">{errors.rehearsalDinnerVenueZip}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mb-4 text-left">
+                  <div className="w-full flex justify-start">
+                    <Checkbox
+                      id="rehearsalDinnerVenueAsInsured"
+                      label={<span className="font-medium text-left">Add this venue as an Additional Insured on my policy</span>}
+                      checked={state.rehearsalDinnerVenueAsInsured}
+                      onChange={(checked) => handleInputChange("rehearsalDinnerVenueAsInsured", checked)}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+
         <div className="flex flex-col sm:flex-row justify-between items-center mt-10 gap-4 w-full">
           <Button
             variant="outline"

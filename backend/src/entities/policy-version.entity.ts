@@ -5,19 +5,19 @@ import { Policy } from './policy.entity';
 @Index(['policyId'])
 export class PolicyVersion {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column({ type: 'simple-json' }) // Corresponds to Json type
-  data: object;
+  data!: object;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   // --- RELATIONS ---
   @Column()
-  policyId: number;
+  policyId!: number;
 
   @ManyToOne(() => Policy, (policy) => policy.versions)
   @JoinColumn({ name: 'policyId' })
-  policy: Policy;
+  policy!: Policy;
 }

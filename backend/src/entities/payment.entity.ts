@@ -8,38 +8,38 @@ import { PaymentStatus } from './enums';
 @Index(['quoteId'])
 export class Payment {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column({ type: 'float' })
-  amount: number;
+  amount!: number;
 
   @Column({ type: 'enum', enum: PaymentStatus, default: PaymentStatus.PENDING })
-  status: PaymentStatus;
+  status!: PaymentStatus;
 
   @Column({ nullable: true })
-  method: string;
+  method!: string;
 
   @Column({ nullable: true })
-  reference: string;
+  reference!: string;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 
   // --- RELATIONS ---
   @Column()
-  quoteId: number;
+  quoteId!: number;
 
   @ManyToOne(() => Quote, (quote) => quote.Payment)
   @JoinColumn({ name: 'quoteId' })
-  quote: Quote;
+  quote!: Quote;
 
   @Column({ nullable: true })
-  policyId: number;
+  policyId!: number;
 
   @ManyToOne(() => Policy, (policy) => policy.payments, { nullable: true })
   @JoinColumn({ name: 'policyId' })
-  Policy: Policy;
+  Policy!: Policy;
 }

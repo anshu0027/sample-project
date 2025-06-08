@@ -13,182 +13,85 @@ import { StepStatus, QuoteSource } from './enums';
 @Index(['convertedToPolicy'])
 export class Quote {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column({ unique: true })
-  quoteNumber: string;
+  quoteNumber!: string;
 
   @Column({ type: 'varchar', length: 255 })
-  email: string;
+  email!: string;
 
   @Column({ nullable: true })
-  coverageLevel: number;
+  coverageLevel!: number;
 
   @Column({ nullable: true })
-  liabilityCoverage: string;
+  liabilityCoverage!: string;
 
   @Column({ default: false, nullable: true })
-  liquorLiability: boolean;
+  liquorLiability!: boolean;
 
   @Column({ nullable: true })
-  covidDisclosure: boolean;
+  covidDisclosure!: boolean;
 
   @Column({ nullable: true })
-  specialActivities: boolean;
+  specialActivities!: boolean;
 
   @Column({ type: 'float', nullable: true })
-  totalPremium: number;
+  totalPremium!: number;
 
   @Column({ type: 'float', nullable: true })
-  basePremium: number;
+  basePremium!: number;
 
   @Column({ type: 'float', nullable: true })
-  liabilityPremium: number;
+  liabilityPremium!: number;
 
   @Column({ type: 'float', nullable: true })
-  liquorLiabilityPremium: number;
+  liquorLiabilityPremium!: number;
 
   @Column({ type: 'enum', enum: StepStatus, default: StepStatus.STEP1 })
-  status: StepStatus;
+  status!: StepStatus;
 
   @Column({ type: 'enum', enum: QuoteSource, default: QuoteSource.CUSTOMER })
-  source: QuoteSource;
+  source!: QuoteSource;
 
   @Column({ default: false })
-  isCustomerGenerated: boolean;
+  isCustomerGenerated!: boolean;
 
   @Column({ default: false })
-  convertedToPolicy: boolean;
+  convertedToPolicy!: boolean;
 
   @Column({ default: false })
-  emailSent: boolean;
+  emailSent!: boolean;
 
   @Column({ nullable: true })
-  emailSentAt: Date;
+  emailSentAt!: Date;
 
   @Column({ nullable: true })
-  residentState: string;
+  residentState!: string;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn() // Corresponds to @updatedAt
-  updatedAt: Date;
+  updatedAt!: Date;
 
   // --- RELATIONS ---
   @Column() // This is the foreign key column
-  userId: number;
+  userId!: number;
 
   @ManyToOne(() => User, (user) => user.quotes)
   @JoinColumn({ name: 'userId' }) // Specifies the FK column
-  user: User;
+  user!: User;
 
   @OneToOne(() => Event, (event) => event.quote) // The inverse side of the relation
-  event: Event;
+    event!: Event;
 
   @OneToOne(() => PolicyHolder, (policyHolder) => policyHolder.quote) // Inverse side
-  policyHolder: PolicyHolder;
+  policyHolder!: PolicyHolder;
 
   @OneToOne(() => Policy, (policy) => policy.quote) // Inverse side
-  policy: Policy;
+  policy!: Policy;
 
   @OneToMany(() => Payment, (payment) => payment.quote)
-  Payment: Payment[];
-
-  // Additional Venue Information for Weddings (Step 2)
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  receptionVenueName: string;
-
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  receptionVenueAddress1: string;
-
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  receptionVenueAddress2: string;
-
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  receptionVenueCountry: string;
-
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  receptionVenueCity: string;
-
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  receptionVenueState: string;
-
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  receptionVenueZip: string;
-
-  @Column({ type: 'boolean', default: false, nullable: true })
-  receptionVenueAsInsured: boolean;
-
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  brunchVenueName: string;
-
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  brunchVenueAddress1: string;
-
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  brunchVenueAddress2: string;
-
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  brunchVenueCountry: string;
-
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  brunchVenueCity: string;
-
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  brunchVenueState: string;
-
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  brunchVenueZip: string;
-
-  @Column({ type: 'boolean', default: false, nullable: true })
-  brunchVenueAsInsured: boolean;
-
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  rehearsalVenueName: string;
-
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  rehearsalVenueAddress1: string;
-
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  rehearsalVenueAddress2: string;
-
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  rehearsalVenueCountry: string;
-
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  rehearsalVenueCity: string;
-
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  rehearsalVenueState: string;
-
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  rehearsalVenueZip: string;
-
-  @Column({ type: 'boolean', default: false, nullable: true })
-  rehearsalVenueAsInsured: boolean;
-
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  rehearsalDinnerVenueName: string;
-
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  rehearsalDinnerVenueAddress1: string;
-
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  rehearsalDinnerVenueAddress2: string;
-
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  rehearsalDinnerVenueCountry: string;
-
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  rehearsalDinnerVenueCity: string;
-
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  rehearsalDinnerVenueState: string;
-
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  rehearsalDinnerVenueZip: string;
-
-  @Column({ type: 'boolean', default: false, nullable: true })
-  rehearsalDinnerVenueAsInsured: boolean;
+  Payment!: Payment[];
 }

@@ -34,6 +34,52 @@ export interface PolicyVersionData {
   venueZip: string;
   venueAsInsured: boolean;
   
+  // Additional Venue Information for Weddings (Step 2)
+  receptionLocationType: string;
+  receptionIndoorOutdoor: string;
+  receptionVenueName: string;
+  receptionVenueAddress1: string;
+  receptionVenueAddress2: string;
+  receptionVenueCountry: string;
+  receptionVenueCity: string;
+  receptionVenueState: string;
+  receptionVenueZip: string;
+  receptionVenueAsInsured: boolean;
+
+  brunchLocationType: string;
+  brunchIndoorOutdoor: string;
+  brunchVenueName: string;
+  brunchVenueAddress1: string;
+  brunchVenueAddress2: string;
+  brunchVenueCountry: string;
+  brunchVenueCity: string;
+  brunchVenueState: string;
+  brunchVenueZip: string;
+  brunchVenueAsInsured: boolean;
+
+  rehearsalLocationType: string;
+  rehearsalIndoorOutdoor: string;
+  rehearsalVenueName: string;
+  rehearsalVenueAddress1: string;
+  rehearsalVenueAddress2: string;
+  rehearsalVenueCountry: string;
+  rehearsalVenueCity: string;
+  rehearsalVenueState: string;
+  rehearsalVenueZip: string;
+  rehearsalVenueAsInsured: boolean;
+
+  rehearsalDinnerLocationType: string;
+  rehearsalDinnerIndoorOutdoor: string;
+  rehearsalDinnerVenueName: string;
+  rehearsalDinnerVenueAddress1: string;
+  rehearsalDinnerVenueAddress2: string;
+  rehearsalDinnerVenueCountry: string;
+  rehearsalDinnerVenueCity: string;
+  rehearsalDinnerVenueState: string;
+  rehearsalDinnerVenueZip: string;
+  rehearsalDinnerVenueAsInsured: boolean;
+
+
   // Step 3
   firstName: string;
   lastName: string;
@@ -59,4 +105,5 @@ export interface PolicyVersionData {
   policyId: number;
   policyNumber: string;
   pdfUrl: string;
+
 } 

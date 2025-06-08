@@ -8,43 +8,43 @@ import { PolicyVersion } from './policy-version.entity';
 @Entity('policies')
 export class Policy {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column({ unique: true })
-  policyNumber: string;
+  policyNumber!: string;
 
   @Column({ nullable: true })
-  pdfUrl: string;
+  pdfUrl!: string;
 
   @Column({ default: false })
-  emailSent: boolean;
+  emailSent!: boolean;
 
   @Column({ nullable: true })
-  emailSentAt: Date;
+  emailSentAt!: Date;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 
   // --- RELATIONS ---
   @Column({ unique: true, nullable: true })
-  quoteId: number;
+  quoteId!: number;
 
   @OneToOne(() => Quote, (quote) => quote.policy)
   @JoinColumn({ name: 'quoteId' })
-  quote: Quote;
+  quote!: Quote;
 
   @OneToOne(() => Event, (event) => event.policy)
-  event: Event;
+  event!: Event;
 
   @OneToOne(() => PolicyHolder, (policyHolder) => policyHolder.policy)
-  policyHolder: PolicyHolder;
+  policyHolder!: PolicyHolder;
 
   @OneToMany(() => Payment, (payment) => payment.Policy)
-  payments: Payment[];
+  payments!: Payment[];
 
   @OneToMany(() => PolicyVersion, (version) => version.policy)
-  versions: PolicyVersion[];
+  versions!: PolicyVersion[];
 }

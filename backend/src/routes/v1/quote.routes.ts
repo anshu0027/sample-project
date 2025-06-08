@@ -168,6 +168,44 @@ router.post('/', async (req: Request, res: Response) => {
           city: fields.venueCity,
           state: fields.venueState,
           zip: fields.venueZip,
+          locationType: fields.locationType,
+          indoorOutdoor: fields.indoorOutdoor,
+          receptionLocationType: fields.receptionLocationType,
+          receptionIndoorOutdoor: fields.receptionIndoorOutdoor,
+          receptionAddress1: fields.receptionAddress1,
+          receptionAddress2: fields.receptionAddress2,
+          receptionCity: fields.receptionCity,
+          receptionState: fields.receptionState,
+          receptionZip: fields.receptionZip,
+          receptionCountry: fields.receptionCountry,
+          receptionVenueAsInsured: fields.receptionVenueAsInsured,
+          brunchLocationType: fields.brunchLocationType,
+          brunchIndoorOutdoor: fields.brunchIndoorOutdoor,
+          brunchAddress1: fields.brunchAddress1,
+          brunchAddress2: fields.brunchAddress2,
+          brunchCity: fields.brunchCity,
+          brunchState: fields.brunchState,
+          brunchZip: fields.brunchZip,
+          brunchCountry: fields.brunchCountry,
+          brunchVenueAsInsured: fields.brunchVenueAsInsured,
+          rehearsalLocationType: fields.rehearsalLocationType,
+          rehearsalIndoorOutdoor: fields.rehearsalIndoorOutdoor,
+          rehearsalAddress1: fields.rehearsalAddress1,
+          rehearsalAddress2: fields.rehearsalAddress2,
+          rehearsalCity: fields.rehearsalCity,
+          rehearsalState: fields.rehearsalState,
+          rehearsalZip: fields.rehearsalZip,
+          rehearsalCountry: fields.rehearsalCountry,
+          rehearsalVenueAsInsured: fields.rehearsalVenueAsInsured,
+          rehearsalDinnerLocationType: fields.rehearsalDinnerLocationType,
+          rehearsalDinnerIndoorOutdoor: fields.rehearsalDinnerIndoorOutdoor,
+          rehearsalDinnerAddress1: fields.rehearsalDinnerAddress1,
+          rehearsalDinnerAddress2: fields.rehearsalDinnerAddress2,
+          rehearsalDinnerCity: fields.rehearsalDinnerCity,
+          rehearsalDinnerState: fields.rehearsalDinnerState,
+          rehearsalDinnerZip: fields.rehearsalDinnerZip,
+          rehearsalDinnerCountry: fields.rehearsalDinnerCountry,
+          rehearsalDinnerVenueAsInsured: fields.rehearsalDinnerVenueAsInsured,
         };
         const venueRepository = AppDataSource.getRepository(Venue);
         newEvent.venue = venueRepository.create(venueData);
@@ -198,28 +236,28 @@ router.post('/', async (req: Request, res: Response) => {
 
     // --- START: AUTO-CONVERSION LOGIC ---
     if (savedQuote.source === QuoteSource.CUSTOMER && paymentStatus === 'SUCCESS') {
-        const policy = await createPolicyFromQuote(savedQuote.id);
+      const policy = await createPolicyFromQuote(savedQuote.id);
 
-        if (policy && fields.totalPremium) {
-            const paymentRepository = AppDataSource.getRepository(Payment);
-            const newPayment = paymentRepository.create({
-                quoteId: savedQuote.id,
-                policyId: policy.id,
-                amount: parseFloat(fields.totalPremium.toString()),
-                status: PaymentStatus.SUCCESS,
-                method: 'online',
-                reference: `payment-${Date.now()}`,
-            });
-            await paymentRepository.save(newPayment);
-        }
-
-        res.status(201).json({
-            quoteNumber: savedQuote.quoteNumber,
-            quote: savedQuote,
-            policy: policy,
-            converted: true,
+      if (policy && fields.totalPremium) {
+        const paymentRepository = AppDataSource.getRepository(Payment);
+        const newPayment = paymentRepository.create({
+          quoteId: savedQuote.id,
+          policyId: policy.id,
+          amount: parseFloat(fields.totalPremium.toString()),
+          status: PaymentStatus.SUCCESS,
+          method: 'online',
+          reference: `payment-${Date.now()}`,
         });
-        return; // End the request here
+        await paymentRepository.save(newPayment);
+      }
+
+      res.status(201).json({
+        quoteNumber: savedQuote.quoteNumber,
+        quote: savedQuote,
+        policy: policy,
+        converted: true,
+      });
+      return; // End the request here
     }
     // --- END: AUTO-CONVERSION LOGIC ---
 
@@ -270,9 +308,9 @@ router.put('/:quoteNumber', async (req: Request, res: Response) => {
       const liabilityCoverage = fields.liabilityCoverage ?? quoteToUpdate.liabilityCoverage;
       const liquorLiability = fields.liquorLiability ?? quoteToUpdate.liquorLiability;
       const maxGuests = fields.maxGuests ?? quoteToUpdate.event?.maxGuests;
-      
+
       const guestRange = mapMaxGuestsToGuestRange(maxGuests);
-      
+
       fields.basePremium = calculateBasePremium(coverageLevel as CoverageLevel);
       fields.liabilityPremium = calculateLiabilityPremium(liabilityCoverage as LiabilityOption);
       fields.liquorLiabilityPremium = calculateLiquorLiabilityPremium(liquorLiability, guestRange);
@@ -307,34 +345,42 @@ router.put('/:quoteNumber', async (req: Request, res: Response) => {
       ...(fields.rehearsalVenueState !== undefined && { rehearsalVenueState: fields.rehearsalVenueState }),
       ...(fields.rehearsalVenueZip !== undefined && { rehearsalVenueZip: fields.rehearsalVenueZip }),
       ...(fields.rehearsalVenueAsInsured !== undefined && { rehearsalVenueAsInsured: fields.rehearsalVenueAsInsured }),
+      ...(fields.rehearsalDinnerVenueName !== undefined && { rehearsalDinnerVenueName: fields.rehearsalDinnerVenueName }),
+      ...(fields.rehearsalDinnerVenueAddress1 !== undefined && { rehearsalDinnerVenueAddress1: fields.rehearsalDinnerVenueAddress1 }),
+      ...(fields.rehearsalDinnerVenueAddress2 !== undefined && { rehearsalDinnerVenueAddress2: fields.rehearsalDinnerVenueAddress2 }),
+      ...(fields.rehearsalDinnerVenueCountry !== undefined && { rehearsalDinnerVenueCountry: fields.rehearsalDinnerVenueCountry }),
+      ...(fields.rehearsalDinnerVenueCity !== undefined && { rehearsalDinnerVenueCity: fields.rehearsalDinnerVenueCity }),
+      ...(fields.rehearsalDinnerVenueState !== undefined && { rehearsalDinnerVenueState: fields.rehearsalDinnerVenueState }),
+      ...(fields.rehearsalDinnerVenueZip !== undefined && { rehearsalDinnerVenueZip: fields.rehearsalDinnerVenueZip }),
+      ...(fields.rehearsalDinnerVenueAsInsured !== undefined && { rehearsalDinnerVenueAsInsured: fields.rehearsalDinnerVenueAsInsured }),
     });
 
     const eventRepository = AppDataSource.getRepository(Event);
     if (fields.eventType || fields.eventDate || fields.maxGuests) {
-        if (!quoteToUpdate.event) {
-            quoteToUpdate.event = eventRepository.create();
-        }
-        eventRepository.merge(quoteToUpdate.event, fields);
-        if (fields.eventDate) quoteToUpdate.event.eventDate = new Date(fields.eventDate);
+      if (!quoteToUpdate.event) {
+        quoteToUpdate.event = eventRepository.create();
+      }
+      eventRepository.merge(quoteToUpdate.event, fields);
+      if (fields.eventDate) quoteToUpdate.event.eventDate = new Date(fields.eventDate);
     }
 
     const venueRepository = AppDataSource.getRepository(Venue);
     if (quoteToUpdate.event && (fields.venueName || fields.venueAddress1)) {
-        if (!quoteToUpdate.event.venue) {
-            quoteToUpdate.event.venue = venueRepository.create();
-        }
-        venueRepository.merge(quoteToUpdate.event.venue, {
-            name: fields.venueName,
-            address1: fields.venueAddress1,
-        });
+      if (!quoteToUpdate.event.venue) {
+        quoteToUpdate.event.venue = venueRepository.create();
+      }
+      venueRepository.merge(quoteToUpdate.event.venue, {
+        name: fields.venueName,
+        address1: fields.venueAddress1,
+      });
     }
 
     const policyHolderRepository = AppDataSource.getRepository(PolicyHolder);
     if (fields.firstName || fields.lastName || fields.address) {
-        if (!quoteToUpdate.policyHolder) {
-            quoteToUpdate.policyHolder = policyHolderRepository.create();
-        }
-        policyHolderRepository.merge(quoteToUpdate.policyHolder, fields);
+      if (!quoteToUpdate.policyHolder) {
+        quoteToUpdate.policyHolder = policyHolderRepository.create();
+      }
+      policyHolderRepository.merge(quoteToUpdate.policyHolder, fields);
     }
 
     const updatedQuote = await quoteRepository.save(quoteToUpdate);
@@ -349,49 +395,49 @@ router.put('/:quoteNumber', async (req: Request, res: Response) => {
 
 // --- DELETE /api/v1/quotes/:quoteNumber ---
 router.delete('/:quoteNumber', async (req: Request, res: Response) => {
-    try {
-        const { quoteNumber } = req.params;
-        const quoteRepository = AppDataSource.getRepository(Quote);
+  try {
+    const { quoteNumber } = req.params;
+    const quoteRepository = AppDataSource.getRepository(Quote);
 
-        const quote = await quoteRepository.findOne({
-            where: { quoteNumber },
-            relations: ['event', 'event.venue', 'policyHolder', 'policy', 'policy.versions', 'Payment'],
-        });
+    const quote = await quoteRepository.findOne({
+      where: { quoteNumber },
+      relations: ['event', 'event.venue', 'policyHolder', 'policy', 'policy.versions', 'Payment'],
+    });
 
-        if (!quote) {
-            res.status(404).json({ error: 'Quote not found' }); // REMOVED 'return'
-            return;
-        }
-
-        const entityManager = AppDataSource.manager;
-
-        if (quote.policy?.versions?.length) {
-            await entityManager.delete('policy_versions', { policyId: quote.policy.id });
-        }
-        if (quote.Payment?.length) {
-            await entityManager.delete('payments', { quoteId: quote.id });
-        }
-        if (quote.policy) {
-            await entityManager.delete('policies', { id: quote.policy.id });
-        }
-        if (quote.event?.venue) {
-            await entityManager.delete('venues', { id: quote.event.venue.id });
-        }
-        if (quote.event) {
-            await entityManager.delete('events', { id: quote.event.id });
-        }
-        if (quote.policyHolder) {
-            await entityManager.delete('policy_holders', { id: quote.policyHolder.id });
-        }
-        
-        await quoteRepository.remove(quote);
-
-        res.json({ message: 'Quote and related records deleted successfully' }); // REMOVED 'return'
-
-    } catch (error) {
-        console.error('DELETE /api/v1/quotes error:', error);
-        res.status(500).json({ error: 'Failed to delete quote' }); // REMOVED 'return'
+    if (!quote) {
+      res.status(404).json({ error: 'Quote not found' }); // REMOVED 'return'
+      return;
     }
+
+    const entityManager = AppDataSource.manager;
+
+    if (quote.policy?.versions?.length) {
+      await entityManager.delete('policy_versions', { policyId: quote.policy.id });
+    }
+    if (quote.Payment?.length) {
+      await entityManager.delete('payments', { quoteId: quote.id });
+    }
+    if (quote.policy) {
+      await entityManager.delete('policies', { id: quote.policy.id });
+    }
+    if (quote.event?.venue) {
+      await entityManager.delete('venues', { id: quote.event.venue.id });
+    }
+    if (quote.event) {
+      await entityManager.delete('events', { id: quote.event.id });
+    }
+    if (quote.policyHolder) {
+      await entityManager.delete('policy_holders', { id: quote.policyHolder.id });
+    }
+
+    await quoteRepository.remove(quote);
+
+    res.json({ message: 'Quote and related records deleted successfully' }); // REMOVED 'return'
+
+  } catch (error) {
+    console.error('DELETE /api/v1/quotes error:', error);
+    res.status(500).json({ error: 'Failed to delete quote' }); // REMOVED 'return'
+  }
 });
 
 export default router;

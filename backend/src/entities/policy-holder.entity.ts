@@ -5,56 +5,56 @@ import { Policy } from './policy.entity';
 @Entity('policy_holders')
 export class PolicyHolder {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column()
-  firstName: string;
+  firstName!: string;
 
   @Column()
-  lastName: string;
+  lastName!: string;
 
   @Column()
-  phone: string;
+  phone!: string;
 
   @Column({ nullable: true })
-  relationship: string;
+  relationship!: string;
 
   @Column({ nullable: true })
-  hearAboutUs: string;
+  hearAboutUs!: string;
 
   @Column()
-  address: string;
+  address!: string;
 
   @Column()
-  country: string;
+  country!: string;
 
   @Column()
-  city: string;
+  city!: string;
 
   @Column({ name: 'state_column', nullable: true })
-  state: string;
+  state!: string;
 
   @Column({ name: 'zip_code', nullable: true })
-  zip: string;
+  zip!: string;
 
   @Column({ nullable: true })
-  legalNotices: boolean;
+  legalNotices!: boolean;
 
   @Column({ nullable: true })
-  completingFormName: string;
+  completingFormName!: string;
 
   // --- RELATIONS ---
   @Column({ unique: true, nullable: true })
-  quoteId: number;
+  quoteId!: number;
 
   @OneToOne(() => Quote, (quote) => quote.policyHolder)
   @JoinColumn({ name: 'quoteId' })
-  quote: Quote;
+  quote!: Quote;
 
   @Column({ nullable: true })
-  policyId: number;
+  policyId!: number;
 
   @OneToOne(() => Policy, (policy) => policy.policyHolder)
   @JoinColumn({ name: 'policyId' })
-  policy: Policy;
+  policy!: Policy;
 }

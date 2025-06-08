@@ -5,24 +5,24 @@ import { Quote } from './quote.entity';
 @Index(['email']) // Corresponds to @@index([email])
 export class User {
   @PrimaryGeneratedColumn() // Corresponds to Int @id @default(autoincrement())
-  id: number;
+  id!: number;
 
   @Column({ unique: true }) // Corresponds to @unique
-  email: string;
+  email!: string;
 
   @Column()
-  firstName: string;
+  firstName!: string;
 
   @Column()
-  lastName: string;
+  lastName!: string;
 
   @Column({ type: 'varchar', length: 15, nullable: true }) // Corresponds to String? @db.VarChar(15)
-  phone: string;
+  phone!: string;
 
   @CreateDateColumn() // Corresponds to DateTime @default(now())
-  createdAt: Date;
+  createdAt!: Date;
 
   // --- RELATIONS ---
   @OneToMany(() => Quote, (quote) => quote.user)
-  quotes: Quote[];
+  quotes!: Quote[];
 }

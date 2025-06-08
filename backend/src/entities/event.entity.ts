@@ -6,44 +6,46 @@ import { Venue } from './venue.entity';
 @Entity('events')
 export class Event {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column()
-  eventType: string;
+  eventType!: string;
 
   @Column()
-  eventDate: Date;
+  eventDate!: Date;
 
   @Column()
-  maxGuests: string;
+  maxGuests!: string;
 
   @Column({ nullable: true })
-  honoree1FirstName: string;
+  honoree1FirstName!: string;
 
   @Column({ nullable: true })
-  honoree1LastName: string;
+  honoree1LastName!: string;
 
   @Column({ nullable: true })
-  honoree2FirstName: string;
+  honoree2FirstName!: string;
 
   @Column({ nullable: true })
-  honoree2LastName: string;
+  honoree2LastName!: string;
+
+  
 
   // --- RELATIONS ---
   @Column({ unique: true, nullable: true })
-  quoteId: number;
+  quoteId!: number;
 
   @OneToOne(() => Quote, (quote) => quote.event)
   @JoinColumn({ name: 'quoteId' }) // This is the "owning" side for the quote relation
-  quote: Quote;
+  quote!: Quote;
 
   @Column({ unique: true, nullable: true })
-  policyId: number;
+  policyId!: number;
 
   @OneToOne(() => Policy, (policy) => policy.event)
   @JoinColumn({ name: 'policyId' }) // This is the "owning" side for the policy relation
-  policy: Policy;
+  policy!: Policy;
 
   @OneToOne(() => Venue, (venue) => venue.event)
-  venue: Venue;
+  venue!: Venue;
 }

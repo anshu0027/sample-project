@@ -111,21 +111,21 @@ export default function EventInformation() {
     const newErrors: Record<string, string> = {};
     const nameRegex = /^[a-zA-Z\-' ]+$/;
     if (isEmpty(state.honoree1FirstName)) newErrors.honoree1FirstName = "Please enter the first name";
- else if (!nameRegex.test(state.honoree1FirstName)) newErrors.honoree1FirstName = "First name contains invalid characters";
+    else if (!nameRegex.test(state.honoree1FirstName)) newErrors.honoree1FirstName = "First name contains invalid characters";
     if (isEmpty(state.honoree1LastName)) newErrors.honoree1LastName = "Please enter the last name";
- else if (!nameRegex.test(state.honoree1LastName)) newErrors.honoree1LastName = "Last name contains invalid characters";
+    else if (!nameRegex.test(state.honoree1LastName)) newErrors.honoree1LastName = "Last name contains invalid characters";
     if (isEmpty(state.ceremonyLocationType)) newErrors.ceremonyLocationType = "Please select a venue type";
     if (isEmpty(state.indoorOutdoor)) newErrors.indoorOutdoor = "Please select indoor/outdoor option";
     if (isEmpty(state.venueName)) newErrors.venueName = "Please enter the venue name";
- if (isEmpty(state.venueAddress1)) newErrors.venueAddress1 = "Please enter the venue address";
+    if (isEmpty(state.venueAddress1)) newErrors.venueAddress1 = "Please enter the venue address";
     if (isEmpty(state.venueCity)) newErrors.venueCity = "Please enter the city";
 
     const validateVenueFields = (prefix: string) => {
- const venueName = state[`${prefix}VenueName` as keyof QuoteState] as string;
- const venueAddress1 = state[`${prefix}VenueAddress1` as keyof QuoteState] as string;
- const venueCity = state[`${prefix}VenueCity` as keyof QuoteState] as string;
- const venueState = state[`${prefix}VenueState` as keyof QuoteState] as string;
- const venueZip = state[`${prefix}VenueZip` as keyof QuoteState] as string;
+      const venueName = state[`${prefix}VenueName` as keyof QuoteState] as string;
+      const venueAddress1 = state[`${prefix}VenueAddress1` as keyof QuoteState] as string;
+      const venueCity = state[`${prefix}VenueCity` as keyof QuoteState] as string;
+      const venueState = state[`${prefix}VenueState` as keyof QuoteState] as string;
+      const venueZip = state[`${prefix}VenueZip` as keyof QuoteState] as string;
 
       if (isEmpty(venueName)) newErrors[`${prefix}VenueName`] = "Please enter the venue name";
       if (isEmpty(venueAddress1)) newErrors[`${prefix}VenueAddress1`] = "Please enter the venue address";
@@ -135,14 +135,14 @@ export default function EventInformation() {
       if (!isCruiseShipVenue) {
         if (isEmpty(venueState)) newErrors[`${prefix}VenueState`] = "Please select a state";
         if (isEmpty(venueZip)) newErrors[`${prefix}VenueZip`] = "Please enter the ZIP code";
- else if (!isValidZip(venueZip)) newErrors[`${prefix}VenueZip`] = "Please enter a valid ZIP code";
+        else if (!isValidZip(venueZip)) newErrors[`${prefix}VenueZip`] = "Please enter a valid ZIP code";
       }
     };
 
     if (!isCruiseShip) {
- if (isEmpty(state.venueState)) newErrors.venueState = "Please select a state";
- if (isEmpty(state.venueZip)) newErrors.venueZip = "Please enter the ZIP code";
- else if (!isValidZip(state.venueZip)) newErrors.venueZip = "Please enter a valid ZIP code";
+      if (isEmpty(state.venueState)) newErrors.venueState = "Please select a state";
+      if (isEmpty(state.venueZip)) newErrors.venueZip = "Please enter the ZIP code";
+      else if (!isValidZip(state.venueZip)) newErrors.venueZip = "Please enter a valid ZIP code";
     }
 
     if (state.eventType === 'wedding') {
@@ -150,28 +150,28 @@ export default function EventInformation() {
 
       // Validate Reception Venue
       validateVenueFields('reception');
-      if (isEmpty(state.receptionCeremonyLocationType)) newErrors.receptionCeremonyLocationType = "Please select a venue type";
+      if (isEmpty(state.receptionLocationType)) newErrors.receptionCeremonyLocationType = "Please select a venue type";
       if (isEmpty(state.receptionIndoorOutdoor)) newErrors.receptionIndoorOutdoor = "Please select indoor/outdoor option";
 
       // Validate Brunch Venue (optional, only if name is provided)
       if (!isEmpty(state.brunchVenueName)) {
- validateVenueFields('brunch');
- if (isEmpty(state.brunchCeremonyLocationType)) newErrors.brunchCeremonyLocationType = "Please select a venue type";
- if (isEmpty(state.brunchIndoorOutdoor)) newErrors.brunchIndoorOutdoor = "Please select indoor/outdoor option";
+        validateVenueFields('brunch');
+        if (isEmpty(state.brunchLocationType)) newErrors.brunchCeremonyLocationType = "Please select a venue type";
+        if (isEmpty(state.brunchIndoorOutdoor)) newErrors.brunchIndoorOutdoor = "Please select indoor/outdoor option";
       }
 
       // Validate Rehearsal Venue (optional, only if name is provided)
       if (!isEmpty(state.rehearsalVenueName)) {
- validateVenueFields('rehearsal');
- if (isEmpty(state.rehearsalCeremonyLocationType)) newErrors.rehearsalCeremonyLocationType = "Please select a venue type";
- if (isEmpty(state.rehearsalIndoorOutdoor)) newErrors.rehearsalIndoorOutdoor = "Please select indoor/outdoor option";
+        validateVenueFields('rehearsal');
+        if (isEmpty(state.rehearsalLocationType)) newErrors.rehearsalCeremonyLocationType = "Please select a venue type";
+        if (isEmpty(state.rehearsalIndoorOutdoor)) newErrors.rehearsalIndoorOutdoor = "Please select indoor/outdoor option";
       }
 
       // Validate Rehearsal Dinner Venue (optional, only if name is provided)
       if (!isEmpty(state.rehearsalDinnerVenueName)) {
- validateVenueFields('rehearsalDinner');
- if (isEmpty(state.rehearsalDinnerCeremonyLocationType)) newErrors.rehearsalDinnerCeremonyLocationType = "Please select a venue type";
- if (isEmpty(state.rehearsalDinnerIndoorOutdoor)) newErrors.rehearsalDinnerIndoorOutdoor = "Please select indoor/outdoor option";
+        validateVenueFields('rehearsalDinner');
+        if (isEmpty(state.rehearsalDinnerLocationType)) newErrors.rehearsalDinnerCeremonyLocationType = "Please select a venue type";
+        if (isEmpty(state.rehearsalDinnerIndoorOutdoor)) newErrors.rehearsalDinnerIndoorOutdoor = "Please select indoor/outdoor option";
       }
     }
 
@@ -220,8 +220,8 @@ export default function EventInformation() {
 
         if (state.eventType === 'wedding') {
           // Reception Venue
-          payload.receptionCeremonyLocationType = state.receptionCeremonyLocationType;
-          payload.receptionIndoorOutdoor = state.receptionIndoorOutdoor;
+          payload.ceremonyLocationType = state.ceremonyLocationType;
+          payload.indoorOutdoor = state.indoorOutdoor;
           payload.receptionVenueName = state.receptionVenueName;
           payload.receptionVenueAddress1 = state.receptionVenueAddress1;
           payload.receptionVenueAddress2 = state.receptionVenueAddress2;
@@ -234,16 +234,46 @@ export default function EventInformation() {
           // Brunch Venue (only if name is provided)
           if (!isEmpty(state.brunchVenueName)) {
             // Add brunch venue fields to payload
+            payload.brunchLocationType = state.brunchLocationType;
+            payload.brunchIndoorOutdoor = state.brunchIndoorOutdoor;
+            payload.brunchVenueName = state.brunchVenueName;
+            payload.brunchVenueAddress1 = state.brunchVenueAddress1;
+            payload.brunchVenueAddress2 = state.brunchVenueAddress2;
+            payload.brunchVenueCountry = state.brunchVenueCountry;
+            payload.brunchVenueCity = state.brunchVenueCity;
+            payload.brunchVenueState = state.brunchVenueState;
+            payload.brunchVenueZip = state.brunchVenueZip;
+            payload.brunchVenueAsInsured = state.brunchVenueAsInsured;
           }
 
           // Rehearsal Venue (only if name is provided)
           if (!isEmpty(state.rehearsalVenueName)) {
             // Add rehearsal venue fields to payload
+            payload.rehearsalLocationType = state.rehearsalLocationType;
+            payload.rehearsalIndoorOutdoor = state.rehearsalIndoorOutdoor;
+            payload.rehearsalVenueName = state.rehearsalVenueName;
+            payload.rehearsalVenueAddress1 = state.rehearsalVenueAddress1;
+            payload.rehearsalVenueAddress2 = state.rehearsalVenueAddress2;
+            payload.rehearsalVenueCountry = state.rehearsalVenueCountry;
+            payload.rehearsalVenueCity = state.rehearsalVenueCity;
+            payload.rehearsalVenueState = state.rehearsalVenueState;
+            payload.rehearsalVenueZip = state.rehearsalVenueZip;
+            payload.rehearsalVenueAsInsured = state.rehearsalVenueAsInsured;
           }
 
           // Rehearsal Dinner Venue (only if name is provided)
           if (!isEmpty(state.rehearsalDinnerVenueName)) {
             // Add rehearsal dinner venue fields to payload
+            payload.rehearsalDinnerLocationType = state.rehearsalDinnerLocationType;
+            payload.rehearsalDinnerIndoorOutdoor = state.rehearsalDinnerIndoorOutdoor;
+            payload.rehearsalDinnerVenueName = state.rehearsalDinnerVenueName;
+            payload.rehearsalDinnerVenueAddress1 = state.rehearsalDinnerVenueAddress1;
+            payload.rehearsalDinnerVenueAddress2 = state.rehearsalDinnerVenueAddress2;
+            payload.rehearsalDinnerVenueCountry = state.rehearsalDinnerVenueCountry;
+            payload.rehearsalDinnerVenueCity = state.rehearsalDinnerVenueCity;
+            payload.rehearsalDinnerVenueState = state.rehearsalDinnerVenueState;
+            payload.rehearsalDinnerVenueZip = state.rehearsalDinnerVenueZip;
+            payload.rehearsalDinnerVenueAsInsured = state.rehearsalDinnerVenueAsInsured;
           }
         }
 
