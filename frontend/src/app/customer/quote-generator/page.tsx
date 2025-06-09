@@ -154,13 +154,26 @@ export default function QuoteGenerator() {
 
         try {
           // 1. Call the new backend to create the quote
-          const res = await fetch(`${apiUrl}/quotes`, { // UPDATED PATH
+          const res = await fetch(`${apiUrl}/quotes`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              ...state,
-              // The backend now determines the step/status, so we don't send it
-              source: "CUSTOMER",
+              // Only send the fields needed for quote creation
+              residentState: state.residentState,
+              eventType: state.eventType,
+              maxGuests: state.maxGuests,
+              eventDate: state.eventDate,
+              coverageLevel: state.coverageLevel,
+              liabilityCoverage: state.liabilityCoverage,
+              liquorLiability: state.liquorLiability,
+              covidDisclosure: state.covidDisclosure,
+              specialActivities: state.specialActivities,
+              email: state.email,
+              totalPremium: state.totalPremium,
+              basePremium: state.basePremium,
+              liabilityPremium: state.liabilityPremium,
+              liquorLiabilityPremium: state.liquorLiabilityPremium,
+              source: "CUSTOMER"
             }),
           });
           const data = await res.json();
@@ -315,7 +328,7 @@ export default function QuoteGenerator() {
 
   return (
     <>
-      <div className="w-full mx-auto mb-10 text-center shadow-2xl border-0 bg-white/90 rounded-2xl p-8 sm:p-10 md:p-12">
+      <div className="w-full mx-auto mb-10 text-center text-black shadow-2xl border-0 bg-white/90 rounded-2xl p-8 sm:p-10 md:p-12">
         <div className="mb-8">
           <p className="text-3xl md:text-4xl font-extrabold text-blue-900 drop-shadow text-center">
             Get Your Wedding Insurance Quote
@@ -675,7 +688,7 @@ export default function QuoteGenerator() {
             variant="primary"
             size="lg"
             onClick={handleCalculateQuote}
-            className="transition-transform duration-150 hover:scale-105"
+            className="transition-transform cursor-pointer duration-150 hover:scale-105"
           >
             <DollarSign size={18} />
             Calculate Quote

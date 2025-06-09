@@ -6,7 +6,7 @@ import { Policy } from './policy.entity';
 import { Payment } from './payment.entity';
 import { StepStatus, QuoteSource } from './enums';
 
-@Entity('quotes')
+@Entity('QUOTES')
 @Index(['user'])
 @Index(['status'])
 @Index(['source'])
@@ -48,10 +48,10 @@ export class Quote {
   @Column({ type: 'float', nullable: true })
   liquorLiabilityPremium!: number;
 
-  @Column({ type: 'enum', enum: StepStatus, default: StepStatus.STEP1 })
+  @Column({ type: 'varchar', length: 20, default: StepStatus.STEP1 })
   status!: StepStatus;
 
-  @Column({ type: 'enum', enum: QuoteSource, default: QuoteSource.CUSTOMER })
+  @Column({ type: 'varchar', length: 20, default: QuoteSource.CUSTOMER })
   source!: QuoteSource;
 
   @Column({ default: false })

@@ -1,7 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { Policy } from './policy.entity';
 
-@Entity('policy_versions')
+@Entity('POLICY_VERSIONS')
 @Index(['policyId'])
 export class PolicyVersion {
   @PrimaryGeneratedColumn()

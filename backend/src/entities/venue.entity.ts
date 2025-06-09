@@ -1,7 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn } from 'typeorm';
 import { Event } from './event.entity';
 
-@Entity('venues')
+@Entity('VENUES')
 export class Venue {
   @PrimaryGeneratedColumn()
   id!: number;
@@ -36,7 +36,7 @@ export class Venue {
   @Column({ nullable: true })
   indoorOutdoor!: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'number', default: 0 })
   venueAsInsured!: boolean;
 
 
@@ -70,7 +70,7 @@ export class Venue {
     @Column({ type: 'varchar', length: 255, nullable: true })
     receptionVenueZip!: string;
   
-    @Column({ type: 'boolean', default: false, nullable: true })
+    @Column({ type: 'number', default: 0, nullable: true })
     receptionVenueAsInsured!: boolean;
 
     // Brunch Venue
@@ -101,7 +101,7 @@ export class Venue {
     @Column({ type: 'varchar', length: 255, nullable: true })
     brunchVenueZip!: string;
   
-    @Column({ type: 'boolean', default: false, nullable: true })
+    @Column({ type: 'number', default: 0, nullable: true })
     brunchVenueAsInsured!: boolean;
 
     // Rehearsal Venue
@@ -132,7 +132,7 @@ export class Venue {
     @Column({ type: 'varchar', length: 255, nullable: true })
     rehearsalVenueZip!: string;
   
-    @Column({ type: 'boolean', default: false, nullable: true })
+    @Column({ type: 'number', default: 0, nullable: true })
     rehearsalVenueAsInsured!: boolean;
 
     // Rehearsal Dinner Venue
@@ -157,7 +157,7 @@ export class Venue {
     @Column({ type: 'varchar', length: 255, nullable: true })
     rehearsalDinnerVenueZip!: string;
   
-    @Column({ type: 'boolean', default: false, nullable: true })
+    @Column({ type: 'number', default: 0, nullable: true })
     rehearsalDinnerVenueAsInsured!: boolean;
 
     @Column({ type: 'varchar', length: 255, nullable: true })

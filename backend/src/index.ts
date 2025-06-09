@@ -9,40 +9,49 @@ import policyListRoutes from './routes/v1/policy-list.routes';
 import adminRoutes from './routes/v1/admin.routes';
 import paymentRoutes from './routes/v1/payment.routes';
 
-const main = async () => {
-  // Initialize TypeORM connection
-  try {
-    await AppDataSource.initialize();
+const app = express();
+
+// CORS configuration
+app.use(cors({
+  origin: ['http://localhost:3000', 'http://localhost:8000'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
+
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Health check route
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
+
+// Root route
+app.get('/', (req, res) => {
+  res.json({ message: 'Wedding Insurance API is running' });
+});
+
+// API routes
+app.use('/api/v1/quotes', quoteRoutes);
+app.use('/api/v1/email', emailRoutes);
+app.use('/api/v1/policies', policyRoutes);
+app.use('/api/v1/policy-list', policyListRoutes);
+app.use('/api/v1/admin', adminRoutes);
+app.use('/api/v1/payment', paymentRoutes);
+
+// Initialize database connection
+AppDataSource.initialize()
+  .then(() => {
     console.log("Data Source has been initialized!");
-  } catch (err) {
-    console.error("Error during Data Source initialization:", err);
-    return;
-  }
-
-  const app = express();
-
-  // --- Middlewares ---
-  // Enable CORS to allow requests from your frontend
-  app.use(cors({
-    origin: 'http://localhost:3000', // Your Next.js frontend URL
-    credentials: true,
-  }));
-  // Parse JSON bodies
-  app.use(express.json());
-
-  // --- Routes ---
-  app.get('/api/health', (_, res) => res.send('Server is healthy!'));
-  app.use('/api/v1/quotes', quoteRoutes); // We will add this next
-  app.use('/api/v1/email', emailRoutes);
-  app.use('/api/v1/policies', policyRoutes);
-  app.use('/api/v1/policy-list', policyListRoutes);
-  app.use('/api/v1/admin', adminRoutes);
-  app.use('/api/v1/payment', paymentRoutes);
-
-  const PORT = process.env.PORT || 8000;
-  app.listen(PORT, () => {
-    console.log(`Backend server running on http://localhost:${PORT}`);
+    
+    // Start server
+    const PORT = process.env.PORT || 8000;
+    app.listen(PORT, () => {
+      console.log(`Backend server running on http://localhost:${PORT}`);
+    });
+  })
+  .catch((error) => {
+    console.error("Error during Data Source initialization:", error);
   });
-};
-
-main().catch(console.error);

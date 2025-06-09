@@ -5,7 +5,7 @@ import { PolicyHolder } from './policy-holder.entity';
 import { Payment } from './payment.entity';
 import { PolicyVersion } from './policy-version.entity';
 
-@Entity('policies')
+@Entity('POLICIES')
 export class Policy {
   @PrimaryGeneratedColumn()
   id!: number;

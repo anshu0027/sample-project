@@ -3,7 +3,7 @@ import { Quote } from './quote.entity';
 import { Policy } from './policy.entity';
 import { PaymentStatus } from './enums';
 
-@Entity('payments')
+@Entity('PAYMENTS')
 @Index(['status'])
 @Index(['quoteId'])
 export class Payment {
@@ -13,7 +13,7 @@ export class Payment {
   @Column({ type: 'float' })
   amount!: number;
 
-  @Column({ type: 'enum', enum: PaymentStatus, default: PaymentStatus.PENDING })
+  @Column({ type: 'varchar', length: 20, default: PaymentStatus.PENDING })
   status!: PaymentStatus;
 
   @Column({ nullable: true })

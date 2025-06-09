@@ -3,7 +3,7 @@ import { Quote } from './quote.entity';
 import { Policy } from './policy.entity';
 import { Venue } from './venue.entity';
 
-@Entity('events')
+@Entity('EVENTS')
 export class Event {
   @PrimaryGeneratedColumn()
   id!: number;

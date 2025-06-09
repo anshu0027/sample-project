@@ -8,6 +8,9 @@
     "skipLibCheck": true,
     "outDir": "./dist",
     "rootDir": "./src",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
     "emitDecoratorMetadata": true, // Required for TypeORM
     "experimentalDecorators": true // Required for TypeORM
   },

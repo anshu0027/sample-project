@@ -96,13 +96,21 @@ router.get('/', async (req: Request, res: Response) => {
 // --- POST /api/v1/quotes ---
 // Replace the existing POST handler in my-backend/src/routes/v1/quote.routes.ts
 router.post('/', async (req: Request, res: Response) => {
+
+  console.log("Request Body:", req.body);
   try {
     const fields = req.body;
+    console.log("Fields:", fields);
     const { source = 'CUSTOMER', paymentStatus } = fields;
+    console.log("Source:", source);
+    console.log("Payment Status:", paymentStatus);
 
     const referer = req.get('referer');
+    console.log("Referer:", referer);
     const isAdminRequest = source === 'ADMIN' || (referer && referer.includes('/admin/'));
+    console.log("Is Admin Request:", isAdminRequest);
     const effectiveSource = isAdminRequest ? QuoteSource.ADMIN : QuoteSource.CUSTOMER;
+    console.log("Effective Source:", effectiveSource);
 
     if (!fields.email) {
       res.status(400).json({ error: 'Missing user email.' });
@@ -112,12 +120,10 @@ router.post('/', async (req: Request, res: Response) => {
     // --- User Handling ---
     const userRepository = AppDataSource.getRepository(User);
     let user = await userRepository.findOneBy({ email: fields.email });
+    console.log("User:", user);
     if (!user) {
       user = userRepository.create({
         email: fields.email,
-        firstName: fields.firstName || '',
-        lastName: fields.lastName || '',
-        phone: fields.phone || '',
       });
       await userRepository.save(user);
     }
@@ -138,6 +144,7 @@ router.post('/', async (req: Request, res: Response) => {
     };
 
     const quoteRepository = AppDataSource.getRepository(Quote);
+    console.log("Quote Repository:", quoteRepository);
     const newQuote = quoteRepository.create({
       ...quoteData,
       quoteNumber: generateQuoteNumber(),
@@ -146,7 +153,7 @@ router.post('/', async (req: Request, res: Response) => {
       isCustomerGenerated: effectiveSource === QuoteSource.CUSTOMER,
       user: user,
     });
-
+    console.log("New Quote:", newQuote);
     if (fields.eventType && fields.eventDate && fields.maxGuests) {
       const eventData = {
         eventType: fields.eventType,
@@ -208,9 +215,12 @@ router.post('/', async (req: Request, res: Response) => {
           rehearsalDinnerVenueAsInsured: fields.rehearsalDinnerVenueAsInsured,
         };
         const venueRepository = AppDataSource.getRepository(Venue);
+        console.log("Venue Repository:", venueRepository);
         newEvent.venue = venueRepository.create(venueData);
+        console.log("New Event:", newEvent);
       }
       newQuote.event = newEvent;
+      console.log("New Quote:", newQuote);
     }
 
     if (fields.firstName && fields.lastName) {
@@ -230,14 +240,17 @@ router.post('/', async (req: Request, res: Response) => {
       };
       const policyHolderRepository = AppDataSource.getRepository(PolicyHolder);
       newQuote.policyHolder = policyHolderRepository.create(policyHolderData);
+      console.log("New Policy Holder:", newQuote.policyHolder);
     }
 
+    console.log("New Quote:", newQuote);
     const savedQuote = await quoteRepository.save(newQuote);
+    console.log("Saved Quote:", savedQuote);
 
     // --- START: AUTO-CONVERSION LOGIC ---
     if (savedQuote.source === QuoteSource.CUSTOMER && paymentStatus === 'SUCCESS') {
       const policy = await createPolicyFromQuote(savedQuote.id);
-
+      console.log("Policy:", policy);
       if (policy && fields.totalPremium) {
         const paymentRepository = AppDataSource.getRepository(Payment);
         const newPayment = paymentRepository.create({
@@ -250,7 +263,7 @@ router.post('/', async (req: Request, res: Response) => {
         });
         await paymentRepository.save(newPayment);
       }
-
+      console.log("New Payment:", Payment);
       res.status(201).json({
         quoteNumber: savedQuote.quoteNumber,
         quote: savedQuote,
@@ -269,8 +282,12 @@ router.post('/', async (req: Request, res: Response) => {
     });
 
   } catch (error) {
+
+    console.error('Caught error:', error);
     console.error('POST /api/v1/quotes error:', error);
     const message = error instanceof Error ? error.message : 'Server error';
+    console.error('POST /api/v1/quotes error:', error);
+    console.error('Error response sent to client:', message);
     // @ts-ignore - Check for Oracle's unique constraint error code
     if (error.message && error.message.includes('ORA-00001')) {
       res.status(409).json({ error: 'A record with this unique value already exists. Please try again.' });

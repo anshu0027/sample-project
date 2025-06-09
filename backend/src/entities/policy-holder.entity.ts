@@ -2,7 +2,7 @@ import { Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn } from 'ty
 import { Quote } from './quote.entity';
 import { Policy } from './policy.entity';
 
-@Entity('policy_holders')
+@Entity('POLICY_HOLDERS')
 export class PolicyHolder {
   @PrimaryGeneratedColumn()
   id!: number;
