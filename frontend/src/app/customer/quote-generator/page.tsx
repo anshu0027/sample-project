@@ -30,6 +30,63 @@ import {
 } from "@/utils/validators";
 import { toast } from "@/hooks/use-toast";
 
+// Add type definitions
+type GuestRange = typeof GUEST_RANGES[number]['value'];
+type CoverageLevel = number;
+type LiabilityOption = string;
+
+// Add premium calculation functions
+const calculateBasePremium = (level: CoverageLevel | null): number => {
+  if (!level) return 0;
+  const premiumMap: Record<CoverageLevel, number> = {
+    1: 160,  // $7,500 coverage
+    2: 200,
+    3: 250,
+    4: 300,
+    5: 355,  // $50,000 coverage
+    6: 450,
+    7: 600,
+    8: 750,
+    9: 900,
+    10: 1025, // $175,000 coverage
+  };
+  return premiumMap[level] || 0;
+};
+
+const calculateLiabilityPremium = (option: LiabilityOption): number => {
+  switch (option) {
+    case 'option1': // $1M liability with $25K property damage
+      return 195;
+    case 'option2': // $1M liability with $250K property damage
+      return 210;
+    case 'option3': // $1M liability with $1M property damage
+      return 240;
+    case 'option4': // $1M/$2M Aggregate Liability with $25K PD
+      return 240;
+    case 'option5': // $1M/$2M Aggregate Liability with $250K PD
+      return 255;
+    case 'option6': // $1M/$2M Aggregate Liability with $1M PD
+      return 265;
+    default:
+      return 0;
+  }
+};
+
+const calculateLiquorLiabilityPremium = (hasLiquorLiability: boolean, guestRange: GuestRange): number => {
+  if (!hasLiquorLiability) return 0;
+  const premiumMap: Record<GuestRange, number> = {
+    '1-50': 65,
+    '51-100': 65,
+    '101-150': 85,
+    '151-200': 85,
+    '201-250': 100,
+    '251-300': 100,
+    '301-350': 150,
+    '351-400': 150
+  };
+  return premiumMap[guestRange] || 0;
+};
+
 export default function QuoteGenerator() {
   const router = useRouter();
   const { state, dispatch } = useQuote();
@@ -42,8 +99,6 @@ export default function QuoteGenerator() {
   const [pageLoading, setPageLoading] = useState(true);
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-
-
 
   // Clear quoteNumber on mount to always start a new quote
   useEffect(() => {
@@ -147,78 +202,91 @@ export default function QuoteGenerator() {
   // ==================================================================
   const handleCalculateQuote = async () => {
     if (validateForm()) {
-      dispatch({ type: "CALCULATE_QUOTE" });
+      // Calculate premiums first
+      const basePremium = calculateBasePremium(state.coverageLevel);
+      const liabilityPremium = calculateLiabilityPremium(state.liabilityCoverage);
+      const liquorLiabilityPremium = calculateLiquorLiabilityPremium(
+        state.liquorLiability,
+        state.maxGuests as GuestRange
+      );
+      const totalPremium = basePremium + liabilityPremium + liquorLiabilityPremium;
 
-      setTimeout(async () => {
-        // Define the new API URL from environment variables
-
-        try {
-          // 1. Call the new backend to create the quote
-          const res = await fetch(`${apiUrl}/quotes`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              // Only send the fields needed for quote creation
-              residentState: state.residentState,
-              eventType: state.eventType,
-              maxGuests: state.maxGuests,
-              eventDate: state.eventDate,
-              coverageLevel: state.coverageLevel,
-              liabilityCoverage: state.liabilityCoverage,
-              liquorLiability: state.liquorLiability,
-              covidDisclosure: state.covidDisclosure,
-              specialActivities: state.specialActivities,
-              email: state.email,
-              totalPremium: state.totalPremium,
-              basePremium: state.basePremium,
-              liabilityPremium: state.liabilityPremium,
-              liquorLiabilityPremium: state.liquorLiabilityPremium,
-              source: "CUSTOMER"
-            }),
-          });
-          const data = await res.json();
-
-          // The backend now returns the full quote object in a 'quote' property
-          const newQuote = data.quote;
-
-          if (res.ok && newQuote && newQuote.quoteNumber) {
-            localStorage.setItem("quoteNumber", newQuote.quoteNumber);
-            dispatch({
-              type: "UPDATE_FIELD",
-              field: "quoteNumber",
-              value: newQuote.quoteNumber,
-            });
-            setShowQuoteResults(true);
-
-            // 2. Call the new backend to send the email
-            try {
-              const emailRes = await fetch(`${apiUrl}/email/send`, { // UPDATED PATH
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  to: state.email,
-                  type: "quote",
-                  // The backend email service now takes the full quote object
-                  data: newQuote,
-                }),
-              });
-
-              if (emailRes.ok) {
-                toast.success("Quotation email sent!");
-              } else {
-                const emailData = await emailRes.json();
-                toast.error(`Failed to send email: ${emailData.error || "Unknown error"}`);
-              }
-            } catch (err) {
-              toast.error("Failed to send email.");
-            }
-          } else {
-            toast.error(`Failed to create quote: ${data.error || "Unknown error"}`);
-          }
-        } catch (err) {
-          toast.error("Failed to create quote.");
+      // Update state with calculated values
+      dispatch({ 
+        type: "CALCULATE_QUOTE",
+        payload: {
+          basePremium,
+          liabilityPremium,
+          liquorLiabilityPremium,
+          totalPremium
         }
-      }, 0);
+      });
+
+      try {
+        // 1. Call the new backend to create the quote
+        const res = await fetch(`${apiUrl}/quotes`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            residentState: state.residentState,
+            eventType: state.eventType,
+            maxGuests: state.maxGuests,
+            eventDate: state.eventDate,
+            coverageLevel: state.coverageLevel,
+            liabilityCoverage: state.liabilityCoverage,
+            liquorLiability: state.liquorLiability,
+            covidDisclosure: state.covidDisclosure,
+            specialActivities: state.specialActivities,
+            email: state.email,
+            totalPremium: totalPremium, // Use the calculated value directly
+            basePremium: basePremium,
+            liabilityPremium: liabilityPremium,
+            liquorLiabilityPremium: liquorLiabilityPremium,
+            source: "CUSTOMER"
+          }),
+        });
+        const data = await res.json();
+
+        // The backend now returns the full quote object in a 'quote' property
+        const newQuote = data.quote;
+
+        if (res.ok && newQuote && newQuote.quoteNumber) {
+          localStorage.setItem("quoteNumber", newQuote.quoteNumber);
+          dispatch({
+            type: "UPDATE_FIELD",
+            field: "quoteNumber",
+            value: newQuote.quoteNumber,
+          });
+          setShowQuoteResults(true);
+
+          // 2. Call the new backend to send the email
+          try {
+            const emailRes = await fetch(`${apiUrl}/email/send`, { // UPDATED PATH
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                to: state.email,
+                type: "quote",
+                // The backend email service now takes the full quote object
+                data: newQuote,
+              }),
+            });
+
+            if (emailRes.ok) {
+              toast.success("Quotation email sent!");
+            } else {
+              const emailData = await emailRes.json();
+              toast.error(`Failed to send email: ${emailData.error || "Unknown error"}`);
+            }
+          } catch (err) {
+            toast.error("Failed to send email.");
+          }
+        } else {
+          toast.error(`Failed to create quote: ${data.error || "Unknown error"}`);
+        }
+      } catch (err) {
+        toast.error("Failed to create quote.");
+      }
     } else {
       Object.entries(errors).forEach(([, msg]) => toast.error(msg));
       const firstErrorField = Object.keys(errors)[0];
@@ -278,44 +346,44 @@ export default function QuoteGenerator() {
 
   const QuoteGeneratorSkeleton = () => (
     <div className="animate-pulse">
-      <div className="w-full mx-auto mb-10 text-center shadow-2xl bg-gray-100/90 rounded-2xl p-8 sm:p-10 md:p-12">
-        <div className="mb-8">
-          <div className="h-10 bg-gray-300 rounded w-3/4 mx-auto mb-3"></div>
-          <div className="h-6 bg-gray-300 rounded w-1/2 mx-auto"></div>
+      <div className="w-full mx-auto mb-10 text-center shadow-2xl bg-gray-100/90 rounded-2xl p-4 sm:p-6 md:p-8 lg:p-10">
+        <div className="mb-6 sm:mb-8">
+          <div className="h-8 sm:h-10 bg-gray-300 rounded w-3/4 mx-auto mb-2 sm:mb-3"></div>
+          <div className="h-5 sm:h-6 bg-gray-300 rounded w-1/2 mx-auto"></div>
         </div>
-        <div className="grid lg:grid-cols-2 md:grid-cols-2 sm:grid-cols-1 gap-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
           {[...Array(7)].map((_, i) => (
-            <div key={i} className="mb-6 flex flex-col items-center">
-              <div className="h-5 bg-gray-300 rounded w-1/2 mb-2"></div>
-              <div className="h-10 bg-gray-200 rounded w-[325px]"></div>
+            <div key={i} className="mb-4 sm:mb-6 flex flex-col items-center">
+              <div className="h-4 sm:h-5 bg-gray-300 rounded w-1/2 mb-2"></div>
+              <div className="h-8 sm:h-10 bg-gray-200 rounded w-full sm:w-[325px]"></div>
             </div>
           ))}
         </div>
-        <div className="w-full bg-yellow-100 border-l-4 border-yellow-300 rounded-lg p-4 mt-8 flex items-start gap-3">
-          <div className="h-6 w-6 bg-yellow-200 rounded-full mt-1"></div>
+        <div className="w-full bg-yellow-100 border-l-4 border-yellow-300 rounded-lg p-3 sm:p-4 mt-6 sm:mt-8 flex items-start gap-2 sm:gap-3">
+          <div className="h-5 sm:h-6 w-5 sm:w-6 bg-yellow-200 rounded-full mt-1"></div>
           <div>
-            <div className="h-5 bg-yellow-200 rounded w-1/3 mb-2"></div>
-            <div className="h-10 bg-yellow-200 rounded w-full"></div>
+            <div className="h-4 sm:h-5 bg-yellow-200 rounded w-1/3 mb-2"></div>
+            <div className="h-8 sm:h-10 bg-yellow-200 rounded w-full"></div>
           </div>
         </div>
-        <div className="flex justify-center mt-10">
-          <div className="h-12 bg-blue-300 rounded-md w-48"></div>
+        <div className="flex justify-center mt-6 sm:mt-8">
+          <div className="h-10 sm:h-12 bg-blue-300 rounded-md w-full sm:w-48"></div>
         </div>
       </div>
-      <div className="mb-8 border-0 bg-gray-100 shadow-lg rounded-lg p-6">
-        <div className="h-7 bg-gray-300 rounded w-1/2 mb-2"></div>
-        <div className="h-5 bg-gray-300 rounded w-1/3 mb-6"></div>
-        <div className="space-y-6">
-          <div className="bg-gray-200 rounded-xl p-6">
-            <div className="h-6 bg-gray-300 rounded w-1/3 mx-auto mb-2"></div>
-            <div className="h-10 bg-gray-300 rounded w-1/2 mx-auto mb-4"></div>
-            <div className="h-4 bg-gray-300 rounded w-1/4 mb-2"></div>
-            <div className="h-4 bg-gray-300 rounded w-2/5 mb-1"></div>
-            <div className="h-4 bg-gray-300 rounded w-2/5"></div>
+      <div className="mb-6 sm:mb-8 border-0 bg-gray-100 shadow-lg rounded-lg p-4 sm:p-6">
+        <div className="h-6 sm:h-7 bg-gray-300 rounded w-1/2 mb-2"></div>
+        <div className="h-4 sm:h-5 bg-gray-300 rounded w-1/3 mb-4 sm:mb-6"></div>
+        <div className="space-y-4 sm:space-y-6">
+          <div className="bg-gray-200 rounded-xl p-4 sm:p-6">
+            <div className="h-5 sm:h-6 bg-gray-300 rounded w-1/3 mx-auto mb-2"></div>
+            <div className="h-8 sm:h-10 bg-gray-300 rounded w-1/2 mx-auto mb-3 sm:mb-4"></div>
+            <div className="h-3 sm:h-4 bg-gray-300 rounded w-1/4 mb-2"></div>
+            <div className="h-3 sm:h-4 bg-gray-300 rounded w-2/5 mb-1"></div>
+            <div className="h-3 sm:h-4 bg-gray-300 rounded w-2/5"></div>
           </div>
         </div>
-        <div className="flex justify-end mt-6">
-          <div className="h-12 bg-blue-300 rounded-md w-48"></div>
+        <div className="flex justify-end mt-4 sm:mt-6">
+          <div className="h-10 sm:h-12 bg-blue-300 rounded-md w-full sm:w-48"></div>
         </div>
       </div>
     </div>
@@ -328,18 +396,18 @@ export default function QuoteGenerator() {
 
   return (
     <>
-      <div className="w-full mx-auto mb-10 text-center text-black shadow-2xl border-0 bg-white/90 rounded-2xl p-8 sm:p-10 md:p-12">
-        <div className="mb-8">
-          <p className="text-3xl md:text-4xl font-extrabold text-blue-900 drop-shadow text-center">
+      <div className="w-full mx-auto mb-6 sm:mb-10 text-center text-black shadow-2xl border-0 bg-white/90 rounded-2xl p-4 sm:p-6 md:p-8 lg:p-10">
+        <div className="mb-6 sm:mb-8">
+          <p className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-blue-900 drop-shadow text-center">
             Get Your Wedding Insurance Quote
           </p>
-          <p className="text-lg md:text-xl text-blue-700 font-medium text-center">
+          <p className="text-base sm:text-lg md:text-xl text-blue-700 font-medium text-center mt-2">
             Tell us about your event to receive an instant quote
           </p>
         </div>
 
         {/* Form */}
-        <div className="grid lg:grid-cols-2 md:grid-cols-2 sm:grid-cols-1 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
           {/* Policy Holder's Resident State */}
           <div className="flex flex-col">
             <label
@@ -455,7 +523,7 @@ export default function QuoteGenerator() {
           </div>
 
           {/* Email Address */}
-          <div className="flex flex-col col-span-2 gap-6">
+          <div className="flex flex-col col-span-1 sm:col-span-2 gap-4 sm:gap-6">
             <div className="flex flex-col">
               <label
                 htmlFor="email"
@@ -523,10 +591,10 @@ export default function QuoteGenerator() {
               )}
               {state.coverageLevel && COVERAGE_DETAILS[state.coverageLevel.toString()] && (
                 <div className="mt-4 w-full bg-blue-50 rounded-xl p-4 border border-blue-100">
-                  <h4 className="text-lg font-bold text-left text-blue-600 mb-2">Coverage Details:</h4>
+                  <h4 className="text-base sm:text-lg font-bold text-left text-blue-600 mb-2">Coverage Details:</h4>
                   <div className="space-y-2">
                     {COVERAGE_DETAILS[state.coverageLevel.toString()].map((detail, index) => (
-                      <div key={index} className="flex justify-between text-sm">
+                      <div key={index} className="flex justify-between text-xs sm:text-sm">
                         <span className="text-gray-700">{detail.name}:</span>
                         <span className="font-medium text-blue-700">{detail.limit}</span>
                       </div>
@@ -597,7 +665,7 @@ export default function QuoteGenerator() {
             <Checkbox
               id="liquorLiability"
               label={
-                <span className="font-medium text-left">
+                <span className="font-medium text-left text-sm sm:text-base">
                   Yes, add Host Liquor Liability coverage{" "}
                   {!isLiquorLiabilityDisabled && state.maxGuests
                     ? `(+$${LIABILITY_OPTIONS.find(
@@ -615,7 +683,7 @@ export default function QuoteGenerator() {
               }
               disabled={isLiquorLiabilityDisabled}
               description={
-                <span className="break-words whitespace-normal text-left">
+                <span className="break-words whitespace-normal text-left text-xs sm:text-sm">
                   {isLiquorLiabilityDisabled
                     ? "You must select Liability Coverage to add Host Liquor Liability"
                     : "Provides coverage for alcohol-related incidents if alcohol is served at your event"}
@@ -635,7 +703,7 @@ export default function QuoteGenerator() {
             <Checkbox
               id="specialActivities"
               label={
-                <span className="font-medium">
+                <span className="font-medium text-sm sm:text-base">
                   My event will include special activities or features
                 </span>
               }
@@ -647,26 +715,26 @@ export default function QuoteGenerator() {
         </div>
 
         {/* Important Disclosures */}
-        <div className="w-full bg-yellow-50 border-l-4 border-yellow-400 rounded-lg p-4 mt-8 flex items-start gap-3">
+        <div className="w-full bg-yellow-50 border-l-4 border-yellow-400 rounded-lg p-3 sm:p-4 mt-6 sm:mt-8 flex items-start gap-2 sm:gap-3">
           <AlertCircle size={20} className="text-yellow-500 mt-1" />
           <div>
-            <h3 className="font-semibold text-yellow-800 mb-1">
+            <h3 className="font-semibold text-yellow-800 mb-1 text-sm sm:text-base">
               Important Disclosures
             </h3>
             <FormField
               label={
-                <span className="font-medium text-gray-800">
+                <span className="font-medium text-gray-800 text-sm sm:text-base">
                   COVID-19 Exclusion Acknowledgment
                 </span>
               }
               htmlFor="covidDisclosure"
               error={errors.covidDisclosure}
-              className="mt-3"
+              className="mt-2 sm:mt-3"
             >
               <Checkbox
                 id="covidDisclosure"
                 label={
-                  <span className="font-medium">
+                  <span className="font-medium text-xs sm:text-sm">
                     I understand that cancellations or impacts due to COVID-19,
                     pandemics, or communicable diseases are not covered by this
                     policy
@@ -683,12 +751,12 @@ export default function QuoteGenerator() {
         </div>
 
         {/* Calculate Quote Button */}
-        <div className="flex justify-center mt-10">
+        <div className="flex justify-center mt-6 sm:mt-8">
           <Button
             variant="primary"
             size="lg"
             onClick={handleCalculateQuote}
-            className="transition-transform cursor-pointer duration-150 hover:scale-105"
+            className="w-full sm:w-auto transition-transform cursor-pointer duration-150 hover:scale-105"
           >
             <DollarSign size={18} />
             Calculate Quote
@@ -700,17 +768,17 @@ export default function QuoteGenerator() {
       {showQuoteResults && (
         <Card
           title={
-            <span className="text-xl font-bold text-blue-800">
+            <span className="text-lg sm:text-xl font-bold text-blue-800">
               Your Insurance Quote
             </span>
           }
           subtitle={
-            <span className="text-base text-gray-600">
+            <span className="text-sm sm:text-base text-gray-600">
               Quote #{state.quoteNumber || "PENDING"}
             </span>
           }
           icon={<DollarSign size={24} className="text-blue-600" />}
-          className="mb-8 border-0 bg-white shadow-lg"
+          className="mb-6 sm:mb-8 border-0 bg-white shadow-lg"
           footer={
             <div className="flex justify-end">
               <Button

@@ -200,6 +200,7 @@ export default function EventInformation() {
       try {
         // The payload now only needs the fields being updated
         const payload: Partial<QuoteState> = {
+          eventType: state.eventType,
           honoree1FirstName: state.honoree1FirstName,
           honoree1LastName: state.honoree1LastName,
           honoree2FirstName: state.honoree2FirstName,
@@ -929,13 +930,6 @@ export default function EventInformation() {
             {renderVenueSection('Rehearsal Dinner Venue', 'rehearsalDinner', state, errors)}
           </>
         )}
-
-
-
-
-
-
-
 
         <div className="flex flex-col sm:flex-row justify-between items-center mt-10 gap-4 w-full">
           <Button

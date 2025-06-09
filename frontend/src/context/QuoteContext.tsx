@@ -215,8 +215,8 @@ const initialState: QuoteState = {
 
 type QuoteAction =
   | { type: 'UPDATE_FIELD'; field: keyof QuoteState; value: any }
-  | { type: 'CALCULATE_QUOTE' }
-  | { type: 'COMPLETE_STEP'; step: 1 | 2 | 3 }
+  | { type: 'CALCULATE_QUOTE'; payload?: { basePremium: number; liabilityPremium: number; liquorLiabilityPremium: number; totalPremium: number } }
+  | { type: 'COMPLETE_STEP'; step: number }
   | { type: 'RESET_FORM' }
   | { type: 'SET_ENTIRE_QUOTE_STATE'; payload: Partial<QuoteState> };
 
@@ -229,21 +229,15 @@ const quoteReducer = (state: QuoteState, action: QuoteAction): QuoteState => {
       };
 
     case 'CALCULATE_QUOTE':
-      const basePremium = calculateBasePremium(state.coverageLevel);
-      const liabilityPremium = calculateLiabilityPremium(state.liabilityCoverage); // No longer needs guest range
-      const liquorLiabilityPremium = calculateLiquorLiabilityPremium(
-        state.liquorLiability,
-        state.maxGuests as GuestRange
-      );
       // Generate a unique quote number
       const quoteNumber = getNextQuoteNumber();
       return {
         ...state,
         quoteNumber,
-        basePremium,
-        liabilityPremium,
-        liquorLiabilityPremium,
-        totalPremium: basePremium + liabilityPremium + liquorLiabilityPremium
+        basePremium: action.payload?.basePremium || 0,
+        liabilityPremium: action.payload?.liabilityPremium || 0,
+        liquorLiabilityPremium: action.payload?.liquorLiabilityPremium || 0,
+        totalPremium: action.payload?.totalPremium || 0
       };
 
     case 'COMPLETE_STEP':

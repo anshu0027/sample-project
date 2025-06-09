@@ -14,14 +14,14 @@ import { PolicyVersion } from './entities/policy-version.entity';
 
 dotenv.config();
 
-console.log("User entity loaded", User);
-console.log("Quote entity loaded", Quote);
-console.log("Event entity loaded", Event);
-console.log("Venue entity loaded", Venue);
-console.log("PolicyHolder entity loaded", PolicyHolder);
-console.log("Policy entity loaded", Policy);
-console.log("Payment entity loaded", Payment);
-console.log("PolicyVersion entity loaded", PolicyVersion);
+// console.log("User entity loaded", User);
+// console.log("Quote entity loaded", Quote);
+// console.log("Event entity loaded", Event);
+// console.log("Venue entity loaded", Venue);
+// console.log("PolicyHolder entity loaded", PolicyHolder);
+// console.log("Policy entity loaded", Policy);
+// console.log("Payment entity loaded", Payment);
+// console.log("PolicyVersion entity loaded", PolicyVersion);
 
 export const AppDataSource = new DataSource({
   type: 'oracle',
@@ -44,5 +44,5 @@ export const AppDataSource = new DataSource({
   ],
   synchronize: false, // Enable synchronize
   dropSchema: false, // Drop existing tables before creating new ones
-  logging: ['error', 'query', 'info', 'log'], // Set to true to see generated SQL queries
+  logging: ['error', 'info', 'log'], // Set to true to see generated SQL queries ===== we can also add 'query' to see the queries
 });

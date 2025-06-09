@@ -44,38 +44,68 @@ export default function Payment() {
       }
       
       // 1. Get the latest quote details from the new backend
-      const quoteRes = await fetch(`${apiUrl}/quotes?quoteNumber=${quoteNumber}`); // UPDATED PATH
+      const quoteRes = await fetch(`${apiUrl}/quotes?quoteNumber=${quoteNumber}`);
       const quoteData = await quoteRes.json();
       
       if (!quoteRes.ok || !quoteData.quote) {
         throw new Error(quoteData.error || "Failed to fetch quote details.");
       }
+
+      console.log('Quote data:', quoteData);
+      
+      // Extract the quote from the response
+      const quote = quoteData.quote;
+      if (!quote || !quote.id) {
+        throw new Error("Invalid quote data received");
+      }
+
+      // Get the total premium from the quote
+      const totalPremium = quote.TOTALPREMIUM || quote.totalPremium;
+      if (!totalPremium || totalPremium <= 0) {
+        throw new Error("Invalid total premium amount. Please contact support.");
+      }
+      console.log('Total premium:', totalPremium);
       
       // 2. Create the payment record via the new backend
-      const paymentRes = await fetch(`${apiUrl}/payment`, { // UPDATED PATH
+      const paymentRes = await fetch(`${apiUrl}/payment`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          amount: quoteData.quote.totalPremium,
-          quoteId: quoteData.quote.id,
+          amount: totalPremium,
+          quoteId: quote.id,
           method: selected,
-          status: "SUCCESS"
+          status: "SUCCESS",
+          reference: `PAY-${Date.now()}`
         })
       });
   
       if (!paymentRes.ok) {
         const paymentErrorData = await paymentRes.json();
+        console.error('Payment error response:', paymentErrorData);
         throw new Error(paymentErrorData.error || "Payment failed.");
       }
+
+      const paymentData = await paymentRes.json();
+      console.log('Payment successful:', paymentData);
   
-      // 3. Redirect to the review page with success parameters
+      // 3. Show success message
+      toast.success("Payment successful!");
+      
+      // 4. Clear any stored data
+      localStorage.removeItem("quoteNumber");
       if (isRetrieved) {
         localStorage.removeItem("retrievedQuote");
-        router.replace(`/customer/review?payment=success&method=${selected}&retrieved=true`);
-      } else {
-        router.replace(`/customer/review?payment=success&method=${selected}`);
       }
+      
+      // 5. Redirect to the review page with success parameters
+      const redirectUrl = isRetrieved 
+        ? `/customer/review?payment=success&method=${selected}&retrieved=true`
+        : `/customer/review?payment=success&method=${selected}`;
+      
+      console.log('Redirecting to:', redirectUrl);
+      router.push(redirectUrl);
     } catch (error) {
+      console.error('Payment error:', error);
       const message = error instanceof Error ? error.message : "Payment failed. Please try again.";
       toast.error(message);
     } finally {

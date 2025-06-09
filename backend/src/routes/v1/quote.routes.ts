@@ -302,6 +302,8 @@ router.put('/:quoteNumber', async (req: Request, res: Response) => {
     const { quoteNumber } = req.params;
     const fields = req.body;
 
+    console.log('Updating quote:', quoteNumber, 'with fields:', fields);
+
     const quoteRepository = AppDataSource.getRepository(Quote);
     const quoteToUpdate = await quoteRepository.findOne({
       where: { quoteNumber },
@@ -313,6 +315,7 @@ router.put('/:quoteNumber', async (req: Request, res: Response) => {
       return;
     }
 
+    // Handle premium recalculation if needed
     const needsPremiumRecalculation =
       fields.coverageLevel !== undefined ||
       fields.liabilityCoverage !== undefined ||
@@ -333,75 +336,115 @@ router.put('/:quoteNumber', async (req: Request, res: Response) => {
       fields.totalPremium = fields.basePremium + fields.liabilityPremium + fields.liquorLiabilityPremium;
     }
 
-    // Merge updated fields into the quote object
-    quoteRepository.merge(quoteToUpdate, {
-      ...fields,
-      // Add the new venue fields if they exist in the request body
-      ...(fields.receptionVenueName !== undefined && { receptionVenueName: fields.receptionVenueName }),
-      ...(fields.receptionVenueAddress1 !== undefined && { receptionVenueAddress1: fields.receptionVenueAddress1 }),
-      ...(fields.receptionVenueAddress2 !== undefined && { receptionVenueAddress2: fields.receptionVenueAddress2 }),
-      ...(fields.receptionVenueCountry !== undefined && { receptionVenueCountry: fields.receptionVenueCountry }),
-      ...(fields.receptionVenueCity !== undefined && { receptionVenueCity: fields.receptionVenueCity }),
-      ...(fields.receptionVenueState !== undefined && { receptionVenueState: fields.receptionVenueState }),
-      ...(fields.receptionVenueZip !== undefined && { receptionVenueZip: fields.receptionVenueZip }),
-      ...(fields.receptionVenueAsInsured !== undefined && { receptionVenueAsInsured: fields.receptionVenueAsInsured }),
-      ...(fields.brunchVenueName !== undefined && { brunchVenueName: fields.brunchVenueName }),
-      ...(fields.brunchVenueAddress1 !== undefined && { brunchVenueAddress1: fields.brunchVenueAddress1 }),
-      ...(fields.brunchVenueAddress2 !== undefined && { brunchVenueAddress2: fields.brunchVenueAddress2 }),
-      ...(fields.brunchVenueCountry !== undefined && { brunchVenueCountry: fields.brunchVenueCountry }),
-      ...(fields.brunchVenueCity !== undefined && { brunchVenueCity: fields.brunchVenueCity }),
-      ...(fields.brunchVenueState !== undefined && { brunchVenueState: fields.brunchVenueState }),
-      ...(fields.brunchVenueZip !== undefined && { brunchVenueZip: fields.brunchVenueZip }),
-      ...(fields.brunchVenueAsInsured !== undefined && { brunchVenueAsInsured: fields.brunchVenueAsInsured }),
-      ...(fields.rehearsalVenueName !== undefined && { rehearsalVenueName: fields.rehearsalVenueName }),
-      ...(fields.rehearsalVenueAddress1 !== undefined && { rehearsalVenueAddress1: fields.rehearsalVenueAddress1 }),
-      ...(fields.rehearsalVenueAddress2 !== undefined && { rehearsalVenueAddress2: fields.rehearsalVenueAddress2 }),
-      ...(fields.rehearsalVenueCountry !== undefined && { rehearsalVenueCountry: fields.rehearsalVenueCountry }),
-      ...(fields.rehearsalVenueCity !== undefined && { rehearsalVenueCity: fields.rehearsalVenueCity }),
-      ...(fields.rehearsalVenueState !== undefined && { rehearsalVenueState: fields.rehearsalVenueState }),
-      ...(fields.rehearsalVenueZip !== undefined && { rehearsalVenueZip: fields.rehearsalVenueZip }),
-      ...(fields.rehearsalVenueAsInsured !== undefined && { rehearsalVenueAsInsured: fields.rehearsalVenueAsInsured }),
-      ...(fields.rehearsalDinnerVenueName !== undefined && { rehearsalDinnerVenueName: fields.rehearsalDinnerVenueName }),
-      ...(fields.rehearsalDinnerVenueAddress1 !== undefined && { rehearsalDinnerVenueAddress1: fields.rehearsalDinnerVenueAddress1 }),
-      ...(fields.rehearsalDinnerVenueAddress2 !== undefined && { rehearsalDinnerVenueAddress2: fields.rehearsalDinnerVenueAddress2 }),
-      ...(fields.rehearsalDinnerVenueCountry !== undefined && { rehearsalDinnerVenueCountry: fields.rehearsalDinnerVenueCountry }),
-      ...(fields.rehearsalDinnerVenueCity !== undefined && { rehearsalDinnerVenueCity: fields.rehearsalDinnerVenueCity }),
-      ...(fields.rehearsalDinnerVenueState !== undefined && { rehearsalDinnerVenueState: fields.rehearsalDinnerVenueState }),
-      ...(fields.rehearsalDinnerVenueZip !== undefined && { rehearsalDinnerVenueZip: fields.rehearsalDinnerVenueZip }),
-      ...(fields.rehearsalDinnerVenueAsInsured !== undefined && { rehearsalDinnerVenueAsInsured: fields.rehearsalDinnerVenueAsInsured }),
-    });
+    // Update quote fields
+    quoteRepository.merge(quoteToUpdate, fields);
 
+    // Handle event updates
     const eventRepository = AppDataSource.getRepository(Event);
-    if (fields.eventType || fields.eventDate || fields.maxGuests) {
-      if (!quoteToUpdate.event) {
-        quoteToUpdate.event = eventRepository.create();
+    if (fields.eventType || fields.eventDate || fields.maxGuests || fields.honoree1FirstName || fields.honoree1LastName || fields.honoree2FirstName || fields.honoree2LastName) {
+      let event = quoteToUpdate.event;
+      if (!event) {
+        event = eventRepository.create();
+        quoteToUpdate.event = event;
       }
-      eventRepository.merge(quoteToUpdate.event, fields);
-      if (fields.eventDate) quoteToUpdate.event.eventDate = new Date(fields.eventDate);
+      
+      // Ensure required fields are present
+      if (!fields.eventType) {
+        throw new Error('Event type is required');
+      }
+
+      const eventFields = {
+        eventType: fields.eventType,
+        eventDate: fields.eventDate ? new Date(fields.eventDate) : new Date(), // Default to current date if not provided
+        maxGuests: fields.maxGuests || 0, // Default to 0 if not provided
+        honoree1FirstName: fields.honoree1FirstName || '',
+        honoree1LastName: fields.honoree1LastName || '',
+        honoree2FirstName: fields.honoree2FirstName || '',
+        honoree2LastName: fields.honoree2LastName || '',
+        quoteId: quoteToUpdate.id
+      };
+      
+      console.log('Creating/updating event with fields:', eventFields);
+      eventRepository.merge(event, eventFields);
+      await eventRepository.save(event);
     }
 
+    // Handle venue updates
     const venueRepository = AppDataSource.getRepository(Venue);
-    if (quoteToUpdate.event && (fields.venueName || fields.venueAddress1)) {
-      if (!quoteToUpdate.event.venue) {
-        quoteToUpdate.event.venue = venueRepository.create();
+    if (quoteToUpdate.event && (fields.venueName || fields.venueAddress1 || fields.venueAddress2 || fields.venueCity || fields.venueState || fields.venueZip || fields.venueCountry)) {
+      let venue = quoteToUpdate.event.venue;
+      if (!venue) {
+        venue = venueRepository.create();
+        quoteToUpdate.event.venue = venue;
       }
-      venueRepository.merge(quoteToUpdate.event.venue, {
+      
+      // Ensure required fields are present
+      if (!fields.venueName || !fields.venueAddress1) {
+        throw new Error('Venue name and address are required');
+      }
+
+      const venueFields = {
         name: fields.venueName,
         address1: fields.venueAddress1,
-      });
+        address2: fields.venueAddress2 || '',
+        city: fields.venueCity || '',
+        state: fields.venueState || '',
+        zip: fields.venueZip || '',
+        country: fields.venueCountry || '',
+        eventId: quoteToUpdate.event.id
+      };
+      
+      console.log('Creating/updating venue with fields:', venueFields);
+      venueRepository.merge(venue, venueFields);
+      await venueRepository.save(venue);
     }
 
+    // Handle policy holder updates
     const policyHolderRepository = AppDataSource.getRepository(PolicyHolder);
-    if (fields.firstName || fields.lastName || fields.address) {
-      if (!quoteToUpdate.policyHolder) {
-        quoteToUpdate.policyHolder = policyHolderRepository.create();
+    if (fields.firstName || fields.lastName || fields.phone || fields.address || fields.city || fields.state || fields.zip || fields.country) {
+      let policyHolder = quoteToUpdate.policyHolder;
+      if (!policyHolder) {
+        policyHolder = policyHolderRepository.create();
+        quoteToUpdate.policyHolder = policyHolder;
       }
-      policyHolderRepository.merge(quoteToUpdate.policyHolder, fields);
+      
+      // Ensure required fields are present
+      if (!fields.firstName || !fields.lastName) {
+        throw new Error('First name and last name are required for policy holder');
+      }
+
+      const policyHolderFields = {
+        firstName: fields.firstName,
+        lastName: fields.lastName,
+        phone: fields.phone || '',
+        address: fields.address || '',
+        city: fields.city || '',
+        state: fields.state || '',
+        zip: fields.zip || '',
+        country: fields.country || '',
+        quoteId: quoteToUpdate.id
+      };
+      
+      console.log('Creating/updating policy holder with fields:', policyHolderFields);
+      policyHolderRepository.merge(policyHolder, policyHolderFields);
+      await policyHolderRepository.save(policyHolder);
     }
 
+    // Save the updated quote
     const updatedQuote = await quoteRepository.save(quoteToUpdate);
+    
+    // Fetch the complete quote with all relations
+    const completeQuote = await quoteRepository.findOne({
+      where: { id: updatedQuote.id },
+      relations: ['event', 'event.venue', 'policyHolder', 'user', 'payments'],
+    });
 
-    res.json({ message: 'Quote updated successfully', quote: updatedQuote });
+    console.log('Quote updated successfully:', completeQuote);
+
+    res.json({ 
+      message: 'Quote updated successfully', 
+      quote: completeQuote 
+    });
 
   } catch (error) {
     console.error('PUT /api/v1/quotes error:', error);
@@ -411,48 +454,64 @@ router.put('/:quoteNumber', async (req: Request, res: Response) => {
 
 // --- DELETE /api/v1/quotes/:quoteNumber ---
 router.delete('/:quoteNumber', async (req: Request, res: Response) => {
+  const queryRunner = AppDataSource.createQueryRunner();
+  await queryRunner.connect();
+  await queryRunner.startTransaction();
+
   try {
     const { quoteNumber } = req.params;
-    const quoteRepository = AppDataSource.getRepository(Quote);
+    const quoteRepository = queryRunner.manager.getRepository(Quote);
 
     const quote = await quoteRepository.findOne({
       where: { quoteNumber },
-      relations: ['event', 'event.venue', 'policyHolder', 'policy', 'policy.versions', 'Payment'],
+      relations: ['event', 'event.venue', 'policyHolder', 'policy', 'policy.versions', 'payments'],
     });
 
     if (!quote) {
+      await queryRunner.rollbackTransaction();
       res.status(404).json({ error: 'Quote not found' });
       return;
     }
 
-    const entityManager = AppDataSource.manager;
+    // Delete in correct order to handle foreign key constraints
+    if (quote.payments?.length) {
+      await queryRunner.manager.delete('payments', { quoteId: quote.id });
+    }
 
     if (quote.policy?.versions?.length) {
-      await entityManager.delete('policy_versions', { policyId: quote.policy.id });
+      await queryRunner.manager.delete('policy_versions', { policyId: quote.policy.id });
     }
-    if (quote.payments?.length) {
-      await entityManager.delete('payments', { quoteId: quote.id });
-    }
+
     if (quote.policy) {
-      await entityManager.delete('policies', { id: quote.policy.id });
+      await queryRunner.manager.delete('policies', { id: quote.policy.id });
     }
+
     if (quote.event?.venue) {
-      await entityManager.delete('venues', { id: quote.event.venue.id });
+      await queryRunner.manager.delete('venues', { id: quote.event.venue.id });
     }
+
     if (quote.event) {
-      await entityManager.delete('events', { id: quote.event.id });
+      await queryRunner.manager.delete('events', { id: quote.event.id });
     }
+
     if (quote.policyHolder) {
-      await entityManager.delete('policy_holders', { id: quote.policyHolder.id });
+      await queryRunner.manager.delete('policy_holders', { id: quote.policyHolder.id });
     }
 
     await quoteRepository.remove(quote);
+    await queryRunner.commitTransaction();
 
     res.json({ message: 'Quote and related records deleted successfully' });
 
   } catch (error) {
+    await queryRunner.rollbackTransaction();
     console.error('DELETE /api/v1/quotes error:', error);
-    res.status(500).json({ error: 'Failed to delete quote' });
+    res.status(500).json({ 
+      error: 'Failed to delete quote',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
+  } finally {
+    await queryRunner.release();
   }
 });
 

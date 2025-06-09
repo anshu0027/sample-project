@@ -77,6 +77,9 @@ router.post('/', async (req: Request, res: Response) => {
         }
 
         const policyRepository = AppDataSource.getRepository(Policy);
+        const eventRepository = AppDataSource.getRepository(Event);
+        const policyHolderRepository = AppDataSource.getRepository(PolicyHolder);
+        const paymentRepository = AppDataSource.getRepository(Payment);
 
         // Check if policy already exists
         const existingPolicy = await policyRepository.findOne({
@@ -88,92 +91,56 @@ router.post('/', async (req: Request, res: Response) => {
             return;
         }
 
-        // Create nested entities first
-        const event = AppDataSource.getRepository(Event).create({
+        // Create and save event first
+        const event = eventRepository.create({
             eventType: fields.eventType,
-            eventDate: new Date(fields.eventDate),
+            eventDate: fields.eventDate,
             maxGuests: fields.maxGuests,
-            venue: AppDataSource.getRepository(Venue).create({
-                name: fields.venueName,
-                address1: fields.venueAddress1,
-                country: fields.venueCountry,
-                city: fields.venueCity,
-                state: fields.venueState,
-                zip: fields.venueZip,
-                locationType: fields.locationType,
-                ceremonyLocationType: fields.ceremonyLocationType,
-                indoorOutdoor: fields.indoorOutdoor,
-                venueAsInsured: fields.venueAsInsured,
-                receptionLocationType: fields.receptionLocationType,
-                receptionIndoorOutdoor: fields.receptionIndoorOutdoor,
-                receptionVenueName: fields.receptionVenueName,
-                receptionVenueAddress1: fields.receptionVenueAddress1,
-                receptionVenueAddress2: fields.receptionVenueAddress2,
-                receptionVenueCountry: fields.receptionVenueCountry,
-                receptionVenueCity: fields.receptionVenueCity,
-                receptionVenueState: fields.receptionVenueState,
-                receptionVenueZip: fields.receptionVenueZip,
-                receptionVenueAsInsured: fields.receptionVenueAsInsured,
-                brunchLocationType: fields.brunchLocationType,
-                brunchIndoorOutdoor: fields.brunchIndoorOutdoor,
-                brunchVenueName: fields.brunchVenueName,
-                brunchVenueAddress1: fields.brunchVenueAddress1,
-                brunchVenueAddress2: fields.brunchVenueAddress2,
-                brunchVenueCountry: fields.brunchVenueCountry,
-                brunchVenueCity: fields.brunchVenueCity,
-                brunchVenueState: fields.brunchVenueState,
-                brunchVenueZip: fields.brunchVenueZip,
-                brunchVenueAsInsured: fields.brunchVenueAsInsured,
-                rehearsalLocationType: fields.rehearsalLocationType,
-                rehearsalIndoorOutdoor: fields.rehearsalIndoorOutdoor,
-                rehearsalVenueName: fields.rehearsalVenueName,
-                rehearsalVenueAddress1: fields.rehearsalVenueAddress1,
-                rehearsalVenueAddress2: fields.rehearsalVenueAddress2,
-                rehearsalVenueCountry: fields.rehearsalVenueCountry,
-                rehearsalVenueCity: fields.rehearsalVenueCity,
-                rehearsalVenueState: fields.rehearsalVenueState,
-                rehearsalVenueZip: fields.rehearsalVenueZip,
-                rehearsalVenueAsInsured: fields.rehearsalVenueAsInsured,
-                rehearsalDinnerLocationType: fields.rehearsalDinnerLocationType,
-                rehearsalDinnerIndoorOutdoor: fields.rehearsalDinnerIndoorOutdoor,
-                rehearsalDinnerVenueName: fields.rehearsalDinnerVenueName,
-                rehearsalDinnerVenueAddress1: fields.rehearsalDinnerVenueAddress1,
-                rehearsalDinnerVenueAddress2: fields.rehearsalDinnerVenueAddress2,
-                rehearsalDinnerVenueCountry: fields.rehearsalDinnerVenueCountry,
-                rehearsalDinnerVenueCity: fields.rehearsalDinnerVenueCity,
-                rehearsalDinnerVenueState: fields.rehearsalDinnerVenueState,
-            }),
+            venue: fields.venueId ? { id: fields.venueId } : null
         });
+        const savedEvent = await eventRepository.save(event);
 
-        const policyHolder = AppDataSource.getRepository(PolicyHolder).create({
+        // Create and save policy holder
+        const policyHolder = policyHolderRepository.create({
             firstName: fields.firstName,
             lastName: fields.lastName,
+            email: fields.email,
             phone: fields.phone,
             address: fields.address,
-            country: fields.country,
             city: fields.city,
             state: fields.state,
-            zip: fields.zip,
+            zipCode: fields.zipCode,
+            country: fields.country
         });
+        const savedPolicyHolder = await policyHolderRepository.save(policyHolder);
 
-        const payment = AppDataSource.getRepository(Payment).create({
+        // Create and save payment
+        const payment = paymentRepository.create({
             amount: parseFloat(fields.paymentAmount),
-            status: fields.paymentStatus as PaymentStatus,
-            method: fields.paymentMethod,
-            reference: fields.paymentReference,
+            status: fields.paymentStatus || 'PENDING',
+            method: fields.paymentMethod || 'CASH',
+            reference: fields.paymentReference || `PAY-${Date.now()}`
         });
+        const savedPayment = await paymentRepository.save(payment);
 
-        // Create the main policy and link relations
+        // Create the main policy with saved relations
         const newPolicy = policyRepository.create({
             policyNumber: fields.policyNumber,
             pdfUrl: fields.pdfUrl,
-            event: event,
-            policyHolder: policyHolder,
-            payments: [payment],
+            event: savedEvent,
+            policyHolder: savedPolicyHolder,
+            payments: [savedPayment]
         });
 
         const savedPolicy = await policyRepository.save(newPolicy);
-        res.status(201).json({ policy: savedPolicy });
+
+        // Fetch the complete policy with all relations
+        const completePolicy = await policyRepository.findOne({
+            where: { id: savedPolicy.id },
+            relations: ['event', 'policyHolder', 'payments']
+        });
+
+        res.status(201).json({ policy: completePolicy });
 
     } catch (error) {
         console.error('POST /api/policies error:', error);

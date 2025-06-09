@@ -15,38 +15,90 @@ router.get('/', async (req: Request, res: Response) => {
 
         const policyRepository = AppDataSource.getRepository(Policy);
 
-        // 2. Use findAndCount for efficient pagination
+        // 2. Use findAndCount for efficient pagination with all necessary relations
         const [policies, total] = await policyRepository.findAndCount({
-            relations: ['quote', 'quote.policyHolder', 'quote.event'],
+            relations: [
+                'quote',
+                'quote.policyHolder',
+                'quote.event',
+                'event',
+                'policyHolder',
+                'payments'
+            ],
             order: { createdAt: 'DESC' },
             skip: skip,
             take: pageSize,
         });
 
+        console.log('Raw policies data:', JSON.stringify(policies, null, 2));
+
         // 3. Format the data exactly as the frontend expects
-        const policiesWithQuote = policies.map((p) => {
-            if (p.quote) {
-                return {
-                    ...p.quote, // Spread the quote fields
-                    quoteNumber: p.quote.quoteNumber,
-                    policyId: p.id,
-                    policyNumber: p.policyNumber,
-                    email: p.quote.email,
-                    policyCreatedAt: p.createdAt,
-                    pdfUrl: p.pdfUrl,
-                };
-            } else {
-                // Handle policies that might not have a quote (customer flow)
-                return {
-                    policyId: p.id,
-                    policyCreatedAt: p.createdAt,
-                    pdfUrl: p.pdfUrl,
-                    policyNumber: p.policyNumber,
-                };
-            }
+        const formattedPolicies = policies.map((policy) => {
+            console.log('Processing policy:', policy.id);
+            console.log('Policy quote:', policy.quote);
+            console.log('Policy event:', policy.event);
+            console.log('Policy holder:', policy.policyHolder);
+            console.log('Policy payments:', policy.payments);
+
+            // Get the relevant data from either quote or direct policy
+            const source = policy.quote || policy;
+            const event = policy.quote?.event || policy.event;
+            const policyHolder = policy.quote?.policyHolder || policy.policyHolder;
+            const payment = policy.payments?.[0];
+
+            console.log('Extracted data:', {
+                source,
+                event,
+                policyHolder,
+                payment
+            });
+
+            // Format the data for the frontend
+            const formattedPolicy = {
+                id: policy.id,
+                policyId: policy.id,
+                policyNumber: policy.policyNumber,
+                quoteNumber: policy.quote?.quoteNumber,
+                email: policy.quote?.email,
+                customer: policyHolder ? `${policyHolder.firstName || ''} ${policyHolder.lastName || ''}`.trim() : null,
+                policyHolder: {
+                    firstName: policyHolder?.firstName || null,
+                    lastName: policyHolder?.lastName || null
+                },
+                event: {
+                    eventType: event?.eventType || null,
+                    eventDate: event?.eventDate || null,
+                    maxGuests: event?.maxGuests || null
+                },
+                eventType: event?.eventType || null,
+                eventDate: event?.eventDate || null,
+                totalPremium: payment?.amount || policy.quote?.totalPremium || 0,
+                status: payment?.status || policy.quote?.status || 'PENDING',
+                createdAt: policy.createdAt,
+                updatedAt: policy.updatedAt,
+                payments: policy.payments?.map(p => ({
+                    amount: p.amount,
+                    status: p.status,
+                    method: p.method,
+                    reference: p.reference
+                })) || []
+            };
+
+            console.log('Formatted policy:', formattedPolicy);
+            return formattedPolicy;
         });
 
-        res.json({ policies: policiesWithQuote, total });
+        // 4. Send the formatted response
+        const response = { 
+            policies: formattedPolicies, 
+            total,
+            page,
+            pageSize,
+            totalPages: Math.ceil(total / pageSize)
+        };
+
+        console.log('Final response:', JSON.stringify(response, null, 2));
+        res.json(response);
 
     } catch (error) {
         console.error('GET /api/v1/policy-list error:', error);

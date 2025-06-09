@@ -67,12 +67,14 @@ export default function Policies() {
             if (!res.ok) throw new Error("Failed to fetch policies");
 
             const data = await res.json();
+            console.log('Received policies data:', data);
 
             // The backend now sends pre-formatted data, so mapping is simpler
             setPolicies(data.policies || []);
             setTotalPolicies(data.total || 0);
 
         } catch (err: unknown) {
+            console.error('Error fetching policies:', err);
             setError(err instanceof Error ? err.message : "Unknown error");
         } finally {
             setLoading(false);
@@ -311,46 +313,55 @@ export default function Policies() {
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                            {filteredPolicies.map((policy) => (
-                                <tr key={policy.id} className="border-b border-gray-200 hover:bg-gray-50">
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                        {policy.policyNumber}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {policy.customer || `${policy.policyHolder?.firstName || ''} ${policy.policyHolder?.lastName || ''}`}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {policy.eventType || policy.event?.eventType || 'N/A'}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {policy.eventDate || policy.event?.eventDate ? new Date(policy.eventDate || policy.event?.eventDate || '').toLocaleDateString() : 'N/A'}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        ${policy.totalPremium?.toFixed(2) || '0.00'}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${policy.status === 'COMPLETE' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                                            {policy.status || 'N/A'}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <div className="flex justify-end gap-2">
-                                            <Button variant="outline" size="sm" onClick={() => handleView(policy.quoteNumber)}>
-                                                <Eye size={16} className="mr-1" /> View
-                                            </Button>
-                                            <Button variant="outline" size="sm" onClick={() => handleEdit(policy.quoteNumber)}>
-                                                <Edit size={16} className="mr-1" /> Edit
-                                            </Button>
-                                            <Button variant="outline" size="sm" onClick={() => handleEmail(policy.quoteNumber)} disabled={emailSendingQuoteNumber === policy.quoteNumber}>
-                                                {emailSendingQuoteNumber === policy.quoteNumber ? 'Sending...' : <><Mail className="h-4 w-4 mr-2" /> Email</>}
-                                            </Button>
-                                            <Button variant="destructive" size="sm" onClick={() => handleDeletePolicy(policy.policyId)}>
-                                                Delete
-                                            </Button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
+                            {filteredPolicies.map((policy) => {
+                                console.log('Rendering policy:', policy);
+                                return (
+                                    <tr key={policy.id} className="border-b border-gray-200 hover:bg-gray-50">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                            {policy.policyNumber}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            {policy.customer || `${policy.policyHolder?.firstName || ''} ${policy.policyHolder?.lastName || ''}`.trim() || 'N/A'}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            {policy.eventType || policy.event?.eventType || 'N/A'}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            {policy.eventDate || policy.event?.eventDate ? new Date(policy.eventDate || policy.event?.eventDate || '').toLocaleDateString() : 'N/A'}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            ${(policy.totalPremium || 0).toFixed(2)}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                                policy.status === 'COMPLETE' || policy.status === 'SUCCESS' 
+                                                    ? 'bg-green-100 text-green-800' 
+                                                    : policy.status === 'PENDING' 
+                                                        ? 'bg-yellow-100 text-yellow-800'
+                                                        : 'bg-gray-100 text-gray-800'
+                                            }`}>
+                                                {policy.status || policy.payments?.[0]?.status || 'N/A'}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <div className="flex justify-end gap-2">
+                                                <Button variant="outline" size="sm" onClick={() => handleView(policy.quoteNumber)}>
+                                                    <Eye size={16} className="mr-1" /> View
+                                                </Button>
+                                                <Button variant="outline" size="sm" onClick={() => handleEdit(policy.quoteNumber)}>
+                                                    <Edit size={16} className="mr-1" /> Edit
+                                                </Button>
+                                                <Button variant="outline" size="sm" onClick={() => handleEmail(policy.quoteNumber)} disabled={emailSendingQuoteNumber === policy.quoteNumber}>
+                                                    {emailSendingQuoteNumber === policy.quoteNumber ? 'Sending...' : <><Mail className="h-4 w-4 mr-2" /> Email</>}
+                                                </Button>
+                                                <Button variant="destructive" size="sm" onClick={() => handleDeletePolicy(policy.policyId)}>
+                                                    Delete
+                                                </Button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
                         </tbody>
                     </table>
                 </div>
