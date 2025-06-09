@@ -166,6 +166,8 @@ router.post('/', async (req: Request, res: Response) => {
       const eventRepository = AppDataSource.getRepository(Event);
       const newEvent = eventRepository.create(eventData);
       if (fields.venueName) {
+        const venueRepository = AppDataSource.getRepository(Venue);
+        console.log("Venue Repository:", venueRepository);
         const venueData = {
           name: fields.venueName,
           address1: fields.venueAddress1,
@@ -213,9 +215,9 @@ router.post('/', async (req: Request, res: Response) => {
           rehearsalDinnerCountry: fields.rehearsalDinnerCountry,
           rehearsalDinnerVenueAsInsured: fields.rehearsalDinnerVenueAsInsured,
         };
-        const venueRepository = AppDataSource.getRepository(Venue);
-        console.log("Venue Repository:", venueRepository);
         newEvent.venue = venueRepository.create(venueData);
+        // Explicitly save the venue
+        await venueRepository.save(newEvent.venue);
         console.log("New Event:", newEvent);
       }
       newQuote.event = newEvent;
@@ -223,6 +225,8 @@ router.post('/', async (req: Request, res: Response) => {
     }
 
     if (fields.firstName && fields.lastName) {
+      const policyHolderRepository = AppDataSource.getRepository(PolicyHolder);
+      console.log("Policy Holder Repository:", policyHolderRepository);
       const policyHolderData = {
         firstName: fields.firstName,
         lastName: fields.lastName,
@@ -237,11 +241,16 @@ router.post('/', async (req: Request, res: Response) => {
         legalNotices: fields.legalNotices,
         completingFormName: fields.completingFormName,
       };
-      const policyHolderRepository = AppDataSource.getRepository(PolicyHolder);
       newQuote.policyHolder = policyHolderRepository.create(policyHolderData);
+      // Explicitly save the policy holder
+      await policyHolderRepository.save(newQuote.policyHolder);
       console.log("New Policy Holder:", newQuote.policyHolder);
     }
 
+    // Explicitly save the event if it was created
+    if (newQuote.event) {
+      await AppDataSource.getRepository(Event).save(newQuote.event);
+    }
     console.log("New Quote:", newQuote);
     const savedQuote = await quoteRepository.save(newQuote);
     console.log("Saved Quote:", savedQuote);
