@@ -29,7 +29,7 @@ router.get('/', async (req: Request, res: Response) => {
     const { quoteNumber, id, email, allQuotes } = req.query;
     const quoteRepository = AppDataSource.getRepository(Quote);
 
-    const relations = ['event', 'event.venue', 'policyHolder', 'policy'];
+    const relations = ['event', 'event.venue', 'policyHolder', 'policy', 'payments'];
 
     if (quoteNumber) {
       const quote = await quoteRepository.findOne({
@@ -37,10 +37,10 @@ router.get('/', async (req: Request, res: Response) => {
         relations,
       });
       if (!quote) {
-        res.status(404).json({ error: 'Quote not found' }); // REMOVED 'return'
+        res.status(404).json({ error: 'Quote not found' });
         return;
       }
-      res.json({ quote }); // REMOVED 'return'
+      res.json({ quote });
       return;
     }
 
@@ -50,10 +50,10 @@ router.get('/', async (req: Request, res: Response) => {
         relations,
       });
       if (!quote) {
-        res.status(404).json({ error: 'Quote not found' }); // REMOVED 'return'
+        res.status(404).json({ error: 'Quote not found' });
         return;
       }
-      res.json({ quote }); // REMOVED 'return'
+      res.json({ quote });
       return;
     }
 
@@ -64,19 +64,19 @@ router.get('/', async (req: Request, res: Response) => {
         relations,
       });
       if (!quote) {
-        res.status(404).json({ error: 'Quote not found' }); // REMOVED 'return'
+        res.status(404).json({ error: 'Quote not found' });
         return;
       }
-      res.json({ quote }); // REMOVED 'return'
+      res.json({ quote });
       return;
     }
 
     if (allQuotes) {
       const quotes = await quoteRepository.find({
         order: { createdAt: 'DESC' },
-        relations: [...relations, 'Payment'],
+        relations,
       });
-      res.json({ quotes }); // REMOVED 'return'
+      res.json({ quotes });
       return;
     }
 
@@ -85,11 +85,11 @@ router.get('/', async (req: Request, res: Response) => {
       order: { createdAt: 'DESC' },
       relations,
     });
-    res.json({ policies: quotes }); // REMOVED 'return'
+    res.json({ policies: quotes });
 
   } catch (error) {
     console.error('GET /api/v1/quotes error:', error);
-    res.status(500).json({ error: 'Failed to fetch quotes/policies' }); // REMOVED 'return'
+    res.status(500).json({ error: 'Failed to fetch quotes/policies' });
   }
 });
 
@@ -100,7 +100,6 @@ router.post('/', async (req: Request, res: Response) => {
   console.log("Request Body:", req.body);
   try {
     const fields = req.body;
-    console.log("Fields:", fields);
     const { source = 'CUSTOMER', paymentStatus } = fields;
     console.log("Source:", source);
     console.log("Payment Status:", paymentStatus);
@@ -282,12 +281,10 @@ router.post('/', async (req: Request, res: Response) => {
     });
 
   } catch (error) {
-
-    console.error('Caught error:', error);
+    console.error('Quote creation error:', error);
     console.error('POST /api/v1/quotes error:', error);
     const message = error instanceof Error ? error.message : 'Server error';
     console.error('POST /api/v1/quotes error:', error);
-    console.error('Error response sent to client:', message);
     // @ts-ignore - Check for Oracle's unique constraint error code
     if (error.message && error.message.includes('ORA-00001')) {
       res.status(409).json({ error: 'A record with this unique value already exists. Please try again.' });
@@ -296,6 +293,8 @@ router.post('/', async (req: Request, res: Response) => {
     }
   }
 });
+
+
 
 // --- PUT /api/v1/quotes/:quoteNumber ---
 router.put('/:quoteNumber', async (req: Request, res: Response) => {
@@ -310,7 +309,7 @@ router.put('/:quoteNumber', async (req: Request, res: Response) => {
     });
 
     if (!quoteToUpdate) {
-      res.status(404).json({ error: `Quote with number ${quoteNumber} not found.` }); // REMOVED 'return'
+      res.status(404).json({ error: `Quote with number ${quoteNumber} not found.` });
       return;
     }
 
@@ -402,11 +401,11 @@ router.put('/:quoteNumber', async (req: Request, res: Response) => {
 
     const updatedQuote = await quoteRepository.save(quoteToUpdate);
 
-    res.json({ message: 'Quote updated successfully', quote: updatedQuote }); // REMOVED 'return'
+    res.json({ message: 'Quote updated successfully', quote: updatedQuote });
 
   } catch (error) {
     console.error('PUT /api/v1/quotes error:', error);
-    res.status(500).json({ error: 'Server error during quote update' }); // REMOVED 'return'
+    res.status(500).json({ error: 'Server error during quote update' });
   }
 });
 
@@ -422,7 +421,7 @@ router.delete('/:quoteNumber', async (req: Request, res: Response) => {
     });
 
     if (!quote) {
-      res.status(404).json({ error: 'Quote not found' }); // REMOVED 'return'
+      res.status(404).json({ error: 'Quote not found' });
       return;
     }
 
@@ -431,7 +430,7 @@ router.delete('/:quoteNumber', async (req: Request, res: Response) => {
     if (quote.policy?.versions?.length) {
       await entityManager.delete('policy_versions', { policyId: quote.policy.id });
     }
-    if (quote.Payment?.length) {
+    if (quote.payments?.length) {
       await entityManager.delete('payments', { quoteId: quote.id });
     }
     if (quote.policy) {
@@ -449,12 +448,18 @@ router.delete('/:quoteNumber', async (req: Request, res: Response) => {
 
     await quoteRepository.remove(quote);
 
-    res.json({ message: 'Quote and related records deleted successfully' }); // REMOVED 'return'
+    res.json({ message: 'Quote and related records deleted successfully' });
 
   } catch (error) {
     console.error('DELETE /api/v1/quotes error:', error);
-    res.status(500).json({ error: 'Failed to delete quote' }); // REMOVED 'return'
+    res.status(500).json({ error: 'Failed to delete quote' });
   }
+});
+
+// Error handling middleware
+router.use((err: Error, req: Request, res: Response, next: Function) => {
+  console.error('Unhandled express error:', err);
+  res.status(500).json({ error: 'Internal Server Error' });
 });
 
 export default router;

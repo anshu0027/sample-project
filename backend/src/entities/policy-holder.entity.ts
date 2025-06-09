@@ -4,57 +4,57 @@ import { Policy } from './policy.entity';
 
 @Entity('POLICY_HOLDERS')
 export class PolicyHolder {
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn({ name: 'ID' })
   id!: number;
 
-  @Column()
+  @Column({ name: 'FIRSTNAME' })
   firstName!: string;
 
-  @Column()
+  @Column({ name: 'LASTNAME' })
   lastName!: string;
 
-  @Column()
+  @Column({ name: 'PHONE' })
   phone!: string;
 
-  @Column({ nullable: true })
+  @Column({ name: 'RELATIONSHIP', nullable: true })
   relationship!: string;
 
-  @Column({ nullable: true })
+  @Column({ name: 'HEARABOUTUS', nullable: true })
   hearAboutUs!: string;
 
-  @Column()
+  @Column({ name: 'ADDRESS' })
   address!: string;
 
-  @Column()
+  @Column({ name: 'COUNTRY' })
   country!: string;
 
-  @Column()
+  @Column({ name: 'CITY' })
   city!: string;
 
-  @Column({ name: 'state_column', nullable: true })
+  @Column({ name: 'STATE', nullable: true })
   state!: string;
 
-  @Column({ name: 'zip_code', nullable: true })
+  @Column({ name: 'ZIP', nullable: true })
   zip!: string;
 
-  @Column({ nullable: true })
+  @Column({ name: 'LEGALNOTICES', nullable: true })
   legalNotices!: boolean;
 
-  @Column({ nullable: true })
+  @Column({ name: 'COMPLETINGFORMNAME', nullable: true })
   completingFormName!: string;
 
   // --- RELATIONS ---
-  @Column({ unique: true, nullable: true })
+  @Column({ name: 'QUOTEID', unique: true, nullable: true })
   quoteId!: number;
 
   @OneToOne(() => Quote, (quote) => quote.policyHolder)
-  @JoinColumn({ name: 'quoteId' })
+  @JoinColumn({ name: 'QUOTEID' })
   quote!: Quote;
 
-  @Column({ nullable: true })
+  @Column({ name: 'POLICYID', nullable: true })
   policyId!: number;
 
   @OneToOne(() => Policy, (policy) => policy.policyHolder)
-  @JoinColumn({ name: 'policyId' })
+  @JoinColumn({ name: 'POLICYID' })
   policy!: Policy;
 }

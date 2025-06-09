@@ -1,4 +1,13 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToOne, OneToMany, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  OneToOne,
+  OneToMany,
+  JoinColumn,
+} from 'typeorm';
 import { Quote } from './quote.entity';
 import { Event } from './event.entity';
 import { PolicyHolder } from './policy-holder.entity';
@@ -7,33 +16,33 @@ import { PolicyVersion } from './policy-version.entity';
 
 @Entity('POLICIES')
 export class Policy {
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn({ name: 'ID' })
   id!: number;
 
-  @Column({ unique: true })
+  @Column({ name: 'POLICYNUMBER', unique: true })
   policyNumber!: string;
 
-  @Column({ nullable: true })
+  @Column({ name: 'PDFURL', nullable: true })
   pdfUrl!: string;
 
-  @Column({ default: false })
+  @Column({ name: 'EMAILSENT', default: false })
   emailSent!: boolean;
 
-  @Column({ nullable: true })
+  @Column({ name: 'EMAILSENTAT', nullable: true })
   emailSentAt!: Date;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'CREATEDAT' })
   createdAt!: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'UPDATEDAT' })
   updatedAt!: Date;
 
   // --- RELATIONS ---
-  @Column({ unique: true, nullable: true })
+  @Column({ name: 'QUOTEID', unique: true, nullable: true })
   quoteId!: number;
 
   @OneToOne(() => Quote, (quote) => quote.policy)
-  @JoinColumn({ name: 'quoteId' })
+  @JoinColumn({ name: 'QUOTEID' })
   quote!: Quote;
 
   @OneToOne(() => Event, (event) => event.policy)
@@ -42,7 +51,7 @@ export class Policy {
   @OneToOne(() => PolicyHolder, (policyHolder) => policyHolder.policy)
   policyHolder!: PolicyHolder;
 
-  @OneToMany(() => Payment, (payment) => payment.Policy)
+  @OneToMany(() => Payment, (payment) => payment.policy)
   payments!: Payment[];
 
   @OneToMany(() => PolicyVersion, (version) => version.policy)

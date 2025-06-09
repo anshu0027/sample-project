@@ -44,8 +44,8 @@ export default function AdminDashboard() {
                 const quotes = quotesData.quotes || [];
 
                 // --- Calculate Policy Stats ---
-                const currentPolicies = policies.filter((p: any) => new Date(p.policyCreatedAt) >= currentPeriodStart);
-                const prevPolicies = policies.filter((p: any) => new Date(p.policyCreatedAt) >= previousPeriodStart && new Date(p.policyCreatedAt) <= previousPeriodEnd);
+                const currentPolicies = policies.filter((p: any) => new Date(p.createdAt) >= currentPeriodStart);
+                const prevPolicies = policies.filter((p: any) => new Date(p.createdAt) >= previousPeriodStart && new Date(p.createdAt) <= previousPeriodEnd);
                 const policyChange = prevPolicies.length === 0 ? (currentPolicies.length > 0 ? 100 : 0) : parseFloat((((currentPolicies.length - prevPolicies.length) / prevPolicies.length) * 100).toFixed(1));
                 setPolicyStats({ current: currentPolicies.length, prev: prevPolicies.length, change: policyChange });
 

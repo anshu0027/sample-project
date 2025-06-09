@@ -78,6 +78,16 @@ router.post('/', async (req: Request, res: Response) => {
 
         const policyRepository = AppDataSource.getRepository(Policy);
 
+        // Check if policy already exists
+        const existingPolicy = await policyRepository.findOne({
+            where: { policyNumber: fields.policyNumber }
+        });
+
+        if (existingPolicy) {
+            res.status(400).json({ error: 'Policy with this number already exists.' });
+            return;
+        }
+
         // Create nested entities first
         const event = AppDataSource.getRepository(Event).create({
             eventType: fields.eventType,

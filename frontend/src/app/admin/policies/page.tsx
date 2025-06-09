@@ -8,6 +8,7 @@ import Input from "@/components/ui/Input";
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { toast } from "@/hooks/use-toast";
+import Link from "next/link";
 
 interface PolicyList {
     email: string;
@@ -23,6 +24,11 @@ interface PolicyList {
     event?: {
         eventType?: string | null;
         eventDate?: string | null;
+        honoree1FirstName?: string | null;
+        honoree1LastName?: string | null;
+        honoree2FirstName?: string | null;
+        honoree2LastName?: string | null;
+        maxGuests?: string | null;
     };
     totalPremium?: number | null;
     status?: string | null;
@@ -31,6 +37,7 @@ interface PolicyList {
     customer?: string;
     eventType?: string;
     eventDate?: string;
+    payments?: { amount: number; status: string }[];
 }
 
 export default function Policies() {
@@ -280,25 +287,50 @@ export default function Policies() {
                     <table className="w-full">
                         <thead className="sticky top-0 z-10">
                             <tr className="bg-gray-50">
-                                {/* ... Table headers remain identical ... */}
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Policy Number
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Policy Holder
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Event Type
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Event Date
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Premium
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Payment Status
+                                </th>
+                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Actions
+                                </th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                             {filteredPolicies.map((policy) => (
-                                <tr key={policy.quoteNumber} className="hover:bg-gray-50">
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className="font-medium text-gray-900">{policy.policyNumber}</span>
+                                <tr key={policy.id} className="border-b border-gray-200 hover:bg-gray-50">
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                        {policy.policyNumber}
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm font-medium text-gray-900">{policy.customer}</div>
-                                        <div className="text-sm text-gray-500">{policy?.email || "-"}</div>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {policy.customer || `${policy.policyHolder?.firstName || ''} ${policy.policyHolder?.lastName || ''}`}
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-gray-500">{policy.eventType}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-gray-500">{policy.createdAt ? new Date(policy.createdAt).toLocaleDateString() : "-"}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-gray-900">${policy.totalPremium?.toFixed(2) ?? "-"}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {policy.eventType || policy.event?.eventType || 'N/A'}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {policy.eventDate || policy.event?.eventDate ? new Date(policy.eventDate || policy.event?.eventDate || '').toLocaleDateString() : 'N/A'}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        ${policy.totalPremium?.toFixed(2) || '0.00'}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                         <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${policy.status === 'COMPLETE' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                                            {policy.status}
+                                            {policy.status || 'N/A'}
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">

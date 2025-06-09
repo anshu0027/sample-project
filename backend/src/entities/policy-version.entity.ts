@@ -4,20 +4,20 @@ import { Policy } from './policy.entity';
 @Entity('POLICY_VERSIONS')
 @Index(['policyId'])
 export class PolicyVersion {
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn({ name: 'ID' })
   id!: number;
 
-  @Column({ type: 'simple-json' }) // Corresponds to Json type
+  @Column({ name: 'DATA', type: 'simple-json' }) // Json in Oracle might need special handling later
   data!: object;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'CREATEDAT' })
   createdAt!: Date;
 
   // --- RELATIONS ---
-  @Column()
+  @Column({ name: 'POLICYID' })
   policyId!: number;
 
   @ManyToOne(() => Policy, (policy) => policy.versions)
-  @JoinColumn({ name: 'policyId' })
+  @JoinColumn({ name: 'POLICYID' })
   policy!: Policy;
 }

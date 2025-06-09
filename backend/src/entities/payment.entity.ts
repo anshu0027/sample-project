@@ -1,4 +1,13 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, Index } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
+  Index,
+} from 'typeorm';
 import { Quote } from './quote.entity';
 import { Policy } from './policy.entity';
 import { PaymentStatus } from './enums';
@@ -7,39 +16,39 @@ import { PaymentStatus } from './enums';
 @Index(['status'])
 @Index(['quoteId'])
 export class Payment {
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn({ name: 'ID' })
   id!: number;
 
-  @Column({ type: 'float' })
+  @Column({ name: 'AMOUNT', type: 'decimal', precision: 10, scale: 2 })
   amount!: number;
 
-  @Column({ type: 'varchar', length: 20, default: PaymentStatus.PENDING })
-  status!: PaymentStatus;
+  @Column({ name: 'STATUS', length: 50 })
+  status!: string;
 
-  @Column({ nullable: true })
+  @Column({ name: 'METHOD', length: 50 })
   method!: string;
 
-  @Column({ nullable: true })
+  @Column({ name: 'REFERENCE', length: 100, nullable: true })
   reference!: string;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'CREATEDAT' })
   createdAt!: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'UPDATEDAT' })
   updatedAt!: Date;
 
   // --- RELATIONS ---
-  @Column()
+  @Column({ name: 'QUOTEID', nullable: true })
   quoteId!: number;
 
-  @ManyToOne(() => Quote, (quote) => quote.Payment)
-  @JoinColumn({ name: 'quoteId' })
+  @ManyToOne(() => Quote, (quote) => quote.payments)
+  @JoinColumn({ name: 'QUOTEID' })
   quote!: Quote;
 
-  @Column({ nullable: true })
+  @Column({ name: 'POLICYID', nullable: true })
   policyId!: number;
 
-  @ManyToOne(() => Policy, (policy) => policy.payments, { nullable: true })
-  @JoinColumn({ name: 'policyId' })
-  Policy!: Policy;
+  @ManyToOne(() => Policy, (policy) => policy.payments)
+  @JoinColumn({ name: 'POLICYID' })
+  policy!: Policy;
 }

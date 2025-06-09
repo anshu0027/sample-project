@@ -1,4 +1,15 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, OneToOne, OneToMany, JoinColumn, Index } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+  OneToOne,
+  OneToMany,
+  JoinColumn,
+  Index,
+} from 'typeorm';
 import { User } from './user.entity';
 import { Event } from './event.entity';
 import { PolicyHolder } from './policy-holder.entity';
@@ -7,91 +18,91 @@ import { Payment } from './payment.entity';
 import { StepStatus, QuoteSource } from './enums';
 
 @Entity('QUOTES')
-@Index(['user'])
+@Index(['userId'])
 @Index(['status'])
 @Index(['source'])
 @Index(['convertedToPolicy'])
 export class Quote {
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn({ name: 'ID' })
   id!: number;
 
-  @Column({ unique: true })
+  @Column({ name: 'QUOTENUMBER', unique: true })
   quoteNumber!: string;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ name: 'EMAIL', type: 'varchar', length: 255 })
   email!: string;
 
-  @Column({ nullable: true })
+  @Column({ name: 'COVERAGELEVEL', nullable: true })
   coverageLevel!: number;
 
-  @Column({ nullable: true })
+  @Column({ name: 'LIABILITYCOVERAGE', nullable: true })
   liabilityCoverage!: string;
 
-  @Column({ default: false, nullable: true })
+  @Column({ name: 'LIQUORLIABILITY', default: false, nullable: true })
   liquorLiability!: boolean;
 
-  @Column({ nullable: true })
+  @Column({ name: 'COVIDDISCLOSURE', nullable: true })
   covidDisclosure!: boolean;
 
-  @Column({ nullable: true })
+  @Column({ name: 'SPECIALACTIVITIES', nullable: true })
   specialActivities!: boolean;
 
-  @Column({ type: 'float', nullable: true })
+  @Column({ name: 'TOTALPREMIUM', type: 'float', nullable: true })
   totalPremium!: number;
 
-  @Column({ type: 'float', nullable: true })
+  @Column({ name: 'BASEPREMIUM', type: 'float', nullable: true })
   basePremium!: number;
 
-  @Column({ type: 'float', nullable: true })
+  @Column({ name: 'LIABILITYPREMIUM', type: 'float', nullable: true })
   liabilityPremium!: number;
 
-  @Column({ type: 'float', nullable: true })
+  @Column({ name: 'LIQUORLIABILITYPREMIUM', type: 'float', nullable: true })
   liquorLiabilityPremium!: number;
 
-  @Column({ type: 'varchar', length: 20, default: StepStatus.STEP1 })
+  @Column({ name: 'STATUS', type: 'varchar', length: 20, default: StepStatus.STEP1 })
   status!: StepStatus;
 
-  @Column({ type: 'varchar', length: 20, default: QuoteSource.CUSTOMER })
+  @Column({ name: 'SOURCE', type: 'varchar', length: 20, default: QuoteSource.CUSTOMER })
   source!: QuoteSource;
 
-  @Column({ default: false })
+  @Column({ name: 'ISCUSTOMERGENERATED', default: false })
   isCustomerGenerated!: boolean;
 
-  @Column({ default: false })
+  @Column({ name: 'CONVERTEDTOPOLICY', default: false })
   convertedToPolicy!: boolean;
 
-  @Column({ default: false })
+  @Column({ name: 'EMAILSENT', default: false })
   emailSent!: boolean;
 
-  @Column({ nullable: true })
+  @Column({ name: 'EMAILSENTAT', nullable: true })
   emailSentAt!: Date;
 
-  @Column({ nullable: true })
+  @Column({ name: 'RESIDENTSTATE', nullable: true })
   residentState!: string;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'CREATEDAT' })
   createdAt!: Date;
 
-  @UpdateDateColumn() // Corresponds to @updatedAt
+  @UpdateDateColumn({ name: 'UPDATEDAT' })
   updatedAt!: Date;
 
   // --- RELATIONS ---
-  @Column() // This is the foreign key column
+  @Column({ name: 'USERID' })
   userId!: number;
 
   @ManyToOne(() => User, (user) => user.quotes)
-  @JoinColumn({ name: 'userId' }) // Specifies the FK column
+  @JoinColumn({ name: 'USERID' })
   user!: User;
 
-  @OneToOne(() => Event, (event) => event.quote) // The inverse side of the relation
-    event!: Event;
+  @OneToOne(() => Event, (event) => event.quote)
+  event!: Event;
 
-  @OneToOne(() => PolicyHolder, (policyHolder) => policyHolder.quote) // Inverse side
+  @OneToOne(() => PolicyHolder, (policyHolder) => policyHolder.quote)
   policyHolder!: PolicyHolder;
 
-  @OneToOne(() => Policy, (policy) => policy.quote) // Inverse side
+  @OneToOne(() => Policy, (policy) => policy.quote)
   policy!: Policy;
 
   @OneToMany(() => Payment, (payment) => payment.quote)
-  Payment!: Payment[];
+  payments!: Payment[];
 }

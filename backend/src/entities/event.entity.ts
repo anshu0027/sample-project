@@ -5,45 +5,43 @@ import { Venue } from './venue.entity';
 
 @Entity('EVENTS')
 export class Event {
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn({ name: 'ID' })
   id!: number;
 
-  @Column()
+  @Column({ name: 'EVENTTYPE' })
   eventType!: string;
 
-  @Column()
+  @Column({ name: 'EVENTDATE' })
   eventDate!: Date;
 
-  @Column()
+  @Column({ name: 'MAXGUESTS' })
   maxGuests!: string;
 
-  @Column({ nullable: true })
+  @Column({ name: 'HONOREE1FIRSTNAME', nullable: true })
   honoree1FirstName!: string;
 
-  @Column({ nullable: true })
+  @Column({ name: 'HONOREE1LASTNAME', nullable: true })
   honoree1LastName!: string;
 
-  @Column({ nullable: true })
+  @Column({ name: 'HONOREE2FIRSTNAME', nullable: true })
   honoree2FirstName!: string;
 
-  @Column({ nullable: true })
+  @Column({ name: 'HONOREE2LASTNAME', nullable: true })
   honoree2LastName!: string;
 
-  
-
   // --- RELATIONS ---
-  @Column({ unique: true, nullable: true })
+  @Column({ name: 'QUOTEID', unique: true, nullable: true })
   quoteId!: number;
 
   @OneToOne(() => Quote, (quote) => quote.event)
-  @JoinColumn({ name: 'quoteId' }) // This is the "owning" side for the quote relation
+  @JoinColumn({ name: 'QUOTEID' })
   quote!: Quote;
 
-  @Column({ unique: true, nullable: true })
+  @Column({ name: 'POLICYID', unique: true, nullable: true })
   policyId!: number;
 
   @OneToOne(() => Policy, (policy) => policy.event)
-  @JoinColumn({ name: 'policyId' }) // This is the "owning" side for the policy relation
+  @JoinColumn({ name: 'POLICYID' })
   policy!: Policy;
 
   @OneToOne(() => Venue, (venue) => venue.event)

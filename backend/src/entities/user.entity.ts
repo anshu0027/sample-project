@@ -1,16 +1,16 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany, Index } from 'typeorm';
 import { Quote } from './quote.entity';
 
-@Entity('USERS') // It's good practice to name tables in plural
-@Index(['email']) // Corresponds to @@index([email])
+@Entity('USERS')
+@Index(['email'])
 export class User {
-  @PrimaryGeneratedColumn() // Corresponds to Int @id @default(autoincrement())
+  @PrimaryGeneratedColumn({ name: 'ID' })
   id!: number;
 
-  @Column({ unique: true }) // Corresponds to @unique
+  @Column({ name: 'EMAIL', unique: true })
   email!: string;
 
-  @CreateDateColumn() // Corresponds to DateTime @default(now())
+  @CreateDateColumn({ name: 'CREATEDAT' })
   createdAt!: Date;
 
   // --- RELATIONS ---
