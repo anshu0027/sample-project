@@ -76,6 +76,7 @@ router.get('/', async (req: Request, res: Response) => {
         order: { createdAt: 'DESC' },
         relations,
       });
+      console.log('Quotes from database:', JSON.stringify(quotes, null, 2));
       res.json({ quotes });
       return;
     }
@@ -253,7 +254,7 @@ router.post('/', async (req: Request, res: Response) => {
     }
     console.log("New Quote:", newQuote);
     const savedQuote = await quoteRepository.save(newQuote);
-    console.log("Saved Quote:", savedQuote);
+    console.log('Saved quote:', JSON.stringify(savedQuote, null, 2));
 
     // --- START: AUTO-CONVERSION LOGIC ---
     if (savedQuote.source === QuoteSource.CUSTOMER && paymentStatus === 'SUCCESS') {

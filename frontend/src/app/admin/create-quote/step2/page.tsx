@@ -242,157 +242,100 @@ export default function EventInformation() {
     router.push("/admin/create-quote/step1");
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (validateForm()) {
-      dispatch({ type: "COMPLETE_STEP", step: 2 });
-      // Optionally, dispatch an action to save the current state to local storage or backend
-      // This is good practice if the user might leave and come back later
-      // dispatch({ type: 'SAVE_QUOTE', payload: state }); // Example save action
-
-      // Prepare payload for API if saving to backend at this step is desired,
-      // or ensure the global state has the necessary data for the next step/save
-      const payload: {
-        honoree1FirstName: string;
-        honoree1LastName: string;
-        honoree2FirstName: string;
-        honoree2LastName: string;
-        ceremonyLocationType: string;
-        indoorOutdoor: string;
-        venueName: string;
-        venueAddress1: string;
-        venueAddress2: string;
-        venueCountry: string;
-        venueCity: string;
-        venueState: string;
-        venueZip: string;
-        receptionLocationType?: string;
-        receptionIndoorOutdoor?: string;
-        receptionVenueName?: string;
-        receptionVenueAddress1?: string;
-        receptionVenueAddress2?: string;
-        receptionVenueCountry?: string;
-        receptionVenueCity?: string;
-        receptionVenueState?: string;
-        receptionVenueZip?: string;
-        receptionVenueAsInsured?: boolean;
-        brunchLocationType?: string;
-        brunchIndoorOutdoor?: string;
-        brunchVenueName?: string;
-        brunchVenueAddress1?: string;
-        brunchVenueAddress2?: string;
-        brunchVenueCountry?: string;
-        brunchVenueCity?: string;
-        brunchVenueState?: string;
-        brunchVenueZip?: string;
-        brunchVenueAsInsured?: boolean;
-        rehearsalLocationType?: string;
-        rehearsalIndoorOutdoor?: string;
-        rehearsalVenueName?: string;
-        rehearsalVenueAddress1?: string;
-        rehearsalVenueAddress2?: string;
-        rehearsalVenueCountry?: string;
-        rehearsalVenueCity?: string;
-        rehearsalVenueState?: string;
-        rehearsalVenueZip?: string;
-        rehearsalVenueAsInsured?: boolean;
-        rehearsalDinnerLocationType?: string;
-        rehearsalDinnerIndoorOutdoor?: string;
-        rehearsalDinnerVenueName?: string;
-        rehearsalDinnerVenueAddress1?: string;
-        rehearsalDinnerVenueAddress2?: string;
-        rehearsalDinnerVenueCountry?: string;
-        rehearsalDinnerVenueCity?: string;
-        rehearsalDinnerVenueState?: string;
-        rehearsalDinnerVenueZip?: string;
-        rehearsalDinnerVenueAsInsured?: boolean;
-      } = {
-        honoree1FirstName: state.honoree1FirstName,
-        honoree1LastName: state.honoree1LastName,
-        honoree2FirstName: state.honoree2FirstName,
-        honoree2LastName: state.honoree2LastName,
-        ceremonyLocationType: state.ceremonyLocationType,
-        indoorOutdoor: state.indoorOutdoor,
-        venueName: state.venueName,
-        venueAddress1: state.venueAddress1,
-        venueAddress2: state.venueAddress2,
-        venueCountry: state.venueCountry,
-        venueCity: state.venueCity,
-        venueState: state.venueState,
-        venueZip: state.venueZip
-      };
-
-      if (state.eventType === 'wedding') {
-        // Reception Venue (only if name is provided)
-        if (!isEmpty(state.receptionVenueName)) {
-          payload.receptionLocationType = state.receptionLocationType;
-          payload.receptionIndoorOutdoor = state.receptionIndoorOutdoor;
-          payload.receptionVenueName = state.receptionVenueName;
-          payload.receptionVenueAddress1 = state.receptionVenueAddress1;
-          payload.receptionVenueAddress2 = state.receptionVenueAddress2;
-          payload.receptionVenueCountry = state.receptionVenueCountry;
-          payload.receptionVenueCity = state.receptionVenueCity;
-          payload.receptionVenueState = state.receptionVenueState;
-          payload.receptionVenueZip = state.receptionVenueZip;
-          payload.receptionVenueAsInsured = state.receptionVenueAsInsured;
-        }
-
-        // Brunch Venue (only if name is provided)
-        if (!isEmpty(state.brunchVenueName)) {
-          payload.brunchLocationType = state.brunchLocationType;
-          payload.brunchIndoorOutdoor = state.brunchIndoorOutdoor;
-          payload.brunchVenueName = state.brunchVenueName;
-          payload.brunchVenueAddress1 = state.brunchVenueAddress1;
-          payload.brunchVenueAddress2 = state.brunchVenueAddress2;
-          payload.brunchVenueCountry = state.brunchVenueCountry;
-          payload.brunchVenueCity = state.brunchVenueCity;
-          payload.brunchVenueState = state.brunchVenueState;
-          payload.brunchVenueZip = state.brunchVenueZip;
-          payload.brunchVenueAsInsured = state.brunchVenueAsInsured;
-        }
-
-        // Rehearsal Venue (only if name is provided)
-        if (!isEmpty(state.rehearsalVenueName)) {
-          payload.rehearsalLocationType = state.rehearsalLocationType;
-          payload.rehearsalIndoorOutdoor = state.rehearsalIndoorOutdoor;
-          payload.rehearsalVenueName = state.rehearsalVenueName;
-          payload.rehearsalVenueAddress1 = state.rehearsalVenueAddress1;
-          payload.rehearsalVenueAddress2 = state.rehearsalVenueAddress2;
-          payload.rehearsalVenueCountry = state.rehearsalVenueCountry;
-          payload.rehearsalVenueCity = state.rehearsalVenueCity;
-          payload.rehearsalVenueState = state.rehearsalVenueState;
-          payload.rehearsalVenueZip = state.rehearsalVenueZip;
-          payload.rehearsalVenueAsInsured = state.rehearsalVenueAsInsured;
-        }
-
-        // Rehearsal Dinner Venue (only if name is provided)
-        if (!isEmpty(state.rehearsalDinnerVenueName)) {
-          // Cast payload to any to avoid TypeScript errors
-          payload.rehearsalDinnerLocationType = state.rehearsalDinnerLocationType;
-          payload.rehearsalDinnerIndoorOutdoor = state.rehearsalDinnerIndoorOutdoor;
-          payload.rehearsalDinnerVenueName = state.rehearsalDinnerVenueName;
-          payload.rehearsalDinnerVenueAddress1 = state.rehearsalDinnerVenueAddress1;
-          payload.rehearsalDinnerVenueAddress2 = state.rehearsalDinnerVenueAddress2;
-          payload.rehearsalDinnerVenueCountry = state.rehearsalDinnerVenueCountry;
-          payload.rehearsalDinnerVenueCity = state.rehearsalDinnerVenueCity;
-          payload.rehearsalDinnerVenueState = state.rehearsalDinnerVenueState;
-          payload.rehearsalDinnerVenueZip = state.rehearsalDinnerVenueZip;
-          payload.rehearsalDinnerVenueAsInsured = state.rehearsalDinnerVenueAsInsured;
-        }
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      const quoteNumber = localStorage.getItem("quoteNumber");
+      
+      if (!quoteNumber) {
+        toast.error("Quote number not found. Please start over.");
+        router.push("/admin/create-quote/step1");
+        return;
       }
 
-      router.push("/admin/create-quote/step3");
-    } else {
-      // Show toast for each missing field
-      (Object as any).entries(errors).forEach(([field, message]: [string, string]) => {
+      try {
+        // Update quote with event information
+        const res = await fetch(`${apiUrl}/quotes/${quoteNumber}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            event: {
+              eventType: state.eventType,
+              eventDate: state.eventDate,
+              maxGuests: state.maxGuests,
+              honoree1FirstName: state.honoree1FirstName,
+              honoree1LastName: state.honoree1LastName,
+              honoree2FirstName: state.honoree2FirstName,
+              honoree2LastName: state.honoree2LastName,
+              venue: {
+                name: state.venueName,
+                address1: state.venueAddress1,
+                address2: state.venueAddress2,
+                city: state.venueCity,
+                state: state.venueState,
+                zip: state.venueZip,
+                country: state.venueCountry,
+                locationType: state.ceremonyLocationType,
+                indoorOutdoor: state.indoorOutdoor,
+                // Reception venue data
+                receptionLocationType: state.receptionLocationType,
+                receptionIndoorOutdoor: state.receptionIndoorOutdoor,
+                receptionAddress1: state.receptionVenueAddress1,
+                receptionAddress2: state.receptionVenueAddress2,
+                receptionCity: state.receptionVenueCity,
+                receptionState: state.receptionVenueState,
+                receptionZip: state.receptionVenueZip,
+                receptionCountry: state.receptionVenueCountry,
+                receptionVenueAsInsured: state.receptionVenueAsInsured,
+                // Brunch venue data
+                brunchLocationType: state.brunchLocationType,
+                brunchIndoorOutdoor: state.brunchIndoorOutdoor,
+                brunchAddress1: state.brunchVenueAddress1,
+                brunchAddress2: state.brunchVenueAddress2,
+                brunchCity: state.brunchVenueCity,
+                brunchState: state.brunchVenueState,
+                brunchZip: state.brunchVenueZip,
+                brunchCountry: state.brunchVenueCountry,
+                brunchVenueAsInsured: state.brunchVenueAsInsured,
+                // Rehearsal venue data
+                rehearsalLocationType: state.rehearsalLocationType,
+                rehearsalIndoorOutdoor: state.rehearsalIndoorOutdoor,
+                rehearsalAddress1: state.rehearsalVenueAddress1,
+                rehearsalAddress2: state.rehearsalVenueAddress2,
+                rehearsalCity: state.rehearsalVenueCity,
+                rehearsalState: state.rehearsalVenueState,
+                rehearsalZip: state.rehearsalVenueZip,
+                rehearsalCountry: state.rehearsalVenueCountry,
+                rehearsalVenueAsInsured: state.rehearsalVenueAsInsured,
+                // Rehearsal dinner venue data
+                rehearsalDinnerLocationType: state.rehearsalDinnerLocationType,
+                rehearsalDinnerIndoorOutdoor: state.rehearsalDinnerIndoorOutdoor,
+                rehearsalDinnerAddress1: state.rehearsalDinnerVenueAddress1,
+                rehearsalDinnerAddress2: state.rehearsalDinnerVenueAddress2,
+                rehearsalDinnerCity: state.rehearsalDinnerVenueCity,
+                rehearsalDinnerState: state.rehearsalDinnerVenueState,
+                rehearsalDinnerZip: state.rehearsalDinnerVenueZip,
+                rehearsalDinnerCountry: state.rehearsalDinnerVenueCountry,
+                rehearsalDinnerVenueAsInsured: state.rehearsalDinnerVenueAsInsured,
+              }
+            },
+            status: "STEP2"
+          }),
+        });
+
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.error || 'Failed to update quote');
+        }
+
+        dispatch({ type: "COMPLETE_STEP", step: 2 });
+        router.push("/admin/create-quote/step3");
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "An unknown error occurred.";
         toast.error(message);
-      });
-      const firstErrorField = Object.keys(errors)[0];
-      if (firstErrorField) {
-        const element = document.getElementById(firstErrorField);
-        if (element) {
-          element.scrollIntoView({ behavior: "smooth", block: "center" });
-        }
       }
+    } else {
+      Object.entries(errors).forEach(([, msg]) => toast.error(msg));
     }
   };
 

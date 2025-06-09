@@ -195,45 +195,150 @@ export default function QuoteGenerator() {
   };
 
   // Handle calculate quote
-  const handleCalculateQuote = () => {
+  const handleCalculateQuote = async () => {
     if (validateForm()) {
-      setIsLoading(true);
-      
-      // Calculate premiums
-      const basePremium = calculateBasePremium(state.coverageLevel);
-      const liabilityPremium = calculateLiabilityPremium(state.liabilityCoverage);
-      const liquorLiabilityPremium = calculateLiquorLiabilityPremium(
-        state.liquorLiability,
-        state.maxGuests as GuestRange
-      );
-      const totalPremium = basePremium + liabilityPremium + liquorLiabilityPremium;
+      try {
+        // Calculate premiums
+        const basePremium = calculateBasePremium(state.coverageLevel);
+        const liabilityPremium = calculateLiabilityPremium(state.liabilityCoverage);
+        const liquorLiabilityPremium = calculateLiquorLiabilityPremium(
+          state.liquorLiability,
+          state.maxGuests as GuestRange
+        );
+        const totalPremium = basePremium + liabilityPremium + liquorLiabilityPremium;
 
-      // Update state with calculated values
-      dispatch({ 
-        type: "CALCULATE_QUOTE",
-        payload: {
-          basePremium,
-          liabilityPremium,
-          liquorLiabilityPremium,
-          totalPremium
+        // Update state with calculated values
+        dispatch({
+          type: "CALCULATE_QUOTE",
+          payload: {
+            basePremium,
+            liabilityPremium,
+            liquorLiabilityPremium,
+            totalPremium
+          }
+        });
+
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+        // Create initial quote with step 1 data
+        const res = await fetch(`${apiUrl}/quotes`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            // Base quote data
+            residentState: state.residentState,
+            email: state.email,
+            coverageLevel: state.coverageLevel,
+            liabilityCoverage: state.liabilityCoverage,
+            liquorLiability: state.liquorLiability,
+            covidDisclosure: state.covidDisclosure,
+            specialActivities: state.specialActivities,
+            totalPremium: totalPremium,
+            basePremium: basePremium,
+            liabilityPremium: liabilityPremium,
+            liquorLiabilityPremium: liquorLiabilityPremium,
+            source: "ADMIN",
+            status: "STEP1",
+
+            // Event data
+            event: {
+              eventType: state.eventType,
+              eventDate: state.eventDate,
+              maxGuests: state.maxGuests,
+              honoree1FirstName: "",
+              honoree1LastName: "",
+              honoree2FirstName: "",
+              honoree2LastName: "",
+              venue: {
+                name: "",
+                address1: "",
+                address2: "",
+                city: "",
+                state: "",
+                zip: "",
+                country: "",
+                locationType: "",
+                indoorOutdoor: "",
+                venueAsInsured: false,
+                // Additional venue fields
+                receptionLocationType: "",
+                receptionIndoorOutdoor: "",
+                receptionAddress1: "",
+                receptionAddress2: "",
+                receptionCity: "",
+                receptionState: "",
+                receptionZip: "",
+                receptionCountry: "",
+                receptionVenueAsInsured: false,
+                brunchLocationType: "",
+                brunchIndoorOutdoor: "",
+                brunchAddress1: "",
+                brunchAddress2: "",
+                brunchCity: "",
+                brunchState: "",
+                brunchZip: "",
+                brunchCountry: "",
+                brunchVenueAsInsured: false,
+                rehearsalLocationType: "",
+                rehearsalIndoorOutdoor: "",
+                rehearsalAddress1: "",
+                rehearsalAddress2: "",
+                rehearsalCity: "",
+                rehearsalState: "",
+                rehearsalZip: "",
+                rehearsalCountry: "",
+                rehearsalVenueAsInsured: false,
+                rehearsalDinnerLocationType: "",
+                rehearsalDinnerIndoorOutdoor: "",
+                rehearsalDinnerAddress1: "",
+                rehearsalDinnerAddress2: "",
+                rehearsalDinnerCity: "",
+                rehearsalDinnerState: "",
+                rehearsalDinnerZip: "",
+                rehearsalDinnerCountry: "",
+                rehearsalDinnerVenueAsInsured: false
+              }
+            },
+
+            // Policy holder data
+            policyHolder: {
+              firstName: "",
+              lastName: "",
+              email: state.email,
+              phone: "",
+              address: "",
+              city: "",
+              state: "",
+              zip: "",
+              country: "",
+              relationship: "",
+              hearAboutUs: "",
+              legalNotices: false,
+              completingFormName: ""
+            }
+          }),
+        });
+
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.error || 'Failed to create quote');
         }
-      });
 
-      setTimeout(() => {
+        const data = await res.json();
+        localStorage.setItem("quoteNumber", data.quote.quoteNumber);
+        dispatch({
+          type: "UPDATE_FIELD",
+          field: "quoteNumber",
+          value: data.quote.quoteNumber,
+        });
         setShowQuoteResults(true);
-        setIsLoading(false);
-      }, 1500);
-    } else {
-      Object.entries(errors).forEach(([field, message]) =>
-        toast.error(message)
-      );
-      const firstErrorField = Object.keys(errors)[0];
-      if (firstErrorField) {
-        const element = document.getElementById(firstErrorField);
-        if (element) {
-          element.scrollIntoView({ behavior: "smooth", block: "center" });
-        }
+        dispatch({ type: "COMPLETE_STEP", step: 1 });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "An unknown error occurred.";
+        toast.error(message);
       }
+    } else {
+      Object.entries(errors).forEach(([, msg]) => toast.error(msg));
     }
   };
 

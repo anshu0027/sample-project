@@ -13,6 +13,7 @@ export default function Step4() {
     const router = useRouter();
     const [emailSent, setEmailSent] = useState(false);
     const [pageReady, setPageReady] = useState(false);
+    const [errors, setErrors] = useState({});
 
     useEffect(() => {
         const isAdminAuthenticated = () => {
@@ -53,118 +54,61 @@ export default function Step4() {
         return true;
     }
 
+    function validateForm(): boolean {
+        const errors = {};
+        if (!validateAllFields(state)) {
+            return false;
+        }
+        setErrors(errors);
+        return true;
+    }
+
     // ==================================================================
     // ===== API CHANGE #1: Saving the quote ==========================
     // ==================================================================
     const handleSave = async () => {
-        if (!validateAllFields(state)) {
-            return;
-        }
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-        try {
-            // Structure the data properly with nested objects
-            const payload = {
-                ...state,
-                source: "ADMIN",
-                // Event data in a nested structure
-                event: {
-                    eventType: state.eventType,
-                    eventDate: state.eventDate,
-                    maxGuests: state.maxGuests,
-                    honoree1FirstName: state.honoree1FirstName,
-                    honoree1LastName: state.honoree1LastName,
-                    honoree2FirstName: state.honoree2FirstName,
-                    honoree2LastName: state.honoree2LastName,
-                    venue: {
-                        name: state.venueName,
-                        address1: state.venueAddress1,
-                        address2: state.venueAddress2,
-                        city: state.venueCity,
-                        state: state.venueState,
-                        zip: state.venueZip,
-                        country: state.venueCountry,
-                        locationType: state.ceremonyLocationType,
-                        indoorOutdoor: state.indoorOutdoor,
-                        // Reception venue data
-                        receptionLocationType: state.receptionLocationType,
-                        receptionIndoorOutdoor: state.receptionIndoorOutdoor,
-                        receptionAddress1: state.receptionVenueAddress1,
-                        receptionAddress2: state.receptionVenueAddress2,
-                        receptionCity: state.receptionVenueCity,
-                        receptionState: state.receptionVenueState,
-                        receptionZip: state.receptionVenueZip,
-                        receptionCountry: state.receptionVenueCountry,
-                        receptionVenueAsInsured: state.receptionVenueAsInsured,
-                        // Brunch venue data
-                        brunchLocationType: state.brunchLocationType,
-                        brunchIndoorOutdoor: state.brunchIndoorOutdoor,
-                        brunchAddress1: state.brunchVenueAddress1,
-                        brunchAddress2: state.brunchVenueAddress2,
-                        brunchCity: state.brunchVenueCity,
-                        brunchState: state.brunchVenueState,
-                        brunchZip: state.brunchVenueZip,
-                        brunchCountry: state.brunchVenueCountry,
-                        brunchVenueAsInsured: state.brunchVenueAsInsured,
-                        // Rehearsal venue data
-                        rehearsalLocationType: state.rehearsalLocationType,
-                        rehearsalIndoorOutdoor: state.rehearsalIndoorOutdoor,
-                        rehearsalAddress1: state.rehearsalVenueAddress1,
-                        rehearsalAddress2: state.rehearsalVenueAddress2,
-                        rehearsalCity: state.rehearsalVenueCity,
-                        rehearsalState: state.rehearsalVenueState,
-                        rehearsalZip: state.rehearsalVenueZip,
-                        rehearsalCountry: state.rehearsalVenueCountry,
-                        rehearsalVenueAsInsured: state.rehearsalVenueAsInsured,
-                        // Rehearsal dinner venue data
-                        rehearsalDinnerLocationType: state.rehearsalDinnerLocationType,
-                        rehearsalDinnerIndoorOutdoor: state.rehearsalDinnerIndoorOutdoor,
-                        rehearsalDinnerAddress1: state.rehearsalDinnerVenueAddress1,
-                        rehearsalDinnerAddress2: state.rehearsalDinnerVenueAddress2,
-                        rehearsalDinnerCity: state.rehearsalDinnerVenueCity,
-                        rehearsalDinnerState: state.rehearsalDinnerVenueState,
-                        rehearsalDinnerZip: state.rehearsalDinnerVenueZip,
-                        rehearsalDinnerCountry: state.rehearsalDinnerVenueCountry,
-                        rehearsalDinnerVenueAsInsured: state.rehearsalDinnerVenueAsInsured,
-                    }
-                },
-                // Policy holder data
-                policyHolder: {
-                    firstName: state.firstName,
-                    lastName: state.lastName,
-                    phone: state.phone,
-                    relationship: state.relationship,
-                    hearAboutUs: state.hearAboutUs,
-                    address: state.address,
-                    country: state.country,
-                    city: state.city,
-                    state: state.state,
-                    zip: state.zip,
-                    legalNotices: state.legalNotices,
-                    completingFormName: state.completingFormName,
-                }
-            };
+        if (validateForm()) {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+            const quoteNumber = localStorage.getItem("quoteNumber");
             
-            // The admin flow creates a new quote directly, so we use POST.
-            // The backend will handle setting the status to COMPLETE for admin quotes.
-            const response = await fetch(`${apiUrl}/quotes`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload),
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to save quote');
+            if (!quoteNumber) {
+                toast.error("Quote number not found. Please start over.");
+                router.push("/admin/create-quote/step1");
+                return;
             }
 
-            const data = await response.json();
-            const policyHolderName = `${state.firstName} ${state.lastName}`;
-            alert(`Quote ${data.quote.quoteNumber} created successfully for ${policyHolderName}!`);
-            router.push("/admin/quotes");
+            try {
+                // Update quote with final information
+                const res = await fetch(`${apiUrl}/quotes/${quoteNumber}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        coverageLevel: state.coverageLevel,
+                        liabilityCoverage: state.liabilityCoverage,
+                        liquorLiability: state.liquorLiability,
+                        covidDisclosure: state.covidDisclosure,
+                        specialActivities: state.specialActivities,
+                        totalPremium: state.totalPremium,
+                        basePremium: state.basePremium,
+                        liabilityPremium: state.liabilityPremium,
+                        liquorLiabilityPremium: state.liquorLiabilityPremium,
+                        status: "COMPLETE"
+                    }),
+                });
 
-        } catch (error) {
-            const message = error instanceof Error ? error.message : "An unknown error occurred.";
-            toast.error(message);
+                if (!res.ok) {
+                    const errorData = await res.json();
+                    throw new Error(errorData.error || 'Failed to update quote');
+                }
+
+                toast.success("Quote saved successfully!");
+                router.push("/admin/quotes");
+            } catch (error) {
+                const message = error instanceof Error ? error.message : "An unknown error occurred.";
+                toast.error(message);
+            }
+        } else {
+            Object.entries(errors).forEach(([, msg]) => toast.error(msg));
         }
     };
 

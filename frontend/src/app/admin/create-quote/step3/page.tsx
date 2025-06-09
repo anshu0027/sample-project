@@ -109,21 +109,55 @@ export default function PolicyHolder() {
     router.push("/admin/create-quote/step2");
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (validateForm()) {
-      dispatch({ type: "COMPLETE_STEP", step: 3 });
-      router.push("/admin/create-quote/step4");
-    } else {
-      Object.values(errors).forEach((msg) => {
-        toast.error(msg);
-      });
-      const firstErrorField = Object.keys(errors)[0];
-      if (firstErrorField) {
-        const element = document.getElementById(firstErrorField);
-        if (element) {
-          element.scrollIntoView({ behavior: "smooth", block: "center" });
-        }
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      const quoteNumber = localStorage.getItem("quoteNumber");
+      
+      if (!quoteNumber) {
+        toast.error("Quote number not found. Please start over.");
+        router.push("/admin/create-quote/step1");
+        return;
       }
+
+      try {
+        // Update quote with policy holder information
+        const res = await fetch(`${apiUrl}/quotes/${quoteNumber}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            policyHolder: {
+              firstName: state.firstName,
+              lastName: state.lastName,
+              email: state.email,
+              phone: state.phone,
+              address: state.address,
+              city: state.city,
+              state: state.state,
+              zip: state.zip,
+              country: state.country,
+              relationship: state.relationship,
+              hearAboutUs: state.hearAboutUs,
+              legalNotices: state.legalNotices,
+              completingFormName: state.completingFormName
+            },
+            status: "STEP3"
+          }),
+        });
+
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.error || 'Failed to update quote');
+        }
+
+        dispatch({ type: "COMPLETE_STEP", step: 3 });
+        router.push("/admin/create-quote/step4");
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "An unknown error occurred.";
+        toast.error(message);
+      }
+    } else {
+      Object.entries(errors).forEach(([, msg]) => toast.error(msg));
     }
   };
 

@@ -45,13 +45,22 @@ export default function Quotes() {
     const router = useRouter();
 
     const processQuotesData = (rawData: any[]): QuoteList[] => {
-        return (rawData || []).map((q: any) => ({
-            ...q,
-            customer: q.policyHolder ? `${q.policyHolder.firstName || ''} ${q.policyHolder.lastName || ''}`.trim() : '',
-            eventType: q.event?.eventType || q.eventType || '',
-            eventDate: q.event?.eventDate || q.eventDate || '',
-            isCustomerGenerated: q.source === 'CUSTOMER',
-        }));
+        console.log('Raw data from backend:', rawData);
+        return (rawData || []).map((q: any) => {
+            console.log('Processing quote:', q);
+            const { event, policyHolder, ...baseQuote } = q;
+            console.log('Extracted event:', event);
+            console.log('Extracted policyHolder:', policyHolder);
+            console.log('Base quote:', baseQuote);
+            
+            return {
+                ...baseQuote,
+                customer: policyHolder ? `${policyHolder.firstName || ''} ${policyHolder.lastName || ''}`.trim() : '',
+                eventType: event?.eventType || '',
+                eventDate: event?.eventDate || '',
+                isCustomerGenerated: q.source === 'CUSTOMER',
+            };
+        });
     };
 
     // ==================================================================
@@ -64,6 +73,7 @@ export default function Quotes() {
             const res = await fetch(`${apiUrl}/quotes?allQuotes=true`, { method: "GET" });
             if (res.ok) {
                 const data = await res.json();
+                console.log('API Response:', data);
                 setQuotes(processQuotesData(data.quotes));
             } else {
                 throw new Error("Failed to fetch quotes.");
