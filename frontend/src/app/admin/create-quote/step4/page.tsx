@@ -62,9 +62,86 @@ export default function Step4() {
         }
         const apiUrl = process.env.NEXT_PUBLIC_API_URL;
         try {
+            // Structure the data properly with nested objects
             const payload = {
                 ...state,
-                source: "ADMIN" // Explicitly set source to ADMIN
+                source: "ADMIN",
+                // Event data in a nested structure
+                event: {
+                    eventType: state.eventType,
+                    eventDate: state.eventDate,
+                    maxGuests: state.maxGuests,
+                    honoree1FirstName: state.honoree1FirstName,
+                    honoree1LastName: state.honoree1LastName,
+                    honoree2FirstName: state.honoree2FirstName,
+                    honoree2LastName: state.honoree2LastName,
+                    venue: {
+                        name: state.venueName,
+                        address1: state.venueAddress1,
+                        address2: state.venueAddress2,
+                        city: state.venueCity,
+                        state: state.venueState,
+                        zip: state.venueZip,
+                        country: state.venueCountry,
+                        locationType: state.ceremonyLocationType,
+                        indoorOutdoor: state.indoorOutdoor,
+                        // Reception venue data
+                        receptionLocationType: state.receptionLocationType,
+                        receptionIndoorOutdoor: state.receptionIndoorOutdoor,
+                        receptionAddress1: state.receptionVenueAddress1,
+                        receptionAddress2: state.receptionVenueAddress2,
+                        receptionCity: state.receptionVenueCity,
+                        receptionState: state.receptionVenueState,
+                        receptionZip: state.receptionVenueZip,
+                        receptionCountry: state.receptionVenueCountry,
+                        receptionVenueAsInsured: state.receptionVenueAsInsured,
+                        // Brunch venue data
+                        brunchLocationType: state.brunchLocationType,
+                        brunchIndoorOutdoor: state.brunchIndoorOutdoor,
+                        brunchAddress1: state.brunchVenueAddress1,
+                        brunchAddress2: state.brunchVenueAddress2,
+                        brunchCity: state.brunchVenueCity,
+                        brunchState: state.brunchVenueState,
+                        brunchZip: state.brunchVenueZip,
+                        brunchCountry: state.brunchVenueCountry,
+                        brunchVenueAsInsured: state.brunchVenueAsInsured,
+                        // Rehearsal venue data
+                        rehearsalLocationType: state.rehearsalLocationType,
+                        rehearsalIndoorOutdoor: state.rehearsalIndoorOutdoor,
+                        rehearsalAddress1: state.rehearsalVenueAddress1,
+                        rehearsalAddress2: state.rehearsalVenueAddress2,
+                        rehearsalCity: state.rehearsalVenueCity,
+                        rehearsalState: state.rehearsalVenueState,
+                        rehearsalZip: state.rehearsalVenueZip,
+                        rehearsalCountry: state.rehearsalVenueCountry,
+                        rehearsalVenueAsInsured: state.rehearsalVenueAsInsured,
+                        // Rehearsal dinner venue data
+                        rehearsalDinnerLocationType: state.rehearsalDinnerLocationType,
+                        rehearsalDinnerIndoorOutdoor: state.rehearsalDinnerIndoorOutdoor,
+                        rehearsalDinnerAddress1: state.rehearsalDinnerVenueAddress1,
+                        rehearsalDinnerAddress2: state.rehearsalDinnerVenueAddress2,
+                        rehearsalDinnerCity: state.rehearsalDinnerVenueCity,
+                        rehearsalDinnerState: state.rehearsalDinnerVenueState,
+                        rehearsalDinnerZip: state.rehearsalDinnerVenueZip,
+                        rehearsalDinnerCountry: state.rehearsalDinnerVenueCountry,
+                        rehearsalDinnerVenueAsInsured: state.rehearsalDinnerVenueAsInsured,
+                    }
+                },
+                // Policy holder data
+                policyHolder: {
+                    firstName: state.firstName,
+                    lastName: state.lastName,
+                    phone: state.phone,
+                    relationship: state.relationship,
+                    hearAboutUs: state.hearAboutUs,
+                    address: state.address,
+                    country: state.country,
+                    city: state.city,
+                    state: state.state,
+                    zip: state.zip,
+                    legalNotices: state.legalNotices,
+                    completingFormName: state.completingFormName,
+                }
             };
             
             // The admin flow creates a new quote directly, so we use POST.

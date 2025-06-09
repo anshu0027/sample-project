@@ -48,8 +48,8 @@ export default function Quotes() {
         return (rawData || []).map((q: any) => ({
             ...q,
             customer: q.policyHolder ? `${q.policyHolder.firstName || ''} ${q.policyHolder.lastName || ''}`.trim() : '',
-            eventType: q.event?.eventType || '',
-            eventDate: q.event?.eventDate || '',
+            eventType: q.event?.eventType || q.eventType || '',
+            eventDate: q.event?.eventDate || q.eventDate || '',
             isCustomerGenerated: q.source === 'CUSTOMER',
         }));
     };

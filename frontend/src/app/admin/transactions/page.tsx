@@ -431,7 +431,7 @@ const Transactions = () => {
           variant="outline"
           size="sm"
           onClick={handleBack}
-          className="w-full sm:w-auto"
+          className="w-full sm:w-auto text-gray-800"
         >
           <ArrowLeft size={16} />
           Back to Dashboard
@@ -441,7 +441,7 @@ const Transactions = () => {
         </h1>
       </div>
       {/* Filters and Export Buttons */}
-      <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-6">
+      <div className="flex flex-col lg:flex-row text-gray-800 lg:justify-between lg:items-center gap-4 mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center gap-4 w-full lg:w-auto">
           <div className="relative w-full sm:w-48">
             <select
@@ -508,7 +508,7 @@ const Transactions = () => {
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <Card title="Total Revenue" icon={<DollarSign size={18} />}>
+        <Card title="Total Revenue" className="text-gray-800" icon={<DollarSign size={18} />}>
           <div className="mt-2">
             <div className="text-3xl font-bold text-gray-900">
               ${totalSales.toLocaleString()}
@@ -522,7 +522,7 @@ const Transactions = () => {
             </div>
           </div>
         </Card>
-        <Card title="Completed Transactions" icon={<DollarSign size={18}/>}>
+        <Card title="Completed Transactions" className="text-gray-800" icon={<DollarSign size={18}/>}>
           <div className="mt-2">
             <div className="text-3xl font-bold text-gray-900">
               {successfulTransactions}
@@ -552,9 +552,9 @@ const Transactions = () => {
         </Card> */}
       </div>
 
-      <Card title="Recent Transactions" icon={<Calendar size={18}/>}>
+      <Card title="Recent Transactions" className="text-gray-800" icon={<Calendar size={18}/>}>
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full text-gray-800">
             <thead>
               <tr className="bg-gray-50">
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -631,7 +631,7 @@ const Transactions = () => {
           </p>
           
           {totalPages > 0 && (
-            <div className="flex items-center justify-center sm:justify-end gap-2 w-full sm:w-auto">
+            <div className="flex items-center justify-center text-gray-600 sm:justify-end gap-2 w-full sm:w-auto">
               <Button
                 variant="outline"
                 size="sm"

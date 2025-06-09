@@ -29,6 +29,63 @@ import {
 import { toast } from "@/hooks/use-toast";
 import Card from "@/components/ui/Card";
 
+// Add type definitions
+type GuestRange = typeof GUEST_RANGES[number]['value'];
+type CoverageLevel = number;
+type LiabilityOption = string;
+
+// Add premium calculation functions
+const calculateBasePremium = (level: CoverageLevel | null): number => {
+  if (!level) return 0;
+  const premiumMap: Record<CoverageLevel, number> = {
+    1: 160,  // $7,500 coverage
+    2: 200,
+    3: 250,
+    4: 300,
+    5: 355,  // $50,000 coverage
+    6: 450,
+    7: 600,
+    8: 750,
+    9: 900,
+    10: 1025, // $175,000 coverage
+  };
+  return premiumMap[level] || 0;
+};
+
+const calculateLiabilityPremium = (option: LiabilityOption): number => {
+  switch (option) {
+    case 'option1': // $1M liability with $25K property damage
+      return 195;
+    case 'option2': // $1M liability with $250K property damage
+      return 210;
+    case 'option3': // $1M liability with $1M property damage
+      return 240;
+    case 'option4': // $1M/$2M Aggregate Liability with $25K PD
+      return 240;
+    case 'option5': // $1M/$2M Aggregate Liability with $250K PD
+      return 255;
+    case 'option6': // $1M/$2M Aggregate Liability with $1M PD
+      return 265;
+    default:
+      return 0;
+  }
+};
+
+const calculateLiquorLiabilityPremium = (hasLiquorLiability: boolean, guestRange: GuestRange): number => {
+  if (!hasLiquorLiability) return 0;
+  const premiumMap: Record<GuestRange, number> = {
+    '1-50': 65,
+    '51-100': 65,
+    '101-150': 85,
+    '151-200': 85,
+    '201-250': 100,
+    '251-300': 100,
+    '301-350': 150,
+    '351-400': 150
+  };
+  return premiumMap[guestRange] || 0;
+};
+
 export default function QuoteGenerator() {
   const router = useRouter();
   const { state, dispatch } = useQuote();
@@ -141,17 +198,35 @@ export default function QuoteGenerator() {
   const handleCalculateQuote = () => {
     if (validateForm()) {
       setIsLoading(true);
-      dispatch({ type: "CALCULATE_QUOTE" });
+      
+      // Calculate premiums
+      const basePremium = calculateBasePremium(state.coverageLevel);
+      const liabilityPremium = calculateLiabilityPremium(state.liabilityCoverage);
+      const liquorLiabilityPremium = calculateLiquorLiabilityPremium(
+        state.liquorLiability,
+        state.maxGuests as GuestRange
+      );
+      const totalPremium = basePremium + liabilityPremium + liquorLiabilityPremium;
+
+      // Update state with calculated values
+      dispatch({ 
+        type: "CALCULATE_QUOTE",
+        payload: {
+          basePremium,
+          liabilityPremium,
+          liquorLiabilityPremium,
+          totalPremium
+        }
+      });
+
       setTimeout(() => {
         setShowQuoteResults(true);
         setIsLoading(false);
       }, 1500);
     } else {
-      // Show toast for each missing field
       Object.entries(errors).forEach(([field, message]) =>
         toast.error(message)
       );
-      // Scroll to first error
       const firstErrorField = Object.keys(errors)[0];
       if (firstErrorField) {
         const element = document.getElementById(firstErrorField);

@@ -81,7 +81,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   className="h-8 w-8" // Adjust size as needed, 24px is h-6 w-6 in Tailwind
                 />
                 <div>
-                  <h1 className="font-bold text-xl leading-none">Wedevent </h1>
+                  <h1 className="font-bold text-xl text-gray-800 leading-none">Wedevent </h1>
                   <p className="text-xs text-gray-500 leading-none">Admin Portal</p>
                 </div>
               </div>

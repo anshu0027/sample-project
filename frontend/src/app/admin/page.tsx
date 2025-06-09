@@ -115,8 +115,8 @@ export default function AdminDashboard() {
                     {[...Array(3)].map((_, i) => <StatCardSkeleton key={i} />)}
                 </div>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <Card title="Recent Quotes" icon={<Clock size={20} />}><RecentListSkeleton /></Card>
-                    <Card title="Recent Transactions" icon={<DollarSign size={20} />}><RecentListSkeleton /></Card>
+                    <Card title="Recent Quotes" className="text-gray-800" icon={<Clock size={20} />}><RecentListSkeleton /></Card>
+                    <Card title="Recent Transactions" className="text-gray-800" icon={<DollarSign size={20} />}><RecentListSkeleton /></Card>
                 </div>
             </div>
         );
@@ -205,6 +205,7 @@ export default function AdminDashboard() {
                     title="Recent Quotes"
                     subtitle="Latest quotes created"
                     icon={<Clock size={20} />}
+                    className="text-gray-800"
                     footer={
                         <div className="text-right">
                             <Button
@@ -236,6 +237,7 @@ export default function AdminDashboard() {
                     title="Recent Transactions"
                     subtitle="Latest quote activities"
                     icon={<DollarSign size={20} />}
+                    className="text-gray-800"
                     footer={
                         <div className="text-right">
                             <Button
