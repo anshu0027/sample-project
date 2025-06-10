@@ -162,36 +162,36 @@ export default function EditPolicy() {
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [isLoading, setIsLoading] = useState(true);
     const [selectedVersion, setSelectedVersion] = useState<PolicyVersion | null>(null);
-    const [isVersionDropdownOpen, setIsVersionDropdownOpen] = useState(false);
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const versionDropdownRef = useRef<HTMLDivElement>(null);
     const [restoredFromVersion, setRestoredFromVersion] = useState<PolicyVersion | null>(null);
     const [showQuoteResults, setShowQuoteResults] = useState(false);
     const [emailSent, setEmailSent] = useState(false);
     const [isHovering, setIsHovering] = useState(false);
-
-    useEffect(() => {
-        function handleClickOutside(event: MouseEvent) {
-            if (versionDropdownRef.current && !versionDropdownRef.current.contains(event.target as Node)) {
-                setIsVersionDropdownOpen(false);
-            }
-        }
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
+    const [isLoadingVersion, setIsLoadingVersion] = useState(false);
 
     const handleDropdownToggle = () => {
-        setIsVersionDropdownOpen(!isVersionDropdownOpen);
+        setIsDropdownOpen((prev) => !prev);
     };
 
-    const handleMouseEnter = () => {
-        setIsHovering(true);
-        setIsVersionDropdownOpen(true);
+    const handleClickOutside = (event: MouseEvent) => {
+        const dropdownElement = document.getElementById('version-dropdown');
+        if (dropdownElement && !dropdownElement.contains(event.target as Node)) {
+            setIsDropdownOpen(false);
+        }
     };
 
-    const handleMouseLeave = () => {
-        setIsHovering(false);
-        setIsVersionDropdownOpen(false);
-    };
+    useEffect(() => {
+        if (isDropdownOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        } else {
+            document.removeEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [isDropdownOpen]);
 
     // ==================================================================
     // ===== API CHANGE #1: Fetching the initial policy data ==========
@@ -220,11 +220,23 @@ export default function EditPolicy() {
                     }
                     const policyData = await policyRes.json();
                     setFormState(flattenPolicy(policyData.policy));
-                    setPolicyVersions(policyData.policy.versions || []);
+                    
+                    // Load versions separately
+                    const versionsRes = await fetch(`${apiUrl}/policies/${quoteData.quote.policyId}?versionsOnly=true`);
+                    if (versionsRes.ok) {
+                        const versionsData = await versionsRes.json();
+                        setPolicyVersions(versionsData.versions || []);
+                    }
                 } else {
                     const data = await res.json();
                     setFormState(flattenPolicy(data.policy));
-                    setPolicyVersions(data.policy.versions || []);
+                    
+                    // Load versions separately
+                    const versionsRes = await fetch(`${apiUrl}/policies/${id}?versionsOnly=true`);
+                    if (versionsRes.ok) {
+                        const versionsData = await versionsRes.json();
+                        setPolicyVersions(versionsData.versions || []);
+                    }
                 }
             } catch (error) {
                 const message = error instanceof Error ? error.message : "Unknown error";
@@ -397,6 +409,118 @@ export default function EditPolicy() {
         return Object.keys(newErrors).length === 0;
     };
 
+    const fetchEventData = async () => {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+        try {
+            const res = await fetch(`${apiUrl}/policies/${id}/event`);
+            if (!res.ok) {
+                throw new Error("Failed to fetch event data");
+            }
+            const data = await res.json();
+            // Update state with event data
+            setFormState((prev) => ({ ...prev, ...data.event }));
+        } catch (error) {
+            console.error("Error fetching event data:", error);
+            toast({ title: "Failed to fetch event data", description: error.message, variant: "destructive" });
+        }
+    };
+
+    const fetchPolicyHolderData = async () => {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+        try {
+            const res = await fetch(`${apiUrl}/policies/${id}/policy-holder`);
+            if (!res.ok) {
+                throw new Error("Failed to fetch policy holder data");
+            }
+            const data = await res.json();
+            // Update state with policy holder data
+            setFormState((prev) => ({ ...prev, ...data.policyHolder }));
+        } catch (error) {
+            console.error("Error fetching policy holder data:", error);
+            toast({ title: "Failed to fetch policy holder data", description: error.message, variant: "destructive" });
+        }
+    };
+
+    const fetchPaymentsData = async () => {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+        try {
+            const res = await fetch(`${apiUrl}/policies/${id}/payments`);
+            if (!res.ok) {
+                throw new Error("Failed to fetch payments data");
+            }
+            const data = await res.json();
+            // Update state with payments data
+            setFormState((prev) => ({ ...prev, payments: data.payments }));
+        } catch (error) {
+            console.error("Error fetching payments data:", error);
+            toast({ title: "Failed to fetch payments data", description: error.message, variant: "destructive" });
+        }
+    };
+
+    useEffect(() => {
+        async function fetchPolicy() {
+            setIsLoading(true);
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+            try {
+                // Fetch the main policy data
+                const res = await fetch(`${apiUrl}/policies/${id}`);
+                if (!res.ok) {
+                    throw new Error("Policy not found.");
+                }
+                const data = await res.json();
+                setFormState(flattenPolicy(data.policy));
+            } catch (error) {
+                const message = error instanceof Error ? error.message : "Unknown error";
+                toast({ title: "Failed to fetch policy data", description: message, variant: "destructive" });
+            } finally {
+                setIsLoading(false);
+            }
+        }
+        if (id) {
+            fetchPolicy();
+        }
+    }, [id]);
+
+    const handleVersionClick = async (versionId: number) => {
+        setIsLoadingVersion(true);
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+        try {
+            const res = await fetch(`${apiUrl}/policies/${id}/versions/${versionId}`);
+            if (!res.ok) {
+                throw new Error("Failed to fetch version data");
+            }
+            const data = await res.json();
+            console.log('Fetched version data:', data);
+            const versionData = data.version;
+            // Update form state with the version data
+            setFormState((prev) => ({ ...prev, ...versionData }));
+            toast({ title: "Version loaded", description: `Version from ${new Date(versionData.createdAt).toLocaleString()} loaded.`, variant: "default" });
+        } catch (error) {
+            console.error("Error fetching version data:", error);
+            toast({ title: "Failed to load version", description: error.message, variant: "destructive" });
+        } finally {
+            setIsLoadingVersion(false);
+        }
+    };
+
+    // Example component to display versions with dropdown
+    const VersionDropdown = () => (
+        <div>
+            <button onClick={handleDropdownToggle}>Toggle Versions</button>
+            {isDropdownOpen && (
+                <div id="version-dropdown">
+                    {policyVersions.map((version) => (
+                        <div key={version.id} onClick={() => handleVersionClick(version.id)}>
+                            <span>Version ID: {version.id}</span>
+                            <span>Created At: {new Date(version.createdAt).toLocaleString()}</span>
+                        </div>
+                    ))}
+                    {isLoadingVersion && <div>Loading version data...</div>}
+                </div>
+            )}
+        </div>
+    );
+
     if (isLoading) return <EditPolicySkeleton />;
 
     return (
@@ -408,8 +532,8 @@ export default function EditPolicy() {
                         <div 
                             className="relative inline-block w-full sm:w-auto" 
                             ref={versionDropdownRef}
-                            onMouseEnter={handleMouseEnter}
-                            onMouseLeave={handleMouseLeave}
+                            onMouseEnter={() => setIsHovering(true)}
+                            onMouseLeave={() => setIsHovering(false)}
                         >
                             <Button
                                 variant="outline"
@@ -420,9 +544,9 @@ export default function EditPolicy() {
                                 <span className="hidden sm:inline">
                                     {restoredFromVersion ? 'Working with Restored Version' : 'Version History'}
                                 </span>
-                                <ChevronDown size={16} className={`transform transition-transform ${isVersionDropdownOpen ? 'rotate-180' : ''}`} />
+                                <ChevronDown size={16} className={`transform transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
                             </Button>
-                            {isVersionDropdownOpen && (
+                            {isDropdownOpen && (
                                 <div className="absolute mt-2 w-72 sm:w-96 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-96 overflow-y-auto left-1/2 -translate-x-1/2">
                                     <div className="p-2">
                                         <h3 className="text-sm font-medium text-gray-500 px-3 py-2">Version History</h3>
@@ -442,7 +566,7 @@ export default function EditPolicy() {
                                                         onClick={() => {
                                                             handleRestoreVersion(version);
                                                             if (!isHovering) {
-                                                                setIsVersionDropdownOpen(false);
+                                                                setIsDropdownOpen(false);
                                                             }
                                                         }}
                                                     >

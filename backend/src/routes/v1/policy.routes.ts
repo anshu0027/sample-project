@@ -33,7 +33,7 @@ router.get('/:id', async (req: Request, res: Response) => {
         const policyRepository = AppDataSource.getRepository(Policy);
         const policy = await policyRepository.findOne({
             where: { id: Number(id) },
-            relations: ['quote', 'quote.event', 'quote.event.venue', 'quote.policyHolder', 'event', 'event.venue', 'policyHolder', 'payments', 'versions'],
+            relations: ['quote', 'quote.event', 'quote.event.venue', 'quote.policyHolder', 'event', 'event.venue', 'policyHolder', 'payments'],
         });
 
         if (!policy) {
@@ -475,6 +475,72 @@ router.get('/:id/versions/:versionId', async (req: Request, res: Response) => {
     } catch (error) {
         console.error('GET /api/policies/:id/versions/:versionId error:', error);
         res.status(500).json({ error: 'Failed to fetch policy version' });
+    }
+});
+
+// Endpoint to fetch event data for a policy
+router.get('/:id/event', async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const policyRepository = AppDataSource.getRepository(Policy);
+        const policy = await policyRepository.findOne({
+            where: { id: Number(id) },
+            relations: ['event', 'event.venue'],
+        });
+
+        if (!policy || !policy.event) {
+            res.status(404).json({ error: 'Event not found' });
+            return;
+        }
+
+        res.json({ event: policy.event });
+    } catch (error) {
+        console.error('GET /api/policies/:id/event error:', error);
+        res.status(500).json({ error: 'Failed to fetch event data' });
+    }
+});
+
+// Endpoint to fetch policy holder data for a policy
+router.get('/:id/policy-holder', async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const policyRepository = AppDataSource.getRepository(Policy);
+        const policy = await policyRepository.findOne({
+            where: { id: Number(id) },
+            relations: ['policyHolder'],
+        });
+
+        if (!policy || !policy.policyHolder) {
+            res.status(404).json({ error: 'Policy holder not found' });
+            return;
+        }
+
+        res.json({ policyHolder: policy.policyHolder });
+    } catch (error) {
+        console.error('GET /api/policies/:id/policy-holder error:', error);
+        res.status(500).json({ error: 'Failed to fetch policy holder data' });
+    }
+});
+
+// Endpoint to fetch payments data for a policy
+router.get('/:id/payments', async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const policyRepository = AppDataSource.getRepository(Policy);
+        const policy = await policyRepository.findOne({
+            where: { id: Number(id) },
+            relations: ['payments'],
+        });
+
+        if (!policy || !policy.payments) {
+            res.status(404).json({ error: 'Payments not found' });
+            return;
+        }
+
+        res.json({ payments: policy.payments });
+    } catch (error) {
+        console.error('GET /api/policies/:id/payments error:', error);
+        res.status(500).json({ error: 'Failed to fetch payments data' });
     }
 });
 
