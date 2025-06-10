@@ -1,8 +1,6 @@
 import React from "react";
 import { User, Phone, MapPin, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import FormField from "@/components/ui/FormField";
-import Select from "@/components/ui/Select";
 import Checkbox from "@/components/ui/Checkbox";
 import { US_STATES, RELATIONSHIP_OPTIONS, REFERRAL_OPTIONS } from "@/utils/constants";
 
