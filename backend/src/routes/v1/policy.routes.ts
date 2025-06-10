@@ -97,7 +97,8 @@ router.post('/', async (req: Request, res: Response) => {
             eventDate: fields.eventDate,
             maxGuests: fields.maxGuests,
             venue: fields.venueId ? { id: fields.venueId } : null
-        });
+        } as unknown as Event);
+
         const savedEvent = await eventRepository.save(event);
 
         // Create and save policy holder
@@ -111,7 +112,8 @@ router.post('/', async (req: Request, res: Response) => {
             state: fields.state,
             zipCode: fields.zipCode,
             country: fields.country
-        });
+        } as unknown as PolicyHolder);
+
         const savedPolicyHolder = await policyHolderRepository.save(policyHolder);
 
         // Create and save payment
@@ -130,7 +132,7 @@ router.post('/', async (req: Request, res: Response) => {
             event: savedEvent,
             policyHolder: savedPolicyHolder,
             payments: [savedPayment]
-        });
+        } as unknown as Policy);
 
         const savedPolicy = await policyRepository.save(newPolicy);
 
@@ -159,7 +161,7 @@ router.put('/:id', async (req: Request, res: Response) => {
         const policyRepository = AppDataSource.getRepository(Policy);
         const policyRecord = await policyRepository.findOne({
             where: { id: Number(id) },
-            relations: ['quote', 'event', 'event.venue', 'policyHolder', 'versions'],
+            relations: ['quote', 'event', 'event.venue', 'policyHolder'],
         });
 
         if (!policyRecord) {
@@ -167,59 +169,130 @@ router.put('/:id', async (req: Request, res: Response) => {
             return;
         }
 
-        // --- Versioning Logic ---
-        const versionRepository = AppDataSource.getRepository(PolicyVersion);
-        const policySnapshot = { ...policyRecord, ...fields, versionCreatedAt: new Date() };
-
-        // Cap versions at 10
-        if (policyRecord.versions && policyRecord.versions.length >= 10) {
-            const versionsSorted = policyRecord.versions.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
-            await versionRepository.delete(versionsSorted[0].id);
-        }
-
-        const newVersion = versionRepository.create({
-            policy: policyRecord,
-            data: policySnapshot, // TypeORM handles JSON conversion
-        });
-        await versionRepository.save(newVersion);
-
         // --- Update Logic ---
         // Merge top-level policy fields
-        policyRepository.merge(policyRecord, { policyNumber: fields.policyNumber, pdfUrl: fields.pdfUrl });
+        policyRepository.merge(policyRecord, { 
+            policyNumber: fields.policyNumber, 
+            pdfUrl: fields.pdfUrl,
+            status: fields.status
+        });
 
-        // If it's a customer-flow policy (no quote)
-        if (!policyRecord.quote) {
+        // Update event fields if provided
+        if (fields.eventType || fields.eventDate || fields.maxGuests || 
+            fields.honoree1FirstName || fields.honoree1LastName || 
+            fields.honoree2FirstName || fields.honoree2LastName) {
+            
+            const eventRepository = AppDataSource.getRepository(Event);
+            const event = policyRecord.event || new Event();
+            
+            eventRepository.merge(event, {
+                eventType: fields.eventType,
+                eventDate: fields.eventDate,
+                maxGuests: fields.maxGuests,
+                honoree1FirstName: fields.honoree1FirstName,
+                honoree1LastName: fields.honoree1LastName,
+                honoree2FirstName: fields.honoree2FirstName,
+                honoree2LastName: fields.honoree2LastName
+            });
+            
+            await eventRepository.save(event);
+            policyRecord.event = event;
+        }
+
+        // Update venue fields if provided
+        if (fields.venueName || fields.venueAddress1 || fields.venueAddress2 || 
+            fields.venueCountry || fields.venueCity || fields.venueState || 
+            fields.venueZip || fields.ceremonyLocationType || 
+            fields.indoorOutdoor || fields.venueAsInsured) {
+            
+            const venueRepository = AppDataSource.getRepository(Venue);
+            const venue = policyRecord.event?.venue || new Venue();
+            
+            venueRepository.merge(venue, {
+                name: fields.venueName,
+                address1: fields.venueAddress1,
+                address2: fields.venueAddress2,
+                country: fields.venueCountry,
+                city: fields.venueCity,
+                state: fields.venueState,
+                zip: fields.venueZip,
+                ceremonyLocationType: fields.ceremonyLocationType,
+                indoorOutdoor: fields.indoorOutdoor,
+                venueAsInsured: fields.venueAsInsured
+            });
+            
+            await venueRepository.save(venue);
             if (policyRecord.event) {
-                AppDataSource.getRepository(Event).merge(policyRecord.event, { eventType: fields.eventType, eventDate: fields.eventDate });
-                if (policyRecord.event.venue) {
-                    AppDataSource.getRepository(Venue).merge(policyRecord.event.venue, { name: fields.venueName, address1: fields.venueAddress1 });
-                }
-            }
-            if (policyRecord.policyHolder) {
-                AppDataSource.getRepository(PolicyHolder).merge(policyRecord.policyHolder, { firstName: fields.firstName, lastName: fields.lastName });
-            }
-        } else { // If it's an admin-flow policy (with a quote)
-            const quoteRepository = AppDataSource.getRepository(Quote);
-            const quoteFields = {
-                coverageLevel: fields.coverageLevel,
-                liabilityCoverage: fields.liabilityCoverage,
-                // ... other quote fields
-            };
-            await quoteRepository.update({ id: policyRecord.quote.id }, quoteFields);
-            // Also update event/policyholder on the quote
-            if (policyRecord.quote.event) {
-                 AppDataSource.getRepository(Event).merge(policyRecord.quote.event, { eventType: fields.eventType, eventDate: fields.eventDate });
-                 if (policyRecord.quote.event.venue) {
-                    AppDataSource.getRepository(Venue).merge(policyRecord.quote.event.venue, { name: fields.venueName, address1: fields.venueAddress1 });
-                }
-            }
-             if (policyRecord.quote.policyHolder) {
-                AppDataSource.getRepository(PolicyHolder).merge(policyRecord.quote.policyHolder, { firstName: fields.firstName, lastName: fields.lastName });
+                policyRecord.event.venue = venue;
             }
         }
-        
+
+        // Update policy holder fields if provided
+        if (fields.firstName || fields.lastName || fields.phone || 
+            fields.relationship || fields.hearAboutUs || fields.address || 
+            fields.country || fields.city || fields.state || fields.zip || 
+            fields.legalNotices || fields.completingFormName) {
+            
+            const policyHolderRepository = AppDataSource.getRepository(PolicyHolder);
+            const policyHolder = policyRecord.policyHolder || new PolicyHolder();
+            
+            policyHolderRepository.merge(policyHolder, {
+                firstName: fields.firstName,
+                lastName: fields.lastName,
+                phone: fields.phone,
+                relationship: fields.relationship,
+                hearAboutUs: fields.hearAboutUs,
+                address: fields.address,
+                country: fields.country,
+                city: fields.city,
+                state: fields.state,
+                zip: fields.zip,
+                legalNotices: fields.legalNotices,
+                completingFormName: fields.completingFormName
+            });
+            
+            await policyHolderRepository.save(policyHolder);
+            policyRecord.policyHolder = policyHolder;
+        }
+
+        // Update quote fields if provided
+        if (fields.email || fields.coverageLevel || fields.liabilityCoverage || 
+            fields.liquorLiability || fields.covidDisclosure || 
+            fields.specialActivities || fields.residentState || 
+            fields.totalPremium || fields.basePremium || 
+            fields.liabilityPremium || fields.liquorLiabilityPremium) {
+            
+            const quoteRepository = AppDataSource.getRepository(Quote);
+            const quote = policyRecord.quote || new Quote();
+            
+            quoteRepository.merge(quote, {
+                email: fields.email,
+                coverageLevel: fields.coverageLevel,
+                liabilityCoverage: fields.liabilityCoverage,
+                liquorLiability: fields.liquorLiability,
+                covidDisclosure: fields.covidDisclosure,
+                specialActivities: fields.specialActivities,
+                residentState: fields.residentState,
+                totalPremium: fields.totalPremium,
+                basePremium: fields.basePremium,
+                liabilityPremium: fields.liabilityPremium,
+                liquorLiabilityPremium: fields.liquorLiabilityPremium
+            });
+            
+            await quoteRepository.save(quote);
+            policyRecord.quote = quote;
+        }
+
+        // Save the updated policy
         const updatedPolicy = await policyRepository.save(policyRecord);
-        res.json({ policy: updatedPolicy });
+
+        // Fetch the complete policy with all relations
+        const completePolicy = await policyRepository.findOne({
+            where: { id: updatedPolicy.id },
+            relations: ['quote', 'event', 'event.venue', 'policyHolder', 'versions']
+        });
+
+        res.json({ policy: completePolicy });
 
     } catch (error) {
         console.error('PUT /api/policies error:', error);

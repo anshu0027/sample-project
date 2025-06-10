@@ -108,8 +108,8 @@ export default function Policies() {
     // Export and other UI functions remain largely the same
     const handleExportCSV = () => { /* ... No changes needed ... */ };
     const handleExportPDF = () => { /* ... No changes needed ... */ };
-    const handleView = (quoteNumber: string) => router.push(`/admin/policies/${quoteNumber}`);
-    const handleEdit = (quoteNumber: string) => router.push(`/admin/policies/${quoteNumber}/edit`);
+    const handleView = (policyId: number) => router.push(`/admin/policies/${policyId}`);
+    const handleEdit = (policyId: number) => router.push(`/admin/policies/${policyId}/edit`);
 
     // ==================================================================
     // ===== API CHANGE #2: Deleting a policy =========================
@@ -351,10 +351,10 @@ export default function Policies() {
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                             <div className="flex justify-end gap-2">
-                                                <Button variant="outline" size="sm" onClick={() => handleView(policy.quoteNumber)}>
+                                                <Button variant="outline" size="sm" onClick={() => handleView(policy.policyId)}>
                                                     <Eye size={16} className="mr-1" /> View
                                                 </Button>
-                                                <Button variant="outline" size="sm" onClick={() => handleEdit(policy.quoteNumber)}>
+                                                <Button variant="outline" size="sm" onClick={() => handleEdit(policy.policyId)}>
                                                     <Edit size={16} className="mr-1" /> Edit
                                                 </Button>
                                                 <Button variant="outline" size="sm" onClick={() => handleEmail(policy.quoteNumber)} disabled={emailSendingQuoteNumber === policy.quoteNumber}>

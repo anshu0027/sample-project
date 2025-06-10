@@ -16,51 +16,95 @@ const Step4Form = dynamic(() => import('@/components/quote/Step4Form'), { ssr: f
 
 function flattenPolicy(policy: any): PolicyVersionData | null {
     if (!policy) return null;
-    const quoteData = policy.quote || policy; // Handle both direct policy and policy-with-quote structures
+    
+    // Get the data from either the policy directly or from its quote
+    const data = policy.quote || policy;
+    
     return {
-        residentState: quoteData.residentState || quoteData.policyHolder?.state || '',
-        eventType: quoteData.event?.eventType || '',
-        eventDate: quoteData.event?.eventDate || '',
-        maxGuests: String(quoteData.event?.maxGuests || ''),
-        email: quoteData.email || '',
-        coverageLevel: quoteData.coverageLevel ?? null,
-        liabilityCoverage: quoteData.liabilityCoverage ?? '',
-        liquorLiability: quoteData.liquorLiability ?? false,
-        covidDisclosure: quoteData.covidDisclosure ?? false,
-        specialActivities: quoteData.specialActivities ?? false,
-        honoree1FirstName: quoteData.event?.honoree1FirstName || '',
-        honoree1LastName: quoteData.event?.honoree1LastName || '',
-        honoree2FirstName: quoteData.event?.honoree2FirstName || '',
-        honoree2LastName: quoteData.event?.honoree2LastName || '',
-        ceremonyLocationType: quoteData.event?.venue?.ceremonyLocationType || '',
-        indoorOutdoor: quoteData.event?.venue?.indoorOutdoor || '',
-        venueName: quoteData.event?.venue?.name || '',
-        venueAddress1: quoteData.event?.venue?.address1 || '',
-        venueAddress2: quoteData.event?.venue?.address2 || '',
-        venueCountry: quoteData.event?.venue?.country || '',
-        venueCity: quoteData.event?.venue?.city || '',
-        venueState: quoteData.event?.venue?.state || '',
-        venueZip: quoteData.event?.venue?.zip || '',
-        venueAsInsured: quoteData.event?.venue?.venueAsInsured || false,
-        firstName: quoteData.policyHolder?.firstName || '',
-        lastName: quoteData.policyHolder?.lastName || '',
-        phone: quoteData.policyHolder?.phone || '',
-        relationship: quoteData.policyHolder?.relationship || '',
-        hearAboutUs: quoteData.policyHolder?.hearAboutUs || '',
-        address: quoteData.policyHolder?.address || '',
-        country: quoteData.policyHolder?.country || '',
-        city: quoteData.policyHolder?.city || '',
-        state: quoteData.policyHolder?.state || '',
-        zip: quoteData.policyHolder?.zip || '',
-        legalNotices: quoteData.policyHolder?.legalNotices || false,
-        completingFormName: quoteData.policyHolder?.completingFormName || '',
-        quoteNumber: quoteData.quoteNumber,
-        totalPremium: quoteData.totalPremium,
-        basePremium: quoteData.basePremium,
-        liabilityPremium: quoteData.liabilityPremium,
-        liquorLiabilityPremium: quoteData.liquorLiabilityPremium,
-        status: quoteData.status,
-        policyId: policy.id, // Always use the top-level policy ID
+        residentState: data.residentState || data.policyHolder?.state || '',
+        eventType: data.event?.eventType || '',
+        eventDate: data.event?.eventDate || '',
+        maxGuests: String(data.event?.maxGuests || ''),
+        email: data.email || '',
+        coverageLevel: data.coverageLevel ?? null,
+        liabilityCoverage: data.liabilityCoverage ?? '',
+        liquorLiability: data.liquorLiability ?? false,
+        covidDisclosure: data.covidDisclosure ?? false,
+        specialActivities: data.specialActivities ?? false,
+        honoree1FirstName: data.event?.honoree1FirstName || '',
+        honoree1LastName: data.event?.honoree1LastName || '',
+        honoree2FirstName: data.event?.honoree2FirstName || '',
+        honoree2LastName: data.event?.honoree2LastName || '',
+        ceremonyLocationType: data.event?.venue?.ceremonyLocationType || '',
+        indoorOutdoor: data.event?.venue?.indoorOutdoor || '',
+        venueName: data.event?.venue?.name || '',
+        venueAddress1: data.event?.venue?.address1 || '',
+        venueAddress2: data.event?.venue?.address2 || '',
+        venueCountry: data.event?.venue?.country || '',
+        venueCity: data.event?.venue?.city || '',
+        venueState: data.event?.venue?.state || '',
+        venueZip: data.event?.venue?.zip || '',
+        venueAsInsured: data.event?.venue?.venueAsInsured || false,
+        // Additional venue fields
+        receptionLocationType: data.event?.venue?.receptionLocationType || '',
+        receptionIndoorOutdoor: data.event?.venue?.receptionIndoorOutdoor || '',
+        receptionVenueName: data.event?.venue?.receptionVenueName || '',
+        receptionVenueAddress1: data.event?.venue?.receptionVenueAddress1 || '',
+        receptionVenueAddress2: data.event?.venue?.receptionVenueAddress2 || '',
+        receptionVenueCountry: data.event?.venue?.receptionVenueCountry || '',
+        receptionVenueCity: data.event?.venue?.receptionVenueCity || '',
+        receptionVenueState: data.event?.venue?.receptionVenueState || '',
+        receptionVenueZip: data.event?.venue?.receptionVenueZip || '',
+        receptionVenueAsInsured: data.event?.venue?.receptionVenueAsInsured || false,
+        brunchLocationType: data.event?.venue?.brunchLocationType || '',
+        brunchIndoorOutdoor: data.event?.venue?.brunchIndoorOutdoor || '',
+        brunchVenueName: data.event?.venue?.brunchVenueName || '',
+        brunchVenueAddress1: data.event?.venue?.brunchVenueAddress1 || '',
+        brunchVenueAddress2: data.event?.venue?.brunchVenueAddress2 || '',
+        brunchVenueCountry: data.event?.venue?.brunchVenueCountry || '',
+        brunchVenueCity: data.event?.venue?.brunchVenueCity || '',
+        brunchVenueState: data.event?.venue?.brunchVenueState || '',
+        brunchVenueZip: data.event?.venue?.brunchVenueZip || '',
+        brunchVenueAsInsured: data.event?.venue?.brunchVenueAsInsured || false,
+        rehearsalLocationType: data.event?.venue?.rehearsalLocationType || '',
+        rehearsalIndoorOutdoor: data.event?.venue?.rehearsalIndoorOutdoor || '',
+        rehearsalVenueName: data.event?.venue?.rehearsalVenueName || '',
+        rehearsalVenueAddress1: data.event?.venue?.rehearsalVenueAddress1 || '',
+        rehearsalVenueAddress2: data.event?.venue?.rehearsalVenueAddress2 || '',
+        rehearsalVenueCountry: data.event?.venue?.rehearsalVenueCountry || '',
+        rehearsalVenueCity: data.event?.venue?.rehearsalVenueCity || '',
+        rehearsalVenueState: data.event?.venue?.rehearsalVenueState || '',
+        rehearsalVenueZip: data.event?.venue?.rehearsalVenueZip || '',
+        rehearsalVenueAsInsured: data.event?.venue?.rehearsalVenueAsInsured || false,
+        rehearsalDinnerLocationType: data.event?.venue?.rehearsalDinnerLocationType || '',
+        rehearsalDinnerIndoorOutdoor: data.event?.venue?.rehearsalDinnerIndoorOutdoor || '',
+        rehearsalDinnerVenueName: data.event?.venue?.rehearsalDinnerVenueName || '',
+        rehearsalDinnerVenueAddress1: data.event?.venue?.rehearsalDinnerVenueAddress1 || '',
+        rehearsalDinnerVenueAddress2: data.event?.venue?.rehearsalDinnerVenueAddress2 || '',
+        rehearsalDinnerVenueCountry: data.event?.venue?.rehearsalDinnerVenueCountry || '',
+        rehearsalDinnerVenueCity: data.event?.venue?.rehearsalDinnerVenueCity || '',
+        rehearsalDinnerVenueState: data.event?.venue?.rehearsalDinnerVenueState || '',
+        rehearsalDinnerVenueZip: data.event?.venue?.rehearsalDinnerVenueZip || '',
+        rehearsalDinnerVenueAsInsured: data.event?.venue?.rehearsalDinnerVenueAsInsured || false,
+        firstName: data.policyHolder?.firstName || '',
+        lastName: data.policyHolder?.lastName || '',
+        phone: data.policyHolder?.phone || '',
+        relationship: data.policyHolder?.relationship || '',
+        hearAboutUs: data.policyHolder?.hearAboutUs || '',
+        address: data.policyHolder?.address || '',
+        country: data.policyHolder?.country || '',
+        city: data.policyHolder?.city || '',
+        state: data.policyHolder?.state || '',
+        zip: data.policyHolder?.zip || '',
+        legalNotices: data.policyHolder?.legalNotices || false,
+        completingFormName: data.policyHolder?.completingFormName || '',
+        quoteNumber: data.quoteNumber || policy.quote?.quoteNumber || '',
+        totalPremium: data.totalPremium || policy.quote?.totalPremium || 0,
+        basePremium: data.basePremium || policy.quote?.basePremium || 0,
+        liabilityPremium: data.liabilityPremium || policy.quote?.liabilityPremium || 0,
+        liquorLiabilityPremium: data.liquorLiabilityPremium || policy.quote?.liquorLiabilityPremium || 0,
+        status: data.status || policy.quote?.status || '',
+        policyId: policy.id,
         policyNumber: policy.policyNumber,
         pdfUrl: policy.pdfUrl,
     };
@@ -142,20 +186,31 @@ export default function EditPolicy() {
             setIsLoading(true);
             const apiUrl = process.env.NEXT_PUBLIC_API_URL;
             try {
-                // Use the single, more powerful endpoint we updated on the backend
+                // First try to get the policy by ID
                 const res = await fetch(`${apiUrl}/policies/${id}`);
                 if (!res.ok) {
-                    throw new Error("Policy not found.");
+                    // If that fails, try to get it by quote number
+                    const quoteRes = await fetch(`${apiUrl}/quotes?quoteNumber=${id}`);
+                    if (!quoteRes.ok) {
+                        throw new Error("Policy not found.");
+                    }
+                    const quoteData = await quoteRes.json();
+                    if (!quoteData.quote) {
+                        throw new Error("Quote not found.");
+                    }
+                    // If we found the quote, get the associated policy
+                    const policyRes = await fetch(`${apiUrl}/policies/${quoteData.quote.policyId}`);
+                    if (!policyRes.ok) {
+                        throw new Error("Associated policy not found.");
+                    }
+                    const policyData = await policyRes.json();
+                    setFormState(flattenPolicy(policyData.policy));
+                    setPolicyVersions(policyData.policy.versions || []);
+                } else {
+                    const data = await res.json();
+                    setFormState(flattenPolicy(data.policy));
+                    setPolicyVersions(data.policy.versions || []);
                 }
-                const data = await res.json();
-                
-                // The backend now sends the data in a `quote` property
-                const policyData = data.quote;
-                setFormState(flattenPolicy(policyData));
-                
-                // The versions are now part of the main policy object
-                setPolicyVersions(policyData.versions || []);
-
             } catch (error) {
                 const message = error instanceof Error ? error.message : "Unknown error";
                 toast({ title: "Failed to fetch policy data", description: message, variant: "destructive" });
@@ -218,13 +273,62 @@ export default function EditPolicy() {
 
         const apiUrl = process.env.NEXT_PUBLIC_API_URL;
         try {
+            // Structure the data according to the backend's expectations
             const payload = {
-                ...formState,
+                policyNumber: formState.policyNumber,
+                pdfUrl: formState.pdfUrl,
+                // Event fields
+                eventType: formState.eventType,
+                eventDate: formState.eventDate,
+                maxGuests: formState.maxGuests,
+                honoree1FirstName: formState.honoree1FirstName,
+                honoree1LastName: formState.honoree1LastName,
+                honoree2FirstName: formState.honoree2FirstName,
+                honoree2LastName: formState.honoree2LastName,
+                // Venue fields
+                venueName: formState.venueName,
+                venueAddress1: formState.venueAddress1,
+                venueAddress2: formState.venueAddress2,
+                venueCountry: formState.venueCountry,
+                venueCity: formState.venueCity,
+                venueState: formState.venueState,
+                venueZip: formState.venueZip,
+                ceremonyLocationType: formState.ceremonyLocationType,
+                indoorOutdoor: formState.indoorOutdoor,
+                venueAsInsured: formState.venueAsInsured,
+                // Policy holder fields
+                firstName: formState.firstName,
+                lastName: formState.lastName,
+                phone: formState.phone,
+                relationship: formState.relationship,
+                hearAboutUs: formState.hearAboutUs,
+                address: formState.address,
+                country: formState.country,
+                city: formState.city,
+                state: formState.state,
+                zip: formState.zip,
+                legalNotices: formState.legalNotices,
+                completingFormName: formState.completingFormName,
+                // Quote fields
+                email: formState.email,
+                coverageLevel: formState.coverageLevel,
+                liabilityCoverage: formState.liabilityCoverage,
+                liquorLiability: formState.liquorLiability,
+                covidDisclosure: formState.covidDisclosure,
+                specialActivities: formState.specialActivities,
+                residentState: formState.residentState,
+                totalPremium: formState.totalPremium,
+                basePremium: formState.basePremium,
+                liabilityPremium: formState.liabilityPremium,
+                liquorLiabilityPremium: formState.liquorLiabilityPremium,
+                status: formState.status,
+                /* Version metadata (commented out for now)
                 versionMetadata: restoredFromVersion ? {
                     restoredFromVersionId: restoredFromVersion.id,
                     restoredFromVersionDate: restoredFromVersion.createdAt,
                     isRestored: true,
                 } : undefined
+                */
             };
 
             const response = await fetch(`${apiUrl}/policies/${currentPolicyId}`, {
@@ -238,6 +342,7 @@ export default function EditPolicy() {
                 throw new Error(errorData.error || 'Failed to update policy');
             }
 
+            /* Version-related code (commented out for now)
             setRestoredFromVersion(null);
             setSelectedVersion(null);
 
@@ -247,6 +352,7 @@ export default function EditPolicy() {
                 const versionsData = await versionsRes.json();
                 setPolicyVersions(versionsData.versions);
             }
+            */
 
             toast({ title: "Policy updated successfully!", variant: "default" });
         } catch (error) {
@@ -283,6 +389,7 @@ export default function EditPolicy() {
             <div className="flex flex-col sm:flex-row items-center sm:justify-between mb-6 gap-4">
                 <h1 className="text-2xl text-center sm:text-left font-bold text-gray-900 order-1 sm:order-none w-full sm:w-auto">Edit Policy</h1>
                 <div className="flex flex-col-reverse items-center w-full sm:flex-row sm:items-center sm:w-auto gap-2 order-2 sm:order-none">
+                    {/* Version history UI (commented out for now)
                     {policyVersions.length > 0 && (
                         <div className="relative inline-block w-full sm:w-auto" ref={versionDropdownRef}>
                             <Button
@@ -340,6 +447,7 @@ export default function EditPolicy() {
                             )}
                         </div>
                     )}
+                    */}
                     <Button variant="outline" size="sm" className="w-full justify-center sm:w-auto" onClick={() => router.push('/admin/policies')}>
                         Back to Policies
                     </Button>

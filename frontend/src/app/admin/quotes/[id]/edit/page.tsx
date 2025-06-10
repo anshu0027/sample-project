@@ -4,6 +4,7 @@ import { useRouter, useParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { toast } from "@/hooks/use-toast";
 import dynamic from 'next/dynamic';
+import { GuestRange, CoverageLevel, LiabilityOption } from "@/context/QuoteContext";
 
 const StepFormLoading = () => <div className="p-8 text-center text-gray-500">Loading form...</div>;
 const Step1Form = dynamic(() => import('@/components/quote/Step1Form'), { ssr: false, loading: StepFormLoading });
@@ -12,12 +13,15 @@ const Step3Form = dynamic(() => import('@/components/quote/Step3Form'), { ssr: f
 const Step4Form = dynamic(() => import('@/components/quote/Step4Form'), { ssr: false, loading: StepFormLoading });
 
 interface FormState {
+    step1Complete: boolean;
+    step2Complete: boolean;
+    step3Complete: boolean;
     residentState: string;
     eventType: string;
     eventDate: string;
-    maxGuests: string;
-    coverageLevel: number | null;
-    liabilityCoverage: string;
+    maxGuests: "" | GuestRange;
+    coverageLevel: CoverageLevel | null;
+    liabilityCoverage: LiabilityOption;
     liquorLiability: boolean;
     covidDisclosure: boolean;
     specialActivities: boolean;
@@ -35,6 +39,46 @@ interface FormState {
     venueState: string;
     venueZip: string;
     venueAsInsured: boolean;
+    receptionLocationType: string;
+    receptionIndoorOutdoor: string;
+    receptionVenueName: string;
+    receptionVenueAddress1: string;
+    receptionVenueAddress2: string;
+    receptionVenueCountry: string;
+    receptionVenueCity: string;
+    receptionVenueState: string;
+    receptionVenueZip: string;
+    receptionVenueAsInsured: boolean;
+    brunchLocationType: string;
+    brunchIndoorOutdoor: string;
+    brunchVenueName: string;
+    brunchVenueAddress1: string;
+    brunchVenueAddress2: string;
+    brunchVenueCountry: string;
+    brunchVenueCity: string;
+    brunchVenueState: string;
+    brunchVenueZip: string;
+    brunchVenueAsInsured: boolean;
+    rehearsalLocationType: string;
+    rehearsalIndoorOutdoor: string;
+    rehearsalVenueName: string;
+    rehearsalVenueAddress1: string;
+    rehearsalVenueAddress2: string;
+    rehearsalVenueCountry: string;
+    rehearsalVenueCity: string;
+    rehearsalVenueState: string;
+    rehearsalVenueZip: string;
+    rehearsalVenueAsInsured: boolean;
+    rehearsalDinnerLocationType: string;
+    rehearsalDinnerIndoorOutdoor: string;
+    rehearsalDinnerVenueName: string;
+    rehearsalDinnerVenueAddress1: string;
+    rehearsalDinnerVenueAddress2: string;
+    rehearsalDinnerVenueCountry: string;
+    rehearsalDinnerVenueCity: string;
+    rehearsalDinnerVenueState: string;
+    rehearsalDinnerVenueZip: string;
+    rehearsalDinnerVenueAsInsured: boolean;
     firstName: string;
     lastName: string;
     email: string;
@@ -49,20 +93,23 @@ interface FormState {
     legalNotices: boolean;
     completingFormName: string;
     quoteNumber: string;
-    totalPremium: number | null;
-    basePremium: number | null;
-    liabilityPremium: number | null;
-    liquorLiabilityPremium: number | null;
+    totalPremium: number;
+    basePremium: number;
+    liabilityPremium: number;
+    liquorLiabilityPremium: number;
     status: string;
 }
 
 function flattenQuote(quote: any): FormState | null {
     if (!quote) return null;
     return {
+        step1Complete: true,
+        step2Complete: true,
+        step3Complete: true,
         residentState: quote.residentState || quote.policyHolder?.state || '',
         eventType: quote.event?.eventType || '',
         eventDate: quote.event?.eventDate || '',
-        maxGuests: quote.event?.maxGuests || '',
+        maxGuests: quote.event?.maxGuests || '',  // Will be converted to GuestRange
         coverageLevel: quote.coverageLevel ?? null,
         email: quote.email || '',
         liabilityCoverage: quote.liabilityCoverage ?? '',
@@ -83,6 +130,46 @@ function flattenQuote(quote: any): FormState | null {
         venueState: quote.event?.venue?.state || '',
         venueZip: quote.event?.venue?.zip || '',
         venueAsInsured: quote.event?.venue?.venueAsInsured || false,
+        receptionLocationType: quote.event?.receptionLocationType || '',
+        receptionIndoorOutdoor: quote.event?.receptionIndoorOutdoor || '',
+        receptionVenueName: quote.event?.receptionVenue?.name || '',
+        receptionVenueAddress1: quote.event?.receptionVenue?.address1 || '',
+        receptionVenueAddress2: quote.event?.receptionVenue?.address2 || '',
+        receptionVenueCountry: quote.event?.receptionVenue?.country || '',
+        receptionVenueCity: quote.event?.receptionVenue?.city || '',
+        receptionVenueState: quote.event?.receptionVenue?.state || '',
+        receptionVenueZip: quote.event?.receptionVenue?.zip || '',
+        receptionVenueAsInsured: quote.event?.receptionVenue?.venueAsInsured || false,
+        brunchLocationType: quote.event?.brunchLocationType || '',
+        brunchIndoorOutdoor: quote.event?.brunchIndoorOutdoor || '',
+        brunchVenueName: quote.event?.brunchVenue?.name || '',
+        brunchVenueAddress1: quote.event?.brunchVenue?.address1 || '',
+        brunchVenueAddress2: quote.event?.brunchVenue?.address2 || '',
+        brunchVenueCountry: quote.event?.brunchVenue?.country || '',
+        brunchVenueCity: quote.event?.brunchVenue?.city || '',
+        brunchVenueState: quote.event?.brunchVenue?.state || '',
+        brunchVenueZip: quote.event?.brunchVenue?.zip || '',
+        brunchVenueAsInsured: quote.event?.brunchVenue?.venueAsInsured || false,
+        rehearsalLocationType: quote.event?.rehearsalLocationType || '',
+        rehearsalIndoorOutdoor: quote.event?.rehearsalIndoorOutdoor || '',
+        rehearsalVenueName: quote.event?.rehearsalVenue?.name || '',
+        rehearsalVenueAddress1: quote.event?.rehearsalVenue?.address1 || '',
+        rehearsalVenueAddress2: quote.event?.rehearsalVenue?.address2 || '',
+        rehearsalVenueCountry: quote.event?.rehearsalVenue?.country || '',
+        rehearsalVenueCity: quote.event?.rehearsalVenue?.city || '',
+        rehearsalVenueState: quote.event?.rehearsalVenue?.state || '',
+        rehearsalVenueZip: quote.event?.rehearsalVenue?.zip || '',
+        rehearsalVenueAsInsured: quote.event?.rehearsalVenue?.venueAsInsured || false,
+        rehearsalDinnerLocationType: quote.event?.rehearsalDinnerLocationType || '',
+        rehearsalDinnerIndoorOutdoor: quote.event?.rehearsalDinnerIndoorOutdoor || '',
+        rehearsalDinnerVenueName: quote.event?.rehearsalDinnerVenue?.name || '',
+        rehearsalDinnerVenueAddress1: quote.event?.rehearsalDinnerVenue?.address1 || '',
+        rehearsalDinnerVenueAddress2: quote.event?.rehearsalDinnerVenue?.address2 || '',
+        rehearsalDinnerVenueCountry: quote.event?.rehearsalDinnerVenue?.country || '',
+        rehearsalDinnerVenueCity: quote.event?.rehearsalDinnerVenue?.city || '',
+        rehearsalDinnerVenueState: quote.event?.rehearsalDinnerVenue?.state || '',
+        rehearsalDinnerVenueZip: quote.event?.rehearsalDinnerVenue?.zip || '',
+        rehearsalDinnerVenueAsInsured: quote.event?.rehearsalDinnerVenue?.venueAsInsured || false,
         firstName: quote.policyHolder?.firstName || '',
         lastName: quote.policyHolder?.lastName || '',
         phone: quote.policyHolder?.phone || '',
@@ -96,10 +183,10 @@ function flattenQuote(quote: any): FormState | null {
         legalNotices: quote.policyHolder?.legalNotices || false,
         completingFormName: quote.policyHolder?.completingFormName || '',
         quoteNumber: quote.quoteNumber,
-        totalPremium: quote.totalPremium,
-        basePremium: quote.basePremium,
-        liabilityPremium: quote.liabilityPremium,
-        liquorLiabilityPremium: quote.liquorLiabilityPremium,
+        totalPremium: quote.totalPremium || 0,
+        basePremium: quote.basePremium || 0,
+        liabilityPremium: quote.liabilityPremium || 0,
+        liquorLiabilityPremium: quote.liquorLiabilityPremium || 0,
         status: quote.status,
     };
 }
@@ -296,7 +383,6 @@ export default function EditQuote() {
                     onValidate={validateStep2}
                     onContinue={() => setStep(3)}
                     onSave={handleSave}
-                    isCustomerEdit={false} // if needed for Step2Form
                 />
             )}
             {step === 3 && (
@@ -305,7 +391,6 @@ export default function EditQuote() {
                     errors={errors}
                     onChange={handleInputChange}
                     onSave={handleSave}
-                    isCustomerEdit={false} // if needed for Step3Form
                 />
             )}
             {step === 4 && (
@@ -322,8 +407,7 @@ export default function EditQuote() {
                     emailSent={emailSent}
                     onEmail={() => setEmailSent(true)}
                     isRetrievedQuote={false}
-                    isAdmin={true}                    
-                    isCustomerEdit={false} // if needed for Step4Form
+                    isAdmin={true}
                 />
             )}
         </div>

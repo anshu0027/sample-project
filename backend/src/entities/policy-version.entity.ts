@@ -14,10 +14,10 @@ export class PolicyVersion {
   createdAt!: Date;
 
   // --- RELATIONS ---
-  @Column({ name: 'POLICYID' })
+  @Column({ name: 'POLICYID', nullable: false })
   policyId!: number;
 
-  @ManyToOne(() => Policy, (policy) => policy.versions)
+  @ManyToOne(() => Policy, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'POLICYID' })
   policy!: Policy;
 }

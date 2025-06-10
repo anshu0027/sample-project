@@ -198,6 +198,10 @@ export default function EditUserQuote() {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
     // The payload is the entire form state, as the backend can handle partial updates.
     const payload = { ...formState };
+    
+    console.log('Saving quote with payload:', payload);
+    console.log('API URL:', apiUrl);
+    console.log('Quote ID:', id);
 
     try {
       const res = await fetch(`${apiUrl}/quotes/${id}`, { // UPDATED PATH
@@ -206,10 +210,13 @@ export default function EditUserQuote() {
         body: JSON.stringify(payload),
       });
 
+      console.log('Response status:', res.status);
+      const responseData = await res.json();
+      console.log('Response data:', responseData);
+
       if (res.ok) {
-        const data = await res.json();
         toast({ title: "Quote progress saved!", variant: "default" });
-        const updatedStateFromSave = flattenQuote(data.quote);
+        const updatedStateFromSave = flattenQuote(responseData.quote);
         setFormState(updatedStateFromSave);
         dispatch({
           type: "SET_ENTIRE_QUOTE_STATE",
@@ -217,10 +224,10 @@ export default function EditUserQuote() {
         });
         return true;
       } else {
-        const data = await res.json();
-        throw new Error(data.error || "Failed to update quote.");
+        throw new Error(responseData.error || "Failed to update quote.");
       }
     } catch (error) {
+      console.error('Save error:', error);
       const message = error instanceof Error ? error.message : "An unknown error occurred.";
       toast({ title: message, variant: "destructive" });
       return false;

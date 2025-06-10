@@ -411,7 +411,7 @@ export default function QuoteGenerator() {
               htmlFor="residentState"
               className="block text-sm font-medium text-gray-700 text-left mb-1"
             >
-              Policy Holder's Resident State
+              Policy Holder&apos;s Resident State
               <span className="text-red-500 ml-1">*</span>
             </label>
             <div className="relative w-full">
