@@ -470,6 +470,8 @@ router.delete('/:quoteNumber', async (req: Request, res: Response) => {
 
   try {
     const { quoteNumber } = req.params;
+    console.log('Attempting to delete quote:', quoteNumber);
+    
     const quoteRepository = queryRunner.manager.getRepository(Quote);
 
     const quote = await quoteRepository.findOne({
@@ -479,46 +481,83 @@ router.delete('/:quoteNumber', async (req: Request, res: Response) => {
 
     if (!quote) {
       await queryRunner.rollbackTransaction();
+      console.log('Quote not found:', quoteNumber);
       res.status(404).json({ error: 'Quote not found' });
       return;
     }
 
+    console.log('Found quote with ID:', quote.id);
+    console.log('Policy ID:', quote.policy?.id);
+    console.log('Event ID:', quote.event?.id);
+    console.log('Policy Holder ID:', quote.policyHolder?.id);
+
     // Delete in correct order to handle foreign key constraints
     if (quote.payments?.length) {
-      await queryRunner.manager.delete('payments', { quoteId: quote.id });
+      console.log('Deleting payments for quote:', quote.id);
+      await queryRunner.manager.delete('PAYMENTS', { quoteId: quote.id });
     }
 
-    if (quote.policy?.versions?.length) {
-      await queryRunner.manager.delete('policy_versions', { policyId: quote.policy.id });
-    }
-
+    // If there's a policy, we need to delete all related records first
     if (quote.policy) {
-      await queryRunner.manager.delete('policies', { id: quote.policy.id });
+      console.log('Processing policy deletion for policy:', quote.policy.id);
+      
+      // Delete policy versions first
+      if (quote.policy.versions?.length) {
+        console.log('Deleting policy versions for policy:', quote.policy.id);
+        await queryRunner.manager.delete('POLICY_VERSIONS', { policyId: quote.policy.id });
+      }
+
+      // Delete events linked to the policy
+      console.log('Deleting events linked to policy:', quote.policy.id);
+      await queryRunner.manager.delete('EVENTS', { policyId: quote.policy.id });
+
+      // Delete policy holders linked to the policy
+      console.log('Deleting policy holders linked to policy:', quote.policy.id);
+      await queryRunner.manager.delete('POLICY_HOLDERS', { policyId: quote.policy.id });
+
+      // Now we can delete the policy
+      console.log('Deleting policy:', quote.policy.id);
+      await queryRunner.manager.delete('POLICIES', { id: quote.policy.id });
     }
 
+    // Delete venue if it exists
     if (quote.event?.venue) {
-      await queryRunner.manager.delete('venues', { id: quote.event.venue.id });
+      console.log('Deleting venue:', quote.event.venue.id);
+      await queryRunner.manager.delete('VENUES', { id: quote.event.venue.id });
     }
 
+    // Delete event if it exists
     if (quote.event) {
-      await queryRunner.manager.delete('events', { id: quote.event.id });
+      console.log('Deleting event:', quote.event.id);
+      await queryRunner.manager.delete('EVENTS', { id: quote.event.id });
     }
 
+    // Delete policy holder if it exists
     if (quote.policyHolder) {
-      await queryRunner.manager.delete('policy_holders', { id: quote.policyHolder.id });
+      console.log('Deleting policy holder:', quote.policyHolder.id);
+      await queryRunner.manager.delete('POLICY_HOLDERS', { id: quote.policyHolder.id });
     }
 
+    // Finally delete the quote
+    console.log('Deleting quote:', quote.id);
     await quoteRepository.remove(quote);
     await queryRunner.commitTransaction();
 
-    res.json({ message: 'Quote and related records deleted successfully' });
+    console.log('Successfully deleted quote and all related records');
+    res.json({ message: 'Quote and all related records (including policy) deleted successfully' });
 
   } catch (error) {
     await queryRunner.rollbackTransaction();
     console.error('DELETE /api/v1/quotes error:', error);
+    console.error('Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      code: error instanceof Error ? (error as any).code : undefined
+    });
     res.status(500).json({ 
       error: 'Failed to delete quote',
-      details: error instanceof Error ? error.message : 'Unknown error'
+      details: error instanceof Error ? error.message : 'Unknown error',
+      code: error instanceof Error ? (error as any).code : undefined
     });
   } finally {
     await queryRunner.release();

@@ -108,7 +108,7 @@ export default function Step4() {
                 toast.error(message);
             }
         } else {
-            Object.entries(errors).forEach(([, msg]) => toast.error(msg));
+            Object.entries(errors).forEach(([, msg]) => toast.error(msg as string));
         }
     };
 

@@ -297,21 +297,23 @@ export default function PolicyHolder() {
             </div>
           </div>
         </div>
-        <div className="mb-8 shadow-lg border-0 bg-white p-8 sm:p-10 md:p-12 rounded-2xl w-full">
-          <div className="flex items-center justify-center text-left mb-4 gap-4">
-            <div className="flex-shrink-0">
+
+                
+        <div className="mb-8 shadow-lg border-0 bg-white p-4 sm:p-8 md:p-10 lg:p-12 rounded-2xl w-full">
+          <div className="flex flex-col sm:flex-row items-center justify-center text-center sm:text-left mb-4 gap-2 sm:gap-4">
+            <div className="flex-shrink-0 mb-2 sm:mb-0">
               <Phone size={28} className="text-blue-600" />
             </div>
             <div>
-              <div className="text-xl md:text-2xl font-extrabold leading-tight mb-1">
+              <div className="text-lg sm:text-xl md:text-2xl font-extrabold leading-tight mb-1">
                 Contact Information
               </div>
-              <div className="text-base text-gray-500 font-medium leading-tight">
+              <div className="text-sm sm:text-base text-gray-500 font-medium leading-tight">
                 How we can reach you regarding your policy
               </div>
             </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 w-full px-2 sm:px-4 md:px-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 w-full px-2 sm:px-4 md:px-2">
             <div className="mb-4">
               <label
                 htmlFor="phone"
@@ -326,7 +328,7 @@ export default function PolicyHolder() {
                   value={formattedPhone}
                   onChange={handlePhoneChange}
                   placeholder=" (123) 456-7890"
-                  className={`text-left w-full border rounded-md py-2 pr-2 ${
+                  className={`text-left w-full border rounded-md pl-2 py-2 pr-2 ${
                     errors.phone ? "border-red-500" : "border-gray-300"
                   } focus:outline-none focus:ring-2 focus:ring-blue-500`}
                 />
@@ -407,6 +409,8 @@ export default function PolicyHolder() {
             </div>
           </div>
         </div>
+
+        {/* Mailing Address */}
         <div className="mb-8 shadow-lg border-0 bg-white p-8 sm:p-10 md:p-12 rounded-2xl w-full">
           <div className="flex items-center justify-center text-left mb-4 gap-4">
             <div className="flex-shrink-0">

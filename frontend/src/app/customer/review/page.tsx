@@ -145,11 +145,7 @@ export default function Review() {
   const [savingPolicy, setSavingPolicy] = useState(false);
   const [pageReady, setPageReady] = useState(false);
   const [policySaved, setPolicySaved] = useState(false);
-  const policyNumberRef = useRef(
-    `WI-POL-${Math.floor(Math.random() * 1000000)
-      .toString()
-      .padStart(6, "0")}`
-  );
+  const [policyNumber, setPolicyNumber] = useState<string>("");
 
   // Find option labels from their values
   const eventTypeLabel =
@@ -205,7 +201,7 @@ export default function Review() {
       // Quote info
       doc.setTextColor(0, 0, 0);
       doc.setFontSize(12);
-      doc.text(`Policy #: ${policyNumberRef.current}`, 15, 40);
+      doc.text(`Policy #: ${policyNumber}`, 15, 40);
       doc.text(`Date: ${new Date().toLocaleDateString()}`, 15, 48);
       // Separator line
       doc.setDrawColor(200, 200, 200);
@@ -304,9 +300,13 @@ export default function Review() {
 
   // Define savePolicyAndPayment function at component level
   const savePolicyAndPayment = useCallback(async () => {
-    const storedQuoteNumber = localStorage.getItem("quoteNumber");
-    if (!storedQuoteNumber) {
-      toast.error("Missing quote number. Please start from Step 1.");
+    console.log("savePolicyAndPayment CALLED"); // CRUCIAL: First log in the function
+
+    const quoteNumberFromParams = searchParams.get("qn");
+
+    if (!quoteNumberFromParams) {
+      toast.error("Missing quote number in URL. Payment process might be incomplete.");
+      console.error("savePolicyAndPayment: quoteNumber (qn) is missing from URL searchParams.");
       return;
     }
 
@@ -324,11 +324,11 @@ export default function Review() {
       }
 
       try {
-        // 1. Update quote to COMPLETE status
-        const quoteRes = await fetch(`${apiUrl}/quotes/${storedQuoteNumber}`, { // UPDATED PATH
+        // 1. Update quote to COMPLETE status (using quoteNumberFromParams)
+        const quoteRes = await fetch(`${apiUrl}/quotes/${quoteNumberFromParams}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status: "COMPLETE" }), // Only send the status update
+          body: JSON.stringify({ status: "COMPLETE" }),
         });
 
         const quoteData = await quoteRes.json();
@@ -337,34 +337,81 @@ export default function Review() {
         }
 
         // 2. Convert quote to policy
-        const convertRes = await fetch(`${apiUrl}/policies/from-quote`, { // UPDATED PATH
+        const convertRes = await fetch(`${apiUrl}/policies/from-quote`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ quoteNumber: storedQuoteNumber }),
+          body: JSON.stringify({ quoteNumber: quoteNumberFromParams }),
         });
 
         const convertData = await convertRes.json();
+        console.log("Policy conversion response:", convertData);
+
         if (!convertRes.ok) {
           throw new Error(convertData.error || "Failed to convert quote to policy.");
         }
 
+        // Check if policyNumber is directly in convertData or nested (e.g., convertData.policy.policyNumber)
+        // Adjust the access path based on the actual structure logged by "Policy conversion response:"
+        let actualPolicyNumber;
+
+        console.log("Attempting direct access: convertData.policyNumber", convertData.policyNumber);
         if (convertData.policyNumber) {
-          policyNumberRef.current = convertData.policyNumber;
+          actualPolicyNumber = convertData.policyNumber;
+        }
+
+        console.log("Attempting nested access: convertData.policy.policyNumber", convertData.policy ? convertData.policy.policyNumber : "convertData.policy is undefined/null");
+        if (!actualPolicyNumber && convertData.policy && convertData.policy.policyNumber) {
+          actualPolicyNumber = convertData.policy.policyNumber;
+        }
+
+        console.log("Attempting nested access: convertData.payment.policy.policyNumber", convertData.payment && convertData.payment.policy ? convertData.payment.policy.policyNumber : "convertData.payment or convertData.payment.policy is undefined/null");
+        if (!actualPolicyNumber && convertData.payment && convertData.payment.policy && convertData.payment.policy.policyNumber) {
+          actualPolicyNumber = convertData.payment.policy.policyNumber;
+        }
+        console.log("Attempting nested access: convertData.data.policyDetails.policyNumber", convertData.data && convertData.data.policyDetails ? convertData.data.policyDetails.policyNumber : "convertData.data or convertData.data.policyDetails is undefined/null");
+        if (!actualPolicyNumber && convertData.data && convertData.data.policyDetails && convertData.data.policyDetails.policyNumber) { 
+          actualPolicyNumber = convertData.data.policyDetails.policyNumber;
+        }
+
+        if (actualPolicyNumber) {
+          console.log("Setting policy number:", actualPolicyNumber);
+          setPolicyNumber(actualPolicyNumber);
+          setPolicySaved(true);
+          // Force a re-render to show the policy number
+          setShowPolicyNumber(true);
+        } else {
+          console.error(
+            "Policy number extraction failed. \nAttempted convertData.policyNumber:", convertData.policyNumber,
+            "\nAttempted convertData.policy.policyNumber:", (convertData.policy ? convertData.policy.policyNumber : "convertData.policy was undefined/null or policyNumber missing"),
+            "\nAttempted convertData.payment.policy.policyNumber:", (convertData.payment && convertData.payment.policy ? convertData.payment.policy.policyNumber : "convertData.payment.policy was undefined/null or structure missing"),
+            "\nAttempted convertData.data.policyDetails.policyNumber:", (convertData.data && convertData.data.policyDetails ? convertData.data.policyDetails.policyNumber : "convertData.data.policyDetails structure missing or policyNumber missing"),
+            "\nFull response object (convertData):", convertData
+          );
+          // Inform the user gracefully, assuming the policy creation API call itself was successful
+          toast.error("Policy created, but policy number could not be retrieved for display. Please check your email or contact support.");
+          setPolicySaved(true); // Mark as saved if the API call didn't throw an error
+          setShowPolicyNumber(true); // Still show the "Payment Successful" UI, policyNumber will be blank
         }
         
-        setPolicySaved(true);
-
       } catch (error) {
         const message = error instanceof Error ? error.message : "An unknown error occurred.";
         console.log(message);
+        toast.error(message);
       } finally {
         setSavingPolicy(false);
       }
     }
-  }, [state, paymentSuccess, policySaved]);
+  }, [state, paymentSuccess, policySaved, searchParams]); // Added searchParams dependency
 
   // Effect to save policy after payment success
   useEffect(() => {
+    console.log("Review Page Effect for savePolicyAndPayment triggered. Current conditions:");
+    console.log("paymentSuccess:", paymentSuccess);
+    console.log("showPolicyNumber:", showPolicyNumber);
+    console.log("!policySaved:", !policySaved, "(policySaved:", policySaved, ")");
+    console.log("!savingPolicy:", !savingPolicy, "(savingPolicy:", savingPolicy, ")");
+    console.log("searchParams.get('retrieved'):", searchParams.get("retrieved"));
+
     async function handleRetrievedValidationAndSave() {
       if (
         paymentSuccess &&
@@ -374,12 +421,13 @@ export default function Review() {
         searchParams.get("retrieved") === "true"
       ) {
         // Validate using DB for retrieved quote
-        const quoteNumber = localStorage.getItem("quoteNumber");
-        if (!quoteNumber) {
-          alert("Missing quote number. Please start from Step 1.");
+        const qnForValidation = searchParams.get("qn");
+        if (!qnForValidation) {
+          toast.error("Missing quote number (qn) in URL for retrieved validation.");
+          console.error("handleRetrievedValidationAndSave: Missing qn in searchParams for validation.");
           return;
         }
-        const valid = await validateRetrievedQuoteFields(quoteNumber);
+        const valid = await validateRetrievedQuoteFields(qnForValidation);
         console.log("Valid:", valid);
         if (!valid) {
           alert(
@@ -387,26 +435,19 @@ export default function Review() {
           );
           return;
         }
+        console.log("Conditions MET for calling savePolicyAndPayment (retrieved).");
         savePolicyAndPayment();
+      } else {
+        console.log("Conditions NOT MET for calling savePolicyAndPayment (retrieved).");
       }
     }
     if (searchParams.get("retrieved") === "true") {
       handleRetrievedValidationAndSave();
     } else {
       if (paymentSuccess && showPolicyNumber && !policySaved && !savingPolicy) {
+        console.log("Conditions MET for calling savePolicyAndPayment (non-retrieved).");
         savePolicyAndPayment();
       }
-    }
-    // If this is a retrieved quote, redirect to /back-to-home after policy is saved
-    if (
-      paymentSuccess &&
-      showPolicyNumber &&
-      policySaved &&
-      searchParams.get("retrieved") === "true"
-    ) {
-      setTimeout(() => {
-        router.replace("/back-to-home");
-      }, 2000); // Give user a moment to see the success
     }
   }, [
     paymentSuccess,
@@ -415,7 +456,6 @@ export default function Review() {
     savingPolicy,
     savePolicyAndPayment,
     searchParams,
-    router,
   ]);
 
   useEffect(() => {
@@ -544,7 +584,7 @@ export default function Review() {
                               Policy Number
                             </h4>
                             <p className="text-lg font-bold text-blue-600">
-                              {policyNumberRef.current}
+                              {policyNumber}
                             </p>
                             <h4 className="text-sm font-medium text-gray-500 mt-4 mb-1">
                               Coverage Period

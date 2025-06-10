@@ -34,6 +34,7 @@ export default function Payment() {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
     try {
+          let quoteNumberForRedirect: string | null = null; 
       const quoteNumber = localStorage.getItem("quoteNumber");
       if (!quoteNumber) {
         throw new Error("Missing quote number. Please start a new quote.");
@@ -42,6 +43,7 @@ export default function Payment() {
       if (!selected) {
         throw new Error("Please select a payment method.");
       }
+            quoteNumberForRedirect = quoteNumber; 
       
       // 1. Get the latest quote details from the new backend
       const quoteRes = await fetch(`${apiUrl}/quotes?quoteNumber=${quoteNumber}`);
@@ -99,8 +101,8 @@ export default function Payment() {
       
       // 5. Redirect to the review page with success parameters
       const redirectUrl = isRetrieved 
-        ? `/customer/review?payment=success&method=${selected}&retrieved=true`
-        : `/customer/review?payment=success&method=${selected}`;
+        ? `/customer/review?payment=success&method=${selected}&retrieved=true&qn=${quoteNumberForRedirect}`
+        : `/customer/review?payment=success&method=${selected}&qn=${quoteNumberForRedirect}`;
       
       console.log('Redirecting to:', redirectUrl);
       router.push(redirectUrl);

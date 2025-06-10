@@ -150,27 +150,27 @@ export default function EventInformation() {
 
       // Validate Reception Venue
       validateVenueFields('reception');
-      if (isEmpty(state.receptionLocationType)) newErrors.receptionCeremonyLocationType = "Please select a venue type";
+      if (isEmpty(state.receptionLocationType)) newErrors.receptionLocationType = "Please select a venue type";
       if (isEmpty(state.receptionIndoorOutdoor)) newErrors.receptionIndoorOutdoor = "Please select indoor/outdoor option";
 
       // Validate Brunch Venue (optional, only if name is provided)
       if (!isEmpty(state.brunchVenueName)) {
         validateVenueFields('brunch');
-        if (isEmpty(state.brunchLocationType)) newErrors.brunchCeremonyLocationType = "Please select a venue type";
+        if (isEmpty(state.brunchLocationType)) newErrors.brunchLocationType = "Please select a venue type";
         if (isEmpty(state.brunchIndoorOutdoor)) newErrors.brunchIndoorOutdoor = "Please select indoor/outdoor option";
       }
 
       // Validate Rehearsal Venue (optional, only if name is provided)
       if (!isEmpty(state.rehearsalVenueName)) {
         validateVenueFields('rehearsal');
-        if (isEmpty(state.rehearsalLocationType)) newErrors.rehearsalCeremonyLocationType = "Please select a venue type";
+        if (isEmpty(state.rehearsalLocationType)) newErrors.rehearsalLocationType = "Please select a venue type";
         if (isEmpty(state.rehearsalIndoorOutdoor)) newErrors.rehearsalIndoorOutdoor = "Please select indoor/outdoor option";
       }
 
       // Validate Rehearsal Dinner Venue (optional, only if name is provided)
       if (!isEmpty(state.rehearsalDinnerVenueName)) {
         validateVenueFields('rehearsalDinner');
-        if (isEmpty(state.rehearsalDinnerLocationType)) newErrors.rehearsalDinnerCeremonyLocationType = "Please select a venue type";
+        if (isEmpty(state.rehearsalDinnerLocationType)) newErrors.rehearsalDinnerLocationType = "Please select a venue type";
         if (isEmpty(state.rehearsalDinnerIndoorOutdoor)) newErrors.rehearsalDinnerIndoorOutdoor = "Please select indoor/outdoor option";
       }
     }
@@ -221,8 +221,8 @@ export default function EventInformation() {
 
         if (state.eventType === 'wedding') {
           // Reception Venue
-          payload.ceremonyLocationType = state.ceremonyLocationType;
-          payload.indoorOutdoor = state.indoorOutdoor;
+          payload.receptionLocationType = state.receptionLocationType;
+          payload.receptionIndoorOutdoor = state.receptionIndoorOutdoor;
           payload.receptionVenueName = state.receptionVenueName;
           payload.receptionVenueAddress1 = state.receptionVenueAddress1;
           payload.receptionVenueAddress2 = state.receptionVenueAddress2;
@@ -338,15 +338,15 @@ export default function EventInformation() {
         <div className="space-y-8 w-full px-2 sm:px-4 md:px-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
             <div className="mb-4 text-left">
-              <label htmlFor={`${prefix}CeremonyLocationType`} className="block mb-1 font-medium text-gray-800">
+              <label htmlFor={`${prefix}LocationType`} className="block mb-1 font-medium text-gray-800">
                 Venue Type <span className="text-red-500">*</span>
               </label>
               <div className="relative w-full">
                 <select
-                  id={`${prefix}CeremonyLocationType`}
-                  value={venueState[`${prefix}CeremonyLocationType` as keyof QuoteState] as string}
-                  onChange={(e) => handleInputChange(`${prefix}CeremonyLocationType` as keyof QuoteState, e.target.value)}
-                  className={`block w-full rounded-md shadow-sm border pl-3 pr-10 py-2 text-base appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${venueErrors[`${prefix}CeremonyLocationType`] ? "border-red-500 text-red-900" : "border-gray-300 text-gray-900"} text-left`}
+                  id={`${prefix}LocationType`}
+                  value={venueState[`${prefix}LocationType` as keyof QuoteState] as string}
+                  onChange={(e) => handleInputChange(`${prefix}LocationType` as keyof QuoteState, e.target.value)}
+                  className={`block w-full rounded-md shadow-sm border pl-3 pr-10 py-2 text-base appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${venueErrors[`${prefix}LocationType`] ? "border-red-500 text-red-900" : "border-gray-300 text-gray-900"} text-left`}
                 >
                   <option value="">Select venue type</option>
                   {VENUE_TYPES.map((option) => (
@@ -357,7 +357,7 @@ export default function EventInformation() {
                 </select>
                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" size={16} />
               </div>
-              {venueErrors[`${prefix}CeremonyLocationType`] && <p className="text-sm text-red-500 mt-1">{venueErrors[`${prefix}CeremonyLocationType`]}</p>}
+              {venueErrors[`${prefix}LocationType`] && <p className="text-sm text-red-500 mt-1">{venueErrors[`${prefix}LocationType`]}</p>}
             </div>
             <div className="mb-4 text-left">
               <label htmlFor={`${prefix}IndoorOutdoor`} className="block mb-1 font-medium text-gray-800">

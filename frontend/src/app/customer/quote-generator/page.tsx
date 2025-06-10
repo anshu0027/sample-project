@@ -423,7 +423,7 @@ export default function QuoteGenerator() {
                 onChange={(e) =>
                   handleInputChange("residentState", e.target.value)
                 }
-                className={`w-full p-2 pr-8 border rounded-xl text-left appearance-none ${errors.residentState ? "border-red-500" : ""
+                className={`w-full p-2 pr-8 border rounded-xl text-left appearance-none ${errors.residentState ? "border-red-500" : "border-gray-300"
                   }`}
               >
                 <option value="">Select your state</option>
@@ -453,7 +453,7 @@ export default function QuoteGenerator() {
                 id="eventType"
                 value={state.eventType}
                 onChange={(e) => handleInputChange("eventType", e.target.value)}
-                className={`w-full p-2 pr-8 border rounded-xl text-left appearance-none ${errors.eventType ? "border-red-500" : ""
+                className={`w-full p-2 pr-8 border rounded-xl text-left appearance-none ${errors.eventType ? "border-red-500" : "border-gray-300"
                   }`}
               >
                 <option value="">Select event type</option>
@@ -483,7 +483,7 @@ export default function QuoteGenerator() {
                 id="maxGuests"
                 value={state.maxGuests}
                 onChange={(e) => handleInputChange("maxGuests", e.target.value)}
-                className={`w-full p-2 pr-8 border rounded-xl text-left appearance-none ${errors.maxGuests ? "border-red-500" : ""
+                className={`w-full p-2 pr-8 border rounded-xl text-left appearance-none ${errors.maxGuests ? "border-red-500" : "border-gray-300"
                   }`}
               >
                 <option value="">Select guest count range</option>
@@ -537,7 +537,7 @@ export default function QuoteGenerator() {
                 value={state.email || ""}
                 onChange={(e) => handleInputChange("email", e.target.value)}
                 placeholder="Enter your email"
-                className={`w-full text-left p-2 border rounded-xl ${errors.email ? "border-red-500" : ""
+                className={`w-full text-left p-2 border rounded-xl ${errors.email ? "border-red-500" : "border-gray-300"
                   }`}
                 required
               />
@@ -559,7 +559,7 @@ export default function QuoteGenerator() {
                   onChange={(e) =>
                     handleInputChange("coverageLevel", parseInt(e.target.value))
                   }
-                  className={`w-full p-2 pr-8 border rounded-xl text-left appearance-none ${errors.coverageLevel ? "border-red-500" : ""
+                  className={`w-full p-2 pr-8 border rounded-xl text-left appearance-none ${errors.coverageLevel ? "border-red-500" : "border-gray-300"
                     }`}
                 >
                   <option value="">Select coverage level</option>
@@ -620,7 +620,7 @@ export default function QuoteGenerator() {
                 onChange={(e) =>
                   handleInputChange("liabilityCoverage", e.target.value)
                 }
-                className={`w-full p-2 pr-8 border rounded-xl text-left appearance-none ${errors.liabilityCoverage ? "border-red-500" : ""
+                className={`w-full p-2 pr-8 border rounded-xl text-left appearance-none ${errors.liabilityCoverage ? "border-red-500" : "border-gray-300"
                   }`}
               >
                 {LIABILITY_OPTIONS.map((option) => {
@@ -642,7 +642,7 @@ export default function QuoteGenerator() {
                     <option
                       key={option.value}
                       value={option.value}
-                      className={option.isNew ? "text-red-400" : ""}
+                      className={option.isNew ? "text-red-400" : "border-gray-300"}
                     >{option.label}{premiumText}</option>
                   );
                 })}
