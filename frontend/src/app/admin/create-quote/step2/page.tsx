@@ -259,6 +259,7 @@ export default function EventInformation() {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            // Nest all event and venue details under the 'event' key
             event: {
               eventType: state.eventType,
               eventDate: state.eventDate,
@@ -267,6 +268,7 @@ export default function EventInformation() {
               honoree1LastName: state.honoree1LastName,
               honoree2FirstName: state.honoree2FirstName,
               honoree2LastName: state.honoree2LastName,
+              // Nest all venue details under the 'venue' key within 'event'
               venue: {
                 name: state.venueName,
                 address1: state.venueAddress1,
@@ -277,9 +279,11 @@ export default function EventInformation() {
                 country: state.venueCountry,
                 locationType: state.ceremonyLocationType,
                 indoorOutdoor: state.indoorOutdoor,
+                venueAsInsured: state.venueAsInsured, // Added ceremony venueAsInsured
                 // Reception venue data
                 receptionLocationType: state.receptionLocationType,
                 receptionIndoorOutdoor: state.receptionIndoorOutdoor,
+                receptionVenueName: state.receptionVenueName, // Added receptionVenueName
                 receptionAddress1: state.receptionVenueAddress1,
                 receptionAddress2: state.receptionVenueAddress2,
                 receptionCity: state.receptionVenueCity,
@@ -290,6 +294,7 @@ export default function EventInformation() {
                 // Brunch venue data
                 brunchLocationType: state.brunchLocationType,
                 brunchIndoorOutdoor: state.brunchIndoorOutdoor,
+                brunchVenueName: state.brunchVenueName, // Added brunchVenueName
                 brunchAddress1: state.brunchVenueAddress1,
                 brunchAddress2: state.brunchVenueAddress2,
                 brunchCity: state.brunchVenueCity,
@@ -300,6 +305,7 @@ export default function EventInformation() {
                 // Rehearsal venue data
                 rehearsalLocationType: state.rehearsalLocationType,
                 rehearsalIndoorOutdoor: state.rehearsalIndoorOutdoor,
+                rehearsalVenueName: state.rehearsalVenueName, // Added rehearsalVenueName
                 rehearsalAddress1: state.rehearsalVenueAddress1,
                 rehearsalAddress2: state.rehearsalVenueAddress2,
                 rehearsalCity: state.rehearsalVenueCity,
@@ -310,6 +316,7 @@ export default function EventInformation() {
                 // Rehearsal dinner venue data
                 rehearsalDinnerLocationType: state.rehearsalDinnerLocationType,
                 rehearsalDinnerIndoorOutdoor: state.rehearsalDinnerIndoorOutdoor,
+                rehearsalDinnerVenueName: state.rehearsalDinnerVenueName, // Added rehearsalDinnerVenueName
                 rehearsalDinnerAddress1: state.rehearsalDinnerVenueAddress1,
                 rehearsalDinnerAddress2: state.rehearsalDinnerVenueAddress2,
                 rehearsalDinnerCity: state.rehearsalDinnerVenueCity,
