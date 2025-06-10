@@ -167,6 +167,7 @@ export default function EditPolicy() {
     const [restoredFromVersion, setRestoredFromVersion] = useState<PolicyVersion | null>(null);
     const [showQuoteResults, setShowQuoteResults] = useState(false);
     const [emailSent, setEmailSent] = useState(false);
+    const [isHovering, setIsHovering] = useState(false);
 
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
@@ -177,6 +178,20 @@ export default function EditPolicy() {
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
+
+    const handleDropdownToggle = () => {
+        setIsVersionDropdownOpen(!isVersionDropdownOpen);
+    };
+
+    const handleMouseEnter = () => {
+        setIsHovering(true);
+        setIsVersionDropdownOpen(true);
+    };
+
+    const handleMouseLeave = () => {
+        setIsHovering(false);
+        setIsVersionDropdownOpen(false);
+    };
 
     // ==================================================================
     // ===== API CHANGE #1: Fetching the initial policy data ==========
@@ -237,11 +252,14 @@ export default function EditPolicy() {
     // Function to restore a previous version
     const handleRestoreVersion = (version: PolicyVersion) => {
         try {
-            const historicalData = JSON.parse(version.data);
-            // Ensure we keep the current policyId
+            // Check if data is already an object or needs parsing
+            const versionData = typeof version.data === 'string' ? JSON.parse(version.data) : version.data;
+            
+            // Ensure we keep the current policyId and policyNumber
             setFormState({
-                ...historicalData,
-                policyId: historicalData.id || historicalData.policyId // Handle both cases
+                ...versionData,
+                policyId: formState?.policyId,
+                policyNumber: formState?.policyNumber
             });
             setSelectedVersion(version);
             setRestoredFromVersion(version);
@@ -322,13 +340,12 @@ export default function EditPolicy() {
                 liabilityPremium: formState.liabilityPremium,
                 liquorLiabilityPremium: formState.liquorLiabilityPremium,
                 status: formState.status,
-                /* Version metadata (commented out for now)
+                // Version metadata
                 versionMetadata: restoredFromVersion ? {
                     restoredFromVersionId: restoredFromVersion.id,
                     restoredFromVersionDate: restoredFromVersion.createdAt,
                     isRestored: true,
                 } : undefined
-                */
             };
 
             const response = await fetch(`${apiUrl}/policies/${currentPolicyId}`, {
@@ -342,7 +359,6 @@ export default function EditPolicy() {
                 throw new Error(errorData.error || 'Failed to update policy');
             }
 
-            /* Version-related code (commented out for now)
             setRestoredFromVersion(null);
             setSelectedVersion(null);
 
@@ -352,7 +368,6 @@ export default function EditPolicy() {
                 const versionsData = await versionsRes.json();
                 setPolicyVersions(versionsData.versions);
             }
-            */
 
             toast({ title: "Policy updated successfully!", variant: "default" });
         } catch (error) {
@@ -389,12 +404,16 @@ export default function EditPolicy() {
             <div className="flex flex-col sm:flex-row items-center sm:justify-between mb-6 gap-4">
                 <h1 className="text-2xl text-center sm:text-left font-bold text-gray-900 order-1 sm:order-none w-full sm:w-auto">Edit Policy</h1>
                 <div className="flex flex-col-reverse items-center w-full sm:flex-row sm:items-center sm:w-auto gap-2 order-2 sm:order-none">
-                    {/* Version history UI (commented out for now)
                     {policyVersions.length > 0 && (
-                        <div className="relative inline-block w-full sm:w-auto" ref={versionDropdownRef}>
+                        <div 
+                            className="relative inline-block w-full sm:w-auto" 
+                            ref={versionDropdownRef}
+                            onMouseEnter={handleMouseEnter}
+                            onMouseLeave={handleMouseLeave}
+                        >
                             <Button
                                 variant="outline"
-                                onClick={() => setIsVersionDropdownOpen(!isVersionDropdownOpen)}
+                                onClick={handleDropdownToggle}
                                 className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 w-full justify-center sm:w-auto"
                             >
                                 <History size={16} />
@@ -409,7 +428,8 @@ export default function EditPolicy() {
                                         <h3 className="text-sm font-medium text-gray-500 px-3 py-2">Version History</h3>
                                         <div className="space-y-1">
                                             {policyVersions.map((version) => {
-                                                const versionData = JSON.parse(version.data);
+                                                // Check if data is already an object or needs parsing
+                                                const versionData = typeof version.data === 'string' ? JSON.parse(version.data) : version.data;
                                                 const isRestored = versionData.versionMetadata?.isRestored;
                                                 return (
                                                     <button
@@ -421,7 +441,9 @@ export default function EditPolicy() {
                                                         }`}
                                                         onClick={() => {
                                                             handleRestoreVersion(version);
-                                                            setIsVersionDropdownOpen(false);
+                                                            if (!isHovering) {
+                                                                setIsVersionDropdownOpen(false);
+                                                            }
                                                         }}
                                                     >
                                                         <div className="flex flex-col">
@@ -447,7 +469,6 @@ export default function EditPolicy() {
                             )}
                         </div>
                     )}
-                    */}
                     <Button variant="outline" size="sm" className="w-full justify-center sm:w-auto" onClick={() => router.push('/admin/policies')}>
                         Back to Policies
                     </Button>
@@ -472,51 +493,49 @@ export default function EditPolicy() {
             {formState && (
                 <>
                     {step === 1 && (
-    <Step1Form
-        state={formState as any}
-        errors={errors}
-        onChange={handleInputChange}
-        onValidate={handleValidateStep1}
-        onContinue={() => setStep(2)}
-        // The 'showQuoteResults' prop is now correctly passed from the state we just added.
-        showQuoteResults={showQuoteResults}
-        // The 'handleCalculateQuote' prop is not needed in the edit flow, so it's removed.
-        // We pass a simple function to satisfy the prop requirement if Step1Form needs it.
-        handleCalculateQuote={() => setShowQuoteResults(true)}
-        onSave={handleSave}
-    />
-)}
-{step === 2 && (
-    <Step2Form
-        state={formState as any}
-        errors={errors}
-        onChange={handleInputChange}
-        onValidate={handleValidateStep2}
-        onContinue={() => setStep(3)}
-        onSave={handleSave}
-    />
-)}
-{step === 3 && (
-    <Step3Form
-        state={formState as any}
-        errors={errors}
-        onChange={handleInputChange}
-        onSave={handleSave}
-    />
-)}
-{step === 4 && (
-    <Step4Form
-        state={formState as any}
-        onSave={handleSave}
-        onBack={() => setStep(3)}
-        // The 'emailSent' prop is now correctly passed from the state we added.
-        emailSent={emailSent}
-        // The 'onEmail' prop now correctly updates the state.
-        onEmail={() => setEmailSent(true)}
-        isRetrievedQuote={!!formState?.quoteNumber}
-        isAdmin={true}
-    />
-)}
+                        <Step1Form
+                            state={formState as any}
+                            errors={errors}
+                            onChange={handleInputChange}
+                            onValidate={handleValidateStep1}
+                            onContinue={() => setStep(2)}
+                            showQuoteResults={showQuoteResults}
+                            handleCalculateQuote={() => setShowQuoteResults(true)}
+                            onSave={handleSave}
+                            isRestored={!!restoredFromVersion}
+                        />
+                    )}
+                    {step === 2 && (
+                        <Step2Form
+                            state={formState as any}
+                            errors={errors}
+                            onChange={handleInputChange}
+                            onValidate={handleValidateStep2}
+                            onContinue={() => setStep(3)}
+                            onSave={handleSave}
+                            isRestored={!!restoredFromVersion}
+                        />
+                    )}
+                    {step === 3 && (
+                        <Step3Form
+                            state={formState as any}
+                            errors={errors}
+                            onChange={handleInputChange}
+                            onSave={handleSave}
+                            isRestored={!!restoredFromVersion}
+                        />
+                    )}
+                    {step === 4 && (
+                        <Step4Form
+                            state={formState as any}
+                            onSave={handleSave}
+                            onBack={() => setStep(3)}
+                            emailSent={emailSent}
+                            onEmail={() => setEmailSent(true)}
+                            isRetrievedQuote={!!formState?.quoteNumber}
+                            isAdmin={true}
+                        />
+                    )}
                 </>
             )}
         </div>

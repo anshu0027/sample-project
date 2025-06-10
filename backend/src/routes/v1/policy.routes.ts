@@ -159,14 +159,44 @@ router.put('/:id', async (req: Request, res: Response) => {
         const { versionMetadata, ...fields } = req.body;
 
         const policyRepository = AppDataSource.getRepository(Policy);
+        const versionRepository = AppDataSource.getRepository(PolicyVersion);
         const policyRecord = await policyRepository.findOne({
             where: { id: Number(id) },
-            relations: ['quote', 'event', 'event.venue', 'policyHolder'],
+            relations: ['quote', 'event', 'event.venue', 'policyHolder', 'versions'],
         });
 
         if (!policyRecord) {
             res.status(404).json({ error: 'Policy not found' });
             return;
+        }
+
+        // Create snapshot of current policy data
+        const policySnapshot = {
+            policy: policyRecord,
+            quote: policyRecord.quote,
+            event: policyRecord.event,
+            venue: policyRecord.event?.venue,
+            policyHolder: policyRecord.policyHolder,
+            versionMetadata
+        };
+
+        // Create new version
+        const newVersion = versionRepository.create({
+            policy: policyRecord,
+            data: policySnapshot
+        });
+        await versionRepository.save(newVersion);
+
+        // Check and cleanup old versions if needed
+        const versions = await versionRepository.find({
+            where: { policy: { id: Number(id) } },
+            order: { createdAt: 'DESC' }
+        });
+
+        if (versions.length > 10) {
+            // Delete oldest versions beyond the limit
+            const versionsToDelete = versions.slice(10);
+            await versionRepository.remove(versionsToDelete);
         }
 
         // --- Update Logic ---
@@ -402,6 +432,49 @@ router.post('/from-quote', async (req: Request, res: Response) => {
         console.error('POST /from-quote error:', error);
         const message = error instanceof Error ? error.message : 'Server error';
         res.status(500).json({ error: message });
+    }
+});
+
+// --- GET /api/v1/policies/:id/versions ---
+router.get('/:id/versions', async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const versionRepository = AppDataSource.getRepository(PolicyVersion);
+
+        const versions = await versionRepository.find({
+            where: { policy: { id: Number(id) } },
+            order: { createdAt: 'DESC' }
+        });
+
+        res.json({ versions });
+    } catch (error) {
+        console.error('GET /api/policies/:id/versions error:', error);
+        res.status(500).json({ error: 'Failed to fetch policy versions' });
+    }
+});
+
+// --- GET /api/v1/policies/:id/versions/:versionId ---
+router.get('/:id/versions/:versionId', async (req: Request, res: Response) => {
+    try {
+        const { id, versionId } = req.params;
+        const versionRepository = AppDataSource.getRepository(PolicyVersion);
+
+        const version = await versionRepository.findOne({
+            where: { 
+                id: Number(versionId),
+                policy: { id: Number(id) }
+            }
+        });
+
+        if (!version) {
+            res.status(404).json({ error: 'Policy version not found' });
+            return;
+        }
+
+        res.json({ version });
+    } catch (error) {
+        console.error('GET /api/policies/:id/versions/:versionId error:', error);
+        res.status(500).json({ error: 'Failed to fetch policy version' });
     }
 });
 

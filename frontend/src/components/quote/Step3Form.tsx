@@ -1,5 +1,5 @@
 import React from "react";
-import { User, Phone, MapPin, ChevronDown } from "lucide-react";
+import { User, Phone, MapPin, ChevronDown, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import Checkbox from "@/components/ui/Checkbox";
 import { US_STATES, RELATIONSHIP_OPTIONS, REFERRAL_OPTIONS } from "@/utils/constants";
@@ -9,11 +9,20 @@ type Step3FormProps = {
     errors: Record<string, string>;
     onChange: (field: string, value: any) => void;
     onSave?: () => void;
+    isRestored?: boolean;
 };
 
-export default function Step3Form({ state, errors, onChange, onSave }: Step3FormProps) {
+export default function Step3Form({ state, errors, onChange, onSave, isRestored = false }: Step3FormProps) {
     return (
         <>
+            {isRestored && (
+                <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-center text-blue-800">
+                        <AlertCircle size={20} className="mr-2" />
+                        <span className="font-medium">This form has been restored from a previous version. Review the changes before saving.</span>
+                    </div>
+                </div>
+            )}
             {/* Policyholder Information Section */}
             <div className="mb-10 shadow-2xl border-0 bg-white/90 p-8 sm:p-10 md:p-12 rounded-2xl w-full max-w-4xl mx-auto">
                 <div className="flex items-center justify-center text-left mb-4 gap-4">

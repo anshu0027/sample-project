@@ -55,6 +55,7 @@ interface Step1FormProps {
     handleCalculateQuote: () => void;
     onSave?: () => void;
     isCustomerEdit?: boolean;
+    isRestored?: boolean;
 }
 
 export default function Step1Form({
@@ -66,7 +67,8 @@ export default function Step1Form({
     showQuoteResults,
     handleCalculateQuote,
     onSave,
-    isCustomerEdit = false
+    isCustomerEdit = false,
+    isRestored = false
 }: Step1FormProps) {
     const selectedDate = state.eventDate ? new Date(state.eventDate) : null;
     const minDate = new Date();
@@ -84,8 +86,15 @@ export default function Step1Form({
     }, [state.liabilityCoverage, onChange, state.liquorLiability]);
 
     return (
-        // Replaced Card with div and merged styles
-        <div className="w-full max-w-4xl mx-auto mb-10 text-center shadow-2xl border-0 bg-white/90 rounded-2xl p-8 sm:p-10 md:p-12">
+        <div className="mb-8 shadow-lg border-0 bg-white p-8 sm:p-10 md:p-12 rounded-2xl w-full max-w-4xl mx-auto">
+            {isRestored && (
+                <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-center text-blue-800">
+                        <AlertCircle size={20} className="mr-2" />
+                        <span className="font-medium">This form has been restored from a previous version. Review the changes before saving.</span>
+                    </div>
+                </div>
+            )}
             <div className="mb-8">
                 <p className="text-3xl md:text-4xl font-extrabold text-blue-900 drop-shadow text-center">Get Your Wedding Insurance Quote</p>
                 <p className="text-lg md:text-xl text-blue-700 font-medium text-center">Tell us about your event to receive an instant quote</p>
