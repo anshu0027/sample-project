@@ -126,21 +126,20 @@ export default function PolicyHolder() {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            policyHolder: {
-              firstName: state.firstName,
-              lastName: state.lastName,
-              email: state.email,
-              phone: state.phone,
-              address: state.address,
-              city: state.city,
-              state: state.state,
-              zip: state.zip,
-              country: state.country,
-              relationship: state.relationship,
-              hearAboutUs: state.hearAboutUs,
-              legalNotices: state.legalNotices,
-              completingFormName: state.completingFormName
-            },
+            // Policy holder fields at root level
+            firstName: state.firstName,
+            lastName: state.lastName,
+            email: state.email,
+            phone: state.phone,
+            address: state.address,
+            city: state.city,
+            state: state.state,
+            zip: state.zip,
+            country: state.country,
+            relationship: state.relationship,
+            hearAboutUs: state.hearAboutUs,
+            legalNotices: state.legalNotices,
+            completingFormName: state.completingFormName,
             status: "STEP3"
           }),
         });
@@ -149,6 +148,9 @@ export default function PolicyHolder() {
           const errorData = await res.json();
           throw new Error(errorData.error || 'Failed to update quote');
         }
+
+        const updatedQuote = await res.json();
+        console.log('Updated quote:', updatedQuote); // Add this for debugging
 
         dispatch({ type: "COMPLETE_STEP", step: 3 });
         router.push("/admin/create-quote/step4");
@@ -322,22 +324,22 @@ export default function PolicyHolder() {
           </div>
         </div>
         {/* Contact Information Section */}
-        <div className="mb-8 shadow-lg border-0 bg-white p-8 sm:p-10 md:p-12 rounded-2xl w-full">
-          <div className="flex items-center justify-center text-left mb-4 gap-4">
-            <div className="flex-shrink-0">
+        <div className="mb-8 shadow-lg border-0 bg-white p-4 sm:p-8 md:p-10 lg:p-12 rounded-2xl w-full">
+          <div className="flex flex-col sm:flex-row items-center justify-center text-center sm:text-left mb-4 gap-2 sm:gap-4">
+            <div className="flex-shrink-0 mb-2 sm:mb-0">
               <Phone size={28} className="text-blue-600" />
             </div>
             <div>
-              <div className="text-xl md:text-2xl font-extrabold leading-tight mb-1">
+              <div className="text-lg sm:text-xl md:text-2xl font-extrabold leading-tight mb-1">
                 Contact Information
               </div>
-              <div className="text-base text-gray-500 font-medium leading-tight">
+              <div className="text-sm sm:text-base text-gray-500 font-medium leading-tight">
                 How we can reach you regarding your policy
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 w-full px-2 sm:px-4 md:px-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 w-full px-2 sm:px-4 md:px-2">
             {/* Phone Number */}
             <div className="mb-4">
               <label
@@ -347,15 +349,13 @@ export default function PolicyHolder() {
                 Phone Number <span className="text-red-500">*</span>
               </label>
               <div className="relative">
-                {" "}
-                {/* Added relative for potential icon if needed, though Step3Form doesn't show one here */}
                 <input
                   id="phone"
                   type="tel"
                   value={formattedPhone}
                   onChange={handlePhoneChange}
                   placeholder="(123) 456-7890"
-                  className={`text-left w-full border rounded-md py-2 px-3 ${ // Matched customer page px-3
+                  className={`text-left w-full border rounded-md py-2 px-3 ${
                     errors.phone ? "border-red-500" : "border-gray-300"
                   } focus:outline-none focus:ring-2 focus:ring-blue-500`}
                 />

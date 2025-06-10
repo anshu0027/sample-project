@@ -381,7 +381,7 @@ router.put('/:quoteNumber', async (req: Request, res: Response) => {
 
     // Handle venue updates
     const venueRepository = AppDataSource.getRepository(Venue);
-    if (quoteToUpdate.event && (fields.venueName || fields.venueAddress1 || fields.venueAddress2 || fields.venueCity || fields.venueState || fields.venueZip || fields.venueCountry)) {
+    if (quoteToUpdate.event && (fields.venueName || fields.venueAddress1 || fields.venueAddress2 || fields.venueCity || fields.venueState || fields.venueZip || fields.venueCountry || fields.ceremonyLocationType || fields.indoorOutdoor)) {
       let venue = quoteToUpdate.event.venue;
       if (!venue) {
         venue = venueRepository.create();
@@ -401,6 +401,9 @@ router.put('/:quoteNumber', async (req: Request, res: Response) => {
         state: fields.venueState || '',
         zip: fields.venueZip || '',
         country: fields.venueCountry || '',
+        locationType: fields.ceremonyLocationType || '',
+        ceremonyLocationType: fields.ceremonyLocationType || '',
+        indoorOutdoor: fields.indoorOutdoor || '',
         eventId: quoteToUpdate.event.id
       };
       
@@ -411,7 +414,7 @@ router.put('/:quoteNumber', async (req: Request, res: Response) => {
 
     // Handle policy holder updates
     const policyHolderRepository = AppDataSource.getRepository(PolicyHolder);
-    if (fields.firstName || fields.lastName || fields.phone || fields.address || fields.city || fields.state || fields.zip || fields.country) {
+    if (fields.firstName || fields.lastName || fields.phone || fields.address || fields.city || fields.state || fields.zip || fields.country || fields.relationship || fields.completingFormName) {
       let policyHolder = quoteToUpdate.policyHolder;
       if (!policyHolder) {
         policyHolder = policyHolderRepository.create();
@@ -432,6 +435,8 @@ router.put('/:quoteNumber', async (req: Request, res: Response) => {
         state: fields.state || '',
         zip: fields.zip || '',
         country: fields.country || '',
+        relationship: fields.relationship || '',
+        completingFormName: fields.completingFormName || '',
         quoteId: quoteToUpdate.id
       };
       

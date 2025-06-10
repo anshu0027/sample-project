@@ -370,34 +370,34 @@ export default function PolicyDetail() {
                 </div>
 
                 {/* Step 2: Event Information */}
-                <div className="bg-white shadow-sm rounded-xl p-6 mt-6">
-                    <h2 className="text-lg font-semibold mb-4 text-gray-900 border-b pb-2">
+                <div className="bg-white shadow-sm rounded-xl p-4 sm:p-6 mt-4 sm:mt-6">
+                    <h2 className="text-base sm:text-lg font-semibold mb-4 text-gray-900 border-b pb-2">
                         <span className="bg-purple-100 text-purple-800 text-xs font-medium px-2.5 py-0.5 rounded-full mr-2">2</span>
                         Event Information
                     </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                         <div>
                             <h3 className="text-sm font-medium text-gray-500">Honoree 1 Name</h3>
-                            <p className="mt-1 font-medium">{policy.honoree1FirstName || "-"} {policy.honoree1LastName || "-"}</p>
+                            <p className="mt-1 text-sm sm:text-base font-medium">{policy.honoree1FirstName && policy.honoree1LastName ? `${policy.honoree1FirstName} ${policy.honoree1LastName}` : "-"}</p>
                         </div>
                         <div>
                             <h3 className="text-sm font-medium text-gray-500">Honoree 2 Name</h3>
-                            <p className="mt-1 font-medium">{policy.honoree2FirstName || "-"} {policy.honoree2LastName || "-"}</p>
+                            <p className="mt-1 text-sm sm:text-base font-medium">{policy.honoree2FirstName && policy.honoree2LastName ? `${policy.honoree2FirstName} ${policy.honoree2LastName}` : "-"}</p>
                         </div>
                         <div>
                             <h3 className="text-sm font-medium text-gray-500">Ceremony Location Type</h3>
-                            <p className="mt-1 font-medium">{policy.ceremonyLocationType || "-"}</p>
+                            <p className="mt-1 text-sm sm:text-base font-medium">{policy.ceremonyLocationType || "-"}</p>
                         </div>
                         <div>
                             <h3 className="text-sm font-medium text-gray-500">Indoor/Outdoor</h3>
-                            <p className="mt-1 font-medium">{policy.indoorOutdoor || "-"}</p>
+                            <p className="mt-1 text-sm sm:text-base font-medium">{policy.indoorOutdoor || "-"}</p>
                         </div>
                         <div className="md:col-span-2">
                             <h3 className="text-sm font-medium text-gray-500">Venue</h3>
-                            <p className="mt-1 font-medium">{policy.venueName || "-"}</p>
-                            <p className="font-medium">{policy.venueAddress1 || "-"} {policy.venueAddress2 ? `, ${policy.venueAddress2}` : ""}</p>
-                            <p className="font-medium">{policy.venueCity || "-"}, {policy.venueState || "-"} {policy.venueZip || "-"}</p>
-                            <p className="font-medium">{policy.venueCountry || "-"}</p>
+                            <p className="mt-1 text-sm sm:text-base font-medium">{policy.venueName || "-"}</p>
+                            <p className="text-sm sm:text-base font-medium">{policy.venueAddress1 || "-"} {policy.venueAddress2 ? `, ${policy.venueAddress2}` : ""}</p>
+                            <p className="text-sm sm:text-base font-medium">{policy.venueCity || "-"}, {policy.venueState || "-"} {policy.venueZip || "-"}</p>
+                            <p className="text-sm sm:text-base font-medium">{policy.venueCountry || "-"}</p>
                             <div className="mt-2">
                                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${policy.venueAsInsured ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}>
                                     {policy.venueAsInsured ? "Venue As Additional Insured" : "Venue Not Additional Insured"}
@@ -405,6 +405,75 @@ export default function PolicyDetail() {
                             </div>
                         </div>
                     </div>
+
+                    {/* Additional Venue Information for Weddings */}
+                    {policy.eventType?.toLowerCase() === 'wedding' && (
+                        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                            {/* Reception Venue */}
+                            <div className="md:col-span-2">
+                                <h3 className="text-sm font-medium text-gray-500 mb-2">Reception Venue</h3>
+                                <div className="bg-gray-50 p-4 rounded-lg">
+                                    <p className="text-sm sm:text-base font-medium">{policy.receptionVenueName || "-"}</p>
+                                    <p className="text-sm sm:text-base font-medium">{policy.receptionVenueAddress1 || "-"} {policy.receptionVenueAddress2 ? `, ${policy.receptionVenueAddress2}` : ""}</p>
+                                    <p className="text-sm sm:text-base font-medium">{policy.receptionVenueCity || "-"}, {policy.receptionVenueState || "-"} {policy.receptionVenueZip || "-"}</p>
+                                    <p className="text-sm sm:text-base font-medium">{policy.receptionVenueCountry || "-"}</p>
+                                    <div className="mt-2">
+                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${policy.receptionVenueAsInsured ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}>
+                                            {policy.receptionVenueAsInsured ? "Venue As Additional Insured" : "Venue Not Additional Insured"}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Rehearsal Venue */}
+                            <div className="md:col-span-2">
+                                <h3 className="text-sm font-medium text-gray-500 mb-2">Rehearsal Venue</h3>
+                                <div className="bg-gray-50 p-4 rounded-lg">
+                                    <p className="text-sm sm:text-base font-medium">{policy.rehearsalVenueName || "-"}</p>
+                                    <p className="text-sm sm:text-base font-medium">{policy.rehearsalVenueAddress1 || "-"} {policy.rehearsalVenueAddress2 ? `, ${policy.rehearsalVenueAddress2}` : ""}</p>
+                                    <p className="text-sm sm:text-base font-medium">{policy.rehearsalVenueCity || "-"}, {policy.rehearsalVenueState || "-"} {policy.rehearsalVenueZip || "-"}</p>
+                                    <p className="text-sm sm:text-base font-medium">{policy.rehearsalVenueCountry || "-"}</p>
+                                    <div className="mt-2">
+                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${policy.rehearsalVenueAsInsured ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}>
+                                            {policy.rehearsalVenueAsInsured ? "Venue As Additional Insured" : "Venue Not Additional Insured"}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Rehearsal Dinner Venue */}
+                            <div className="md:col-span-2">
+                                <h3 className="text-sm font-medium text-gray-500 mb-2">Rehearsal Dinner Venue</h3>
+                                <div className="bg-gray-50 p-4 rounded-lg">
+                                    <p className="text-sm sm:text-base font-medium">{policy.rehearsalDinnerVenueName || "-"}</p>
+                                    <p className="text-sm sm:text-base font-medium">{policy.rehearsalDinnerVenueAddress1 || "-"} {policy.rehearsalDinnerVenueAddress2 ? `, ${policy.rehearsalDinnerVenueAddress2}` : ""}</p>
+                                    <p className="text-sm sm:text-base font-medium">{policy.rehearsalDinnerVenueCity || "-"}, {policy.rehearsalDinnerVenueState || "-"} {policy.rehearsalDinnerVenueZip || "-"}</p>
+                                    <p className="text-sm sm:text-base font-medium">{policy.rehearsalDinnerVenueCountry || "-"}</p>
+                                    <div className="mt-2">
+                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${policy.rehearsalDinnerVenueAsInsured ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}>
+                                            {policy.rehearsalDinnerVenueAsInsured ? "Venue As Additional Insured" : "Venue Not Additional Insured"}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Brunch Venue */}
+                            <div className="md:col-span-2">
+                                <h3 className="text-sm font-medium text-gray-500 mb-2">Brunch Venue</h3>
+                                <div className="bg-gray-50 p-4 rounded-lg">
+                                    <p className="text-sm sm:text-base font-medium">{policy.brunchVenueName || "-"}</p>
+                                    <p className="text-sm sm:text-base font-medium">{policy.brunchVenueAddress1 || "-"} {policy.brunchVenueAddress2 ? `, ${policy.brunchVenueAddress2}` : ""}</p>
+                                    <p className="text-sm sm:text-base font-medium">{policy.brunchVenueCity || "-"}, {policy.brunchVenueState || "-"} {policy.brunchVenueZip || "-"}</p>
+                                    <p className="text-sm sm:text-base font-medium">{policy.brunchVenueCountry || "-"}</p>
+                                    <div className="mt-2">
+                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${policy.brunchVenueAsInsured ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}>
+                                            {policy.brunchVenueAsInsured ? "Venue As Additional Insured" : "Venue Not Additional Insured"}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Additional Information */}

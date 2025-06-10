@@ -289,7 +289,35 @@ export default function Quotes() {
             const res = await fetch(`${apiUrl}/quotes/${quoteNumber}`, { method: 'DELETE' });
             if (res.ok) {
                 toast({ title: "Quote deleted successfully!", variant: "default" });
-                fetchQuotes(); // Refetch all quotes to update the list
+                setQuotes(prev => {
+                    const updated = prev.filter(q => q.quoteNumber !== quoteNumber);
+                    // Check if the current page is now empty and not the first page
+                    const filtered = updated.filter(quote => {
+                        const quoteId = quote.quoteNumber || String(quote.id) || '';
+                        const customerName = quote.customer || `${quote.firstName || ''} ${quote.lastName || ''}`;
+                        const email = quote.email || '';
+                        const matchesSearch =
+                            quoteId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            email.toLowerCase().includes(searchTerm.toLowerCase());
+                        const matchesStatus = statusFilter ? quote.status === statusFilter : true;
+                        const matchesDateRange = (() => {
+                            if (!startDate && !endDate) return true;
+                            if (!quote.eventDate) return false;
+                            const eventDate = new Date(quote.eventDate);
+                            if (startDate && endDate) return eventDate >= startDate && eventDate <= endDate;
+                            if (startDate) return eventDate >= startDate;
+                            if (endDate) return eventDate <= endDate;
+                            return true;
+                        })();
+                        return matchesSearch && matchesStatus && matchesDateRange;
+                    });
+                    const totalPages = Math.ceil(filtered.length / itemsPerPage);
+                    if (filtered.length <= (currentPage - 1) * itemsPerPage && currentPage > 1) {
+                        setCurrentPage(currentPage - 1);
+                    }
+                    return updated;
+                });
             } else {
                 const error = await res.json();
                 throw new Error(error.error || "Failed to delete quote.");
@@ -418,7 +446,7 @@ export default function Quotes() {
     }
 
     return (
-        <div className="p-6">
+        <div className="p-4 sm:p-6 md:p-8">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-8 px-2 sm:px-0">
                 <div>
                     <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Insurance Quotes</h1>

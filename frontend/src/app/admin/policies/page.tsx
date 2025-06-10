@@ -121,8 +121,14 @@ export default function Policies() {
             const res = await fetch(`${apiUrl}/policies/${policyId}`, { method: 'DELETE' });
             if (res.ok) {
                 toast.success('Policy deleted successfully!');
-                // Refetch the current page of policies to reflect the deletion
-                fetchPolicies();
+                setPolicies(prev => {
+                    const updated = prev.filter(p => p.policyId !== policyId);
+                    if (updated.length === 0 && currentPage > 1) {
+                        setCurrentPage(currentPage - 1);
+                    }
+                    return updated;
+                });
+                setTotalPolicies(prev => prev - 1);
             } else {
                 const data = await res.json();
                 throw new Error(data.error || 'Failed to delete policy.');

@@ -2,11 +2,12 @@
 import path from "path";
 import fs from "fs/promises";
 import { PDFDocument } from "pdf-lib";
-import jsPDF from "jspdf";
+import { jsPDF } from 'jspdf';
 
-// Cache for base PDF and logo
+// Cache for base PDF
 let basePdfBytesCache: Uint8Array | null = null;
 const basePdfPath = path.join(process.cwd(), "public", "base.pdf");
+// Cache for logo image
 let logoImageDataBase64Cache: string | null = null;
 const logoImagePath = path.join(process.cwd(), "public", "logo.png");
 
@@ -14,39 +15,150 @@ const logoImagePath = path.join(process.cwd(), "public", "logo.png");
 // and place your 'base.pdf' and 'logo.png' files inside it.
 
 async function getBasePdfBytes(): Promise<Uint8Array> {
-  if (basePdfBytesCache) return basePdfBytesCache;
+  if (basePdfBytesCache) {
+    return basePdfBytesCache;
+  }
+  // Check existence and read, or throw if not found
   try {
+    await fs.access(basePdfPath);
     basePdfBytesCache = await fs.readFile(basePdfPath);
     return basePdfBytesCache;
   } catch (error) {
-    console.error("Base PDF file not found:", basePdfPath, error);
-    throw new Error("Base PDF not found.");
+    console.error("Base PDF file not found or not accessible:", basePdfPath, error);
+    throw new Error("Base PDF not found or not accessible.");
   }
 }
 
 async function getLogoImageData(): Promise<string> {
-  if (logoImageDataBase64Cache) return logoImageDataBase64Cache;
+  if (logoImageDataBase64Cache) {
+    return logoImageDataBase64Cache;
+  }
   try {
+    await fs.access(logoImagePath);
     const imageBytes = await fs.readFile(logoImagePath);
     logoImageDataBase64Cache = `data:image/png;base64,${imageBytes.toString("base64")}`;
     return logoImageDataBase64Cache;
   } catch (error) {
-    console.error("Logo image file not found:", logoImagePath, error);
-    throw new Error("Logo image not found.");
+    console.error("Logo image file not found or not accessible:", logoImagePath, error);
+    throw new Error("Logo image not found or not accessible.");
   }
 }
 
+// Define coverage details based on levels
 const COVERAGE_LEVEL_DETAILS: { [key: string]: Array<[string, string, string]> } = {
-  "Level 1": [["Cancellation/postponement", "$7,500", "$160"]],
-  "Level 2": [["Cancellation/postponement", "$15,000", "$210"]],
-  // ... (add all your other levels here)
-  "Default": [["Cancellation/postponement", "$25,000", "$400"]],
+  "Level 1": [
+    ["Cancellation/postponement", "$7,500", "$160"],
+    ["Additional Expense", "$1,500", "$0"],
+    ["Event Photographs/Video", "$1,500", "$0"],
+    ["Event Gifts", "$1,000", "$0"],
+    ["Special Attire", "$1,500", "$0"],
+    ["Special Jewelry", "$1,000", "$0"],
+    ["Lost Deposit", "$1,000", "$0"],
+  ],
+  "Level 2": [
+    ["Cancellation/postponement", "$15,000", "$210"],
+    ["Additional Expense", "$3,000", "$0"],
+    ["Event Photographs/Video", "$2,000", "$0"],
+    ["Event Gifts", "$1,500", "$0"],
+    ["Special Attire", "$2,000", "$0"],
+    ["Special Jewelry", "$1,500", "$0"],
+    ["Lost Deposit", "$1,500", "$0"],
+  ],
+  "Level 3": [
+    ["Cancellation/postponement", "$25,000", "$255"],
+    ["Additional Expense", "$5,000", "$0"],
+    ["Event Photographs/Video", "$2,500", "$0"],
+    ["Event Gifts", "$2,000", "$0"],
+    ["Special Attire", "$2,500", "$0"],
+    ["Special Jewelry", "$2,000", "$0"],
+    ["Lost Deposit", "$2,000", "$0"],
+  ],
+  "Level 4": [
+    ["Cancellation/postponement", "$35,000", "$300"],
+    ["Additional Expense", "$7,000", "$0"],
+    ["Event Photographs/Video", "$3,000", "$0"],
+    ["Event Gifts", "$2,500", "$0"],
+    ["Special Attire", "$3,000", "$0"],
+    ["Special Jewelry", "$2,500", "$0"],
+    ["Lost Deposit", "$2,500", "$0"],
+  ],
+  "Level 5": [
+    ["Cancellation/postponement", "$50,000", "$355"],
+    ["Additional Expense", "$10,000", "$0"],
+    ["Event Photographs/Video", "$3,500", "$0"],
+    ["Event Gifts", "$3,000", "$0"],
+    ["Special Attire", "$3,500", "$0"],
+    ["Special Jewelry", "$3,000", "$0"],
+    ["Lost Deposit", "$3,000", "$0"],
+  ],
+  "Level 6": [
+    ["Cancellation/postponement", "$75,000", "$500"],
+    ["Additional Expense", "$15,000", "$0"],
+    ["Event Photographs/Video", "$4,500", "$0"],
+    ["Event Gifts", "$4,000", "$0"],
+    ["Special Attire", "$4,500", "$0"],
+    ["Special Jewelry", "$4,000", "$0"],
+    ["Lost Deposit", "$4,000", "$0"],
+  ],
+  "Level 7": [
+    ["Cancellation/postponement", "$100,000", "$615"],
+    ["Additional Expense", "$20,000", "$0"],
+    ["Event Photographs/Video", "$6,000", "$0"],
+    ["Event Gifts", "$5,500", "$0"],
+    ["Special Attire", "$6,000", "$0"],
+    ["Special Jewelry", "$5,500", "$0"],
+    ["Lost Deposit", "$5,500", "$0"],
+  ],
+  "Level 8": [
+    ["Cancellation/postponement", "$125,000", "$735"],
+    ["Additional Expense", "$25,000", "$0"],
+    ["Event Photographs/Video", "$7,500", "$0"],
+    ["Event Gifts", "$7,000", "$0"],
+    ["Special Attire", "$7,500", "$0"],
+    ["Special Jewelry", "$7,000", "$0"],
+    ["Lost Deposit", "$7,000", "$0"],
+  ],
+  "Level 9": [
+    ["Cancellation/postponement", "$150,000", "$870"],
+    ["Additional Expense", "$30,000", "$0"],
+    ["Event Photographs/Video", "$9,000", "$0"],
+    ["Event Gifts", "$8,500", "$0"],
+    ["Special Attire", "$9,000", "$0"],
+    ["Special Jewelry", "$8,500", "$0"],
+    ["Lost Deposit", "$8,500", "$0"],
+  ],
+  "Level 10": [
+    ["Cancellation/postponement", "$175,000", "$1025"],
+    ["Additional Expense", "$35,000", "$0"],
+    ["Event Photographs/Video", "$10,500", "$0"],
+    ["Event Gifts", "$10,000", "$0"],
+    ["Special Attire", "$10,500", "$0"],
+    ["Special Jewelry", "$10,000", "$0"],
+    ["Lost Deposit", "$10,000", "$0"],
+  ],
+  "Default": [
+    ["Cancellation/postponement", "$25,000", "$400"],
+    ["Additional Expense", "$5,000", "$50"],
+    ["Event Photography/Video", "$5,000", "$50"],
+    ["Event Gifts", "$5,000", "$100"],
+    ["Special Attire", "$10,000", "$50"],
+    ["Special Jewelry", "$25,000", "$150"],
+    ["Lost Deposit", "$5,000", "$100"],
+  ]
 };
 
+// Helper function to get guest range string from maxGuests integer value
 function getGuestRangeStringFromMaxValue(maxGuestsValue: number | null | undefined): string {
   if (maxGuestsValue === undefined || maxGuestsValue === null) return "N/A";
+
   if (maxGuestsValue <= 50) return "1-50";
-  // ... (add all your other ranges here)
+  if (maxGuestsValue <= 100) return "51-100";
+  if (maxGuestsValue <= 150) return "101-150";
+  if (maxGuestsValue <= 200) return "151-200";
+  if (maxGuestsValue <= 250) return "201-250";
+  if (maxGuestsValue <= 300) return "251-300";
+  if (maxGuestsValue <= 350) return "301-350";
+  if (maxGuestsValue <= 400) return "351-400";
   return String(maxGuestsValue);
 }
 
@@ -54,20 +166,560 @@ function getGuestRangeStringFromMaxValue(maxGuestsValue: number | null | undefin
 
 async function generateInsuranceDeclarationPDFBuffer(quoteData: any): Promise<Uint8Array> {
   const doc = new jsPDF();
-  // ... (Paste the ENTIRE content of your generateInsuranceDeclarationPDFBuffer function here)
-  // No changes are needed inside this function itself.
-  doc.text("Hello from Page 1", 10, 10); // Placeholder
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  let logoImageData: string;
+  
+  try {
+    logoImageData = await getLogoImageData();
+  } catch (error) {
+    console.warn("Logo image not found, falling back to drawn logo or erroring. Error:", (error as Error).message);
+    doc.setDrawColor(0, 0, 0);
+    doc.setLineWidth(2);
+    doc.circle(30, 25, 12);
+    doc.setFontSize(10);
+    doc.setTextColor(0, 0, 0);
+    doc.text("W&F", 30, 22, { align: "center" });
+    doc.text("ROYCE", 30, 28, { align: "center" });
+  }
+
+  if (logoImageData!) {
+    const logoWidth = 24;
+    const logoHeight = 24;
+    doc.addImage(logoImageData, "PNG", 18, 13, logoWidth, logoHeight);
+  }
+
+  // Main Title
+  doc.setFontSize(18);
+  doc.setFont("helvetica", "bold");
+  const titleText = "Special Event Insurance";
+  const titleWidth = doc.getTextWidth(titleText);
+  const titleX = (pageWidth - titleWidth) / 2;
+  const titleY = 20;
+  doc.text(titleText, titleX, titleY);
+
+  // Underline for "Special Event Insurance"
+  const underlineY = titleY + 2;
+  doc.setLineWidth(0.5);
+  doc.line(titleX, underlineY, titleX + titleWidth, underlineY);
+
+  doc.text("Declaration", pageWidth / 2, 30, { align: "center" });
+
+  // Named Insured & Agent Information boxes
+  let yPos = 45;
+
+  // Named Insured box
+  doc.setDrawColor(0, 0, 0);
+  doc.setLineWidth(0.5);
+  doc.rect(15, yPos, 85, 25);
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "bold");
+  doc.text("Named Insured & Address", 17, yPos + 5);
+
+  // Yellow highlight for insured info
+  doc.setFillColor(255, 255, 255);
+  doc.rect(17, yPos + 7, 81, 15, "F");
+  doc.setTextColor(0, 0, 0);
+  doc.setFont("helvetica", "bold");
+  doc.text((quoteData.policyHolder?.firstName || "") + " " + (quoteData.policyHolder?.lastName || "") || "N/A", 19, yPos + 12);
+  doc.setFont("helvetica", "normal");
+  doc.text(quoteData.policyHolder?.address || "N/A", 19, yPos + 16);
+  doc.text((quoteData.policyHolder?.city || "N/A") + ", " + (quoteData.policyHolder?.state || "N/A") + " " + (quoteData.policyHolder?.zip || "N/A"), 19, yPos + 20);
+
+  // Agent Information box
+  doc.setDrawColor(0, 0, 0);
+  doc.rect(105, yPos, 85, 25);
+  doc.setFont("helvetica", "bold");
+  doc.text("Agent Information", 107, yPos + 5);
+
+  // Yellow highlight for agent info
+  doc.setFillColor(255, 255, 255);
+  doc.rect(107, yPos + 7, 81, 15, "F");
+  doc.setTextColor(0, 0, 0);
+  doc.setFont("helvetica", "bold");
+  doc.text("Aura Risk Management", 109, yPos + 12);
+  doc.setFont("helvetica", "normal");
+  doc.text("904 W. Chapman Ave.", 109, yPos + 16);
+  doc.text("Orange, CA 94025", 109, yPos + 20);
+
+  yPos += 35;
+
+  // Policy Information Header
+  doc.setFillColor(255, 255, 255);
+  doc.setLineWidth(0.5);
+  doc.rect(15, yPos, pageWidth - 30, 8, "F");
+  doc.setTextColor(0, 0, 0);
+  doc.setFont("helvetica", "bold");
+  const policyInfoHeaderText = "POLICY INFORMATION";
+  doc.text(policyInfoHeaderText, 17, yPos + 5);
+
+  // Underline for "POLICY INFORMATION" header
+  const policyInfoUnderlineY = yPos + 5 + 2;
+  doc.setLineWidth(1.0);
+  doc.setDrawColor(39, 108, 140);
+  doc.line(15, policyInfoUnderlineY, pageWidth - 15, policyInfoUnderlineY);
+
+  yPos += 8;
+
+  // Policy Information Content
+  doc.setTextColor(0, 0, 0);
+  doc.setFont("helvetica", "bold");
+  doc.text("Policy Number:", 17, yPos + 8);
+
+  doc.setFillColor(255, 255, 255);
+  doc.rect(52, yPos + 5, 55, 5, "F");
+  doc.setTextColor(0, 0, 0);
+  doc.text(quoteData.policy?.policyNumber || "99/99/9999", 54, yPos + 8);
+
+  doc.text("Policy Period:", 120, yPos + 8);
+
+  doc.text("Issue Date:", 120, yPos + 14);
+  doc.setFillColor(255, 255, 255);
+  doc.rect(145, yPos + 11, 25, 5, "F");
+  doc.text(
+    quoteData.createdAt
+      ? new Date(quoteData.createdAt).toLocaleDateString()
+      : new Date().toLocaleDateString(),
+    147, yPos + 14
+  );
+
+  doc.text("Event Date:", 120, yPos + 20);
+  doc.setFillColor(255, 255, 255);
+  doc.rect(145, yPos + 17, 25, 5, "F");
+  doc.text(
+    quoteData.event?.eventDate
+      ? new Date(quoteData.event.eventDate).toLocaleDateString()
+      : "N/A",
+    147, yPos + 20
+  );
+
+  doc.setTextColor(0, 0, 0);
+  doc.text("Insurance Company:", 17, yPos + 26);
+  doc.setFont("helvetica", "normal");
+  doc.text("Certain Underwriters At Lloyd's", 17, yPos + 30);
+
+  doc.setFont("helvetica", "bold");
+  doc.text("Customer Service: 1-888-888-0888", 120, yPos + 26);
+  doc.text("Claims Service: 1-888-888-0889", 120, yPos + 30);
+
+  // Total Premium
+  doc.setDrawColor(0, 0, 0);
+  doc.setFontSize(12);
+  const totalPremiumText = `Total Policy Premium: $${quoteData.totalPremium?.toFixed(2) || "0.00"} (EXCLUDING ANY FEES OR TAXES)`;
+  const totalPremiumTextWidth = doc.getTextWidth(totalPremiumText);
+  const totalPremiumTextX = (pageWidth - totalPremiumTextWidth) / 2;
+  const totalPremiumTextY = yPos + 40;
+  doc.text(totalPremiumText, totalPremiumTextX, totalPremiumTextY);
+
+  // Underline for "Total Policy Premium"
+  const totalPremiumUnderlineY = totalPremiumTextY + 2;
+  doc.setLineWidth(0.5);
+  doc.line(totalPremiumTextX, totalPremiumUnderlineY, totalPremiumTextX + totalPremiumTextWidth, totalPremiumUnderlineY);
+
+  yPos += 49;
+
+  // Policy Limits of Liability Header
+  doc.setFillColor(255, 255, 255);
+  doc.rect(15, yPos, pageWidth - 30, 8, "F");
+  doc.setTextColor(0, 0, 0);
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "bold");
+  doc.text("POLICY LIMITS OF LIABILITY", 17, yPos + 5);
+
+  const policyLimitsUnderlineY = yPos + 5 + 2;
+  doc.setDrawColor(39, 108, 140);
+  doc.setLineWidth(1.0);
+  doc.line(15, policyLimitsUnderlineY, pageWidth - 15, policyLimitsUnderlineY);
+  doc.setLineWidth(0.5);
+
+  yPos += 10;
+
+  // Table headers
+  doc.setDrawColor(128, 128, 128);
+  doc.rect(15, yPos, pageWidth - 30, 6);
+  doc.setTextColor(0, 0, 0);
+  doc.setFont("helvetica", "bold");
+  doc.text("EVENT CANCELLATION COVERAGE", 17, yPos + 4);
+  doc.text("LIMITS OF LIABILITY", 120, yPos + 4, { align: "center" });
+  doc.text("PREMIUM", 170, yPos + 4, { align: "center" });
+  yPos += 6;
+
+  // Get coverage level and table data
+  const coverageLevelInt = quoteData.coverageLevel;
+  let coverageLevelStringKey = null;
+
+  if (typeof coverageLevelInt === 'number' && coverageLevelInt > 0) {
+    coverageLevelStringKey = `Level ${coverageLevelInt}`;
+  }
+
+  const currentCoverageLevel = coverageLevelStringKey && COVERAGE_LEVEL_DETAILS[coverageLevelStringKey] ? coverageLevelStringKey : "Default";
+  let tableDataForLevel = COVERAGE_LEVEL_DETAILS[currentCoverageLevel] || COVERAGE_LEVEL_DETAILS["Default"];
+
+  // Calculate total premium for this section
+  let eventCoveragePremium = 0;
+  tableDataForLevel.forEach(row => {
+    const premiumValue = parseFloat(row[2].replace('$', ''));
+    if (!isNaN(premiumValue)) {
+      eventCoveragePremium += premiumValue;
+    }
+  });
+
+  const finalTableData = [...tableDataForLevel, ["Event Coverage Premium", "", `$${eventCoveragePremium.toFixed(2)}`]];
+
+  // Draw table rows
+  finalTableData.forEach((row, index) => {
+    doc.setDrawColor(128, 128, 128);
+    doc.rect(15, yPos, pageWidth - 30, 6);
+    doc.setTextColor(0, 0, 0);
+    doc.setFont("helvetica", "normal");
+    doc.text(row[0], 17, yPos + 4);
+
+    if (row[1]) {
+      doc.setFillColor(255, 255, 255);
+      doc.rect(110, yPos + 1, 30, 4, "F");
+      doc.text(row[1], 125, yPos + 4, { align: "center" });
+    }
+
+    doc.setFillColor(255, 255, 255);
+    doc.rect(160, yPos + 1, 30, 4, "F");
+    doc.setFont("helvetica", index === finalTableData.length - 1 ? "bold" : "normal");
+    doc.text(row[2], 175, yPos + 4, { align: "center" });
+
+    yPos += 6;
+  });
+
+  yPos += 7;
+
+  // Optional Endorsements Header
+  doc.setFillColor(255, 255, 255);
+  doc.rect(15, yPos, pageWidth - 30, 8, "F");
+  doc.setTextColor(0, 0, 0);
+  doc.setFont("helvetica", "bold");
+  doc.text("OPTIONAL ENDORSEMENTS & COVERAGES", 17, yPos + 5);
+
+  const endorsementsHeaderUnderlineY = yPos + 5 + 2;
+  doc.setDrawColor(39, 108, 140);
+  doc.setLineWidth(1.0);
+  doc.line(15, endorsementsHeaderUnderlineY, pageWidth - 15, endorsementsHeaderUnderlineY);
+  doc.setLineWidth(0.5);
+
+  yPos += 10;
+
+  // Endorsements table headers
+  doc.setDrawColor(128, 128, 128);
+  doc.rect(15, yPos, pageWidth - 30, 6);
+  doc.setTextColor(0, 0, 0);
+  doc.setFont("helvetica", "bold");
+  doc.text("ENDORSEMENTS", 17, yPos + 4);
+  doc.text("LIMITS OF LIABILITY", 120, yPos + 4, { align: "center" });
+  doc.text("PREMIUM", 170, yPos + 4, { align: "center" });
+  yPos += 6;
+
+  // Endorsements content
+  doc.setDrawColor(128, 128, 128);
+  doc.rect(15, yPos, pageWidth - 30, 27);
+  doc.setTextColor(0, 0, 0);
+  doc.setFont("helvetica", "bold");
+  doc.text("Special Event Liability: Effective 12:01 AM", 17, yPos + 4);
+  doc.setFont("helvetica", "normal");
+  const eventDate = quoteData.event?.eventDate
+    ? new Date(quoteData.event.eventDate).toLocaleDateString()
+    : "N/A";
+  doc.text(`standard time on the Event Date: ${eventDate}`, 17, yPos + 8);
+
+  let eventEndDateString = "N/A";
+  if (quoteData.event?.eventDate) {
+    const eventStartDate = new Date(quoteData.event.eventDate);
+    const eventEndDate = new Date(eventStartDate);
+    eventEndDate.setDate(eventStartDate.getDate() + 2);
+    eventEndDateString = eventEndDate.toLocaleDateString();
+  }
+  doc.text(`until 2:00 AM standard time on ${eventEndDateString}`, 17, yPos + 12);
+  doc.setFont("helvetica", "bold");
+  doc.text("Property Damage Liability Sublimit", 17, yPos + 16);
+  doc.text("Liquor Liability Coverage", 17, yPos + 20);
+  doc.text("Number of Guest", 17, yPos + 24);
+
+  // Liability limits
+  const liabilityData = [
+    "$1M per Occurrence",
+    "$1M General Aggregate",
+    "",
+    `$${quoteData.liabilityPremium?.toFixed(2) || "0.00"}`,
+    `$${quoteData.liquorLiabilityPremium?.toFixed(2) || "0.00"}`,
+    `${getGuestRangeStringFromMaxValue(quoteData.event?.maxGuests)}`,
+  ];
+
+  liabilityData.forEach((item, index) => {
+    doc.setFillColor(255, 255, 255);
+    doc.rect(110, yPos + index * 4 + 1, 30, 4, "F");
+    doc.setTextColor(0, 0, 0);
+    doc.text(item, 125, yPos + index * 4 + 4, { align: "center" });
+  });
+
+  // Calculate and display premium for endorsements
+  const endorsementsPremium = (quoteData.liabilityPremium || 0) + (quoteData.liquorLiabilityPremium || 0);
+
+  doc.setFillColor(255, 255, 255);
+  doc.rect(160, yPos + 10, 30, 6, "F");
+  doc.setFont("helvetica", "bold");
+  doc.text(`$${endorsementsPremium.toFixed(2)}`, 175, yPos + 13, { align: "center" });
+
+  yPos += 32;
+
+  // Coverages Header
+  doc.setFillColor(255, 255, 255);
+  doc.rect(15, yPos, pageWidth - 30, 8, "F");
+  doc.setTextColor(0, 0, 0);
+  doc.setFont("helvetica", "bold");
+  doc.text("COVERAGES", 17, yPos + 5);
+
+  yPos += 8;
+
+  // Extended Territory row
+  doc.setDrawColor(128, 128, 128);
+  doc.rect(15, yPos, pageWidth - 30, 6);
+  doc.setTextColor(0, 0, 0);
+  doc.setFont("helvetica", "bold");
+  doc.text("Extended Territory", 17, yPos + 4);
+  doc.setFont("helvetica", "normal");
+  doc.text("Not Applicable", 125, yPos + 4, { align: "center" });
+  doc.text("Included", 175, yPos + 4, { align: "center" });
+
+  // Footer
+  doc.setDrawColor(128, 128, 128);
+  doc.setLineWidth(0.5);
+  doc.line(15, pageHeight - 14, pageWidth - 15, pageHeight - 14);
+
+  doc.setTextColor(128, 128, 128);
+  doc.setFontSize(8);
+  doc.text("AU -DEC (08-24)", 15, pageHeight - 10);
+  doc.text("1", pageWidth - 15, pageHeight - 10, { align: "right" });
+
   return new Uint8Array(doc.output("arraybuffer") as ArrayBuffer);
 }
 
 async function generateInsuranceDeclarationPage2PDFBuffer(quoteData: any): Promise<Uint8Array> {
   const doc = new jsPDF();
-  // ... (Paste the ENTIRE content of your generateInsuranceDeclarationPage2PDFBuffer function here)
-  // No changes are needed inside this function itself.
-  doc.text("Hello from Page 2", 10, 10); // Placeholder
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  let logoImageData: string;
+
+  try {
+    logoImageData = await getLogoImageData();
+  } catch (error) {
+    console.warn("Logo image not found for page 2, falling back to drawn logo or erroring. Error:", (error as Error).message);
+    // Fallback for page 2 as well
+    doc.setDrawColor(0, 0, 0);
+    doc.setLineWidth(2);
+    doc.circle(30, 25, 12);
+    doc.setFontSize(10);
+    doc.setTextColor(0, 0, 0);
+    doc.text("W&F", 30, 22, { align: "center" });
+    doc.text("ROYCE", 30, 28, { align: "center" });
+  }
+
+  if (logoImageData!) {
+    const logoWidth = 24;
+    const logoHeight = 24;
+    doc.addImage(logoImageData, "PNG", 18, 13, logoWidth, logoHeight);
+  }
+
+  let yPos = 50;
+
+  // Policy Forms and Endorsements Header
+  doc.setFillColor(255, 255, 255);
+  doc.rect(15, yPos, pageWidth - 30, 8, "F");
+  doc.setTextColor(0, 0, 0);
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "bold");
+  doc.text("POLICY FORMS AND ENDORSEMENTS", 17, yPos + 5);
+  // Add underline for "POLICY FORMS AND ENDORSEMENTS"
+  const formsHeaderUnderlineY = yPos + 5 + 2;
+  doc.setDrawColor(39, 108, 140); // #276C8C
+  doc.setLineWidth(1.0);
+  doc.line(15, formsHeaderUnderlineY, pageWidth - 15, formsHeaderUnderlineY);
+  doc.setLineWidth(0.5);
+
+  yPos += 9;
+
+  // Policy Forms and Endorsements Table
+  const policyForms = [
+    ["AU - 1 (08-24)", "Special Event Insurance"],
+    ["AU - 200 (08-24)", "Special Event Liability"],
+    ["AU - 200LL (08-24)", "Special Event Liquor Liability"],
+    ["AU - 400FL (08-24)", "Special Event Liability FL Provision"],
+    ["AU - 201 (08-24)", "Additional Insured"],
+  ];
+
+  policyForms.forEach((row) => {
+    doc.setDrawColor(128, 128, 128);
+    doc.rect(15, yPos, 60, 6);
+    doc.rect(75, yPos, pageWidth - 90, 6);
+    doc.setTextColor(0, 0, 0);
+    doc.setFont("helvetica", "bold");
+    doc.text(row[0], 17, yPos + 4);
+    doc.setFont("helvetica", "normal");
+    doc.text(row[1], 77, yPos + 4);
+    yPos += 6;
+  });
+
+  yPos += 10;
+
+  // Event Information Header
+  doc.setFillColor(255, 255, 255);
+  doc.rect(15, yPos, pageWidth - 30, 8, "F");
+  doc.setTextColor(0, 0, 0);
+  doc.setFont("helvetica", "bold");
+  doc.text("EVENT INFORMATION", 17, yPos + 5);
+  // Add underline for "EVENT INFORMATION" (first occurrence)
+  const eventInfoHeaderUnderlineY1 = yPos + 5 + 2;
+  doc.setDrawColor(39, 108, 140); // #276C8C
+  doc.setLineWidth(1.0);
+  doc.line(15, eventInfoHeaderUnderlineY1, pageWidth - 15, eventInfoHeaderUnderlineY1);
+  doc.setLineWidth(0.5);
+
+  yPos += 9;
+
+  // Event Information Table Headers
+  doc.setDrawColor(128, 128, 128);
+  doc.rect(15, yPos, (pageWidth - 30) / 2, 6);
+  doc.rect(15 + (pageWidth - 30) / 2, yPos, (pageWidth - 30) / 2, 6);
+  doc.setTextColor(0, 0, 0);
+  doc.setFont("helvetica", "bold");
+  doc.text("INSURED EVENT", 17, yPos + 4);
+  doc.text("HONOREE(S)", 17 + (pageWidth - 30) / 2 + 2, yPos + 4);
+
+  yPos += 6;
+
+  // Event Information Table Content
+  doc.setDrawColor(128, 128, 128);
+  doc.rect(15, yPos, (pageWidth - 30) / 2, 6);
+  doc.rect(15 + (pageWidth - 30) / 2, yPos, (pageWidth - 30) / 2, 6);
+
+  // Yellow highlight for event and honorees
+  doc.setFillColor(255, 255, 255);
+  doc.rect(15 + 1, yPos + 1, (pageWidth - 30) / 2 - 2, 4, "F");
+  doc.rect(15 + (pageWidth - 30) / 2 + 1, yPos + 1, (pageWidth - 30) / 2 - 2, 4, "F");
+
+  doc.setTextColor(0, 0, 0);
+  doc.setFont("helvetica", "bold");
+  doc.text(quoteData.event?.eventType || "N/A", 17, yPos + 4);
+  doc.text((quoteData.event?.honoree1FirstName || "") + " " + (quoteData.event?.honoree1LastName || "") + (quoteData.event?.honoree2FirstName ? " & " + quoteData.event?.honoree2FirstName + " " + quoteData.event?.honoree2LastName : ""), 17 + (pageWidth - 30) / 2 + 2, yPos + 4);
+
+  yPos += 15;
+
+  // Event Location(s) Header
+  doc.setTextColor(0, 0, 0);
+  doc.setFont("helvetica", "bold");
+  doc.text("EVENT LOCATION(S)", 15, yPos);
+  doc.setLineWidth(0.5);
+  doc.line(15, yPos + 1, 60, yPos + 1);
+
+  yPos += 5;
+
+  // Event Location Table
+  for (let i = 1; i <= 4; i++) {
+    doc.setDrawColor(128, 128, 128);
+    doc.rect(15, yPos, 10, 6);
+    doc.rect(25, yPos, pageWidth - 40, 6);
+    doc.setTextColor(0, 0, 0);
+    doc.setFont("helvetica", "bold");
+    doc.text(`${i}.`, 17, yPos + 4);
+
+    // Yellow highlight for first location
+    if (i === 1) {
+      doc.setFillColor(255, 255, 255);
+      doc.rect(26, yPos + 1, pageWidth - 42, 4, "F");
+      doc.text((quoteData.event?.venue?.address1 || "N/A") + ", " + (quoteData.event?.venue?.city || "N/A") + ", " + (quoteData.event?.venue?.state || "N/A") + " " + (quoteData.event?.venue?.zip || "N/A"), 27, yPos + 4);
+    }
+
+    yPos += 6;
+  }
+
+  yPos += 10;
+
+  // Additional Insured(s) Header
+  doc.setTextColor(0, 0, 0);
+  doc.setFont("helvetica", "bold");
+  doc.text("ADDITIONAL INSURED(S)", 15, yPos);
+  doc.setLineWidth(0.5);
+  doc.line(15, yPos + 1, 70, yPos + 1);
+
+  yPos += 5;
+
+  // Additional Insured Table
+  for (let i = 1; i <= 4; i++) {
+    doc.setDrawColor(128, 128, 128);
+    doc.rect(15, yPos, 10, 6);
+    doc.rect(25, yPos, pageWidth - 40, 6);
+    doc.setTextColor(0, 0, 0);
+    doc.setFont("helvetica", "bold");
+
+    // Yellow highlight for first number
+    if (i === 1) {
+      doc.setFillColor(255, 255, 255);
+      doc.rect(15 + 1, yPos + 1, 8, 4, "F");
+    }
+
+    doc.text(`${i}.`, 17, yPos + 4);
+    yPos += 6;
+  }
+
+  yPos += 10;
+
+  // Event Information Header (second occurrence)
+  doc.setFillColor(255, 255, 255);
+  doc.rect(15, yPos, pageWidth - 30, 8, "F");
+  doc.setTextColor(0, 0, 0);
+  doc.setFont("helvetica", "bold");
+  doc.text("EVENT INFORMATION", 17, yPos + 5);
+  // Add underline for "EVENT INFORMATION" (second occurrence)
+  const eventInfoHeaderUnderlineY2 = yPos + 5 + 2;
+  doc.setDrawColor(39, 108, 140); // #276C8C
+  doc.setLineWidth(1.0);
+  doc.line(15, eventInfoHeaderUnderlineY2, pageWidth - 15, eventInfoHeaderUnderlineY2);
+  doc.setLineWidth(0.5);
+
+  yPos += 9;
+
+  // Event Information Fees Table
+  const feeData = [
+    ["Policy Fee", "$50.00"],
+    ["Surplus Lines Taxes", "$48.00"],
+    ["Stamping Fee", "$5.00"],
+    ["Total Premium", `$${quoteData.totalPremium?.toFixed(2) || "0.00"}`],
+  ];
+
+  feeData.forEach((row, index) => {
+    doc.setDrawColor(128, 128, 128);
+    doc.rect(15, yPos, (pageWidth - 30) * 0.7, 6);
+    doc.rect(15 + (pageWidth - 30) * 0.7, yPos, (pageWidth - 30) * 0.3, 6);
+    doc.setTextColor(0, 0, 0);
+    doc.setFont("helvetica", "bold");
+    doc.text(row[0], 17, yPos + 4);
+
+    // Yellow highlight for fee amounts
+    doc.setFillColor(255, 255, 255);
+    doc.rect(15 + (pageWidth - 30) * 0.7 + 1, yPos + 1, (pageWidth - 30) * 0.3 - 2, 4, "F");
+    doc.text(row[1], 15 + (pageWidth - 30) * 0.7 + (pageWidth - 30) * 0.3 - 5, yPos + 4, { align: "right" });
+
+    yPos += 6;
+  });
+
+  // Footer
+  // Line above footer text
+  doc.setDrawColor(128, 128, 128);
+  doc.setLineWidth(0.5);
+  doc.line(15, pageHeight - 14, pageWidth - 15, pageHeight - 14); // Moved line up by 2 points
+
+  doc.setTextColor(128, 128, 128);
+  doc.setFontSize(8);
+  doc.text("AU -DEC (08-24)", 15, pageHeight - 10);
+  doc.text("2", pageWidth - 15, pageHeight - 10, { align: "right" });
+
   return new Uint8Array(doc.output("arraybuffer") as ArrayBuffer);
 }
-
 
 // --- MAIN EXPORTED FUNCTION ---
 

@@ -239,8 +239,12 @@ export default function QuoteGenerator() {
             liquorLiabilityPremium: liquorLiabilityPremium,
             source: "ADMIN",
             status: "STEP1",
+            // Add event details directly to the quote
+            eventType: state.eventType,
+            eventDate: state.eventDate,
+            maxGuests: state.maxGuests,
 
-            // Event data
+            // Event data structure for compatibility
             event: {
               eventType: state.eventType,
               eventDate: state.eventDate,

@@ -296,7 +296,7 @@ export default function EditQuote() {
                     onValidate={validateStep2}
                     onContinue={() => setStep(3)}
                     onSave={handleSave}
-                    // isCustomerEdit={false} // if needed for Step2Form
+                    isCustomerEdit={false} // if needed for Step2Form
                 />
             )}
             {step === 3 && (
@@ -305,7 +305,7 @@ export default function EditQuote() {
                     errors={errors}
                     onChange={handleInputChange}
                     onSave={handleSave}
-                    // isCustomerEdit={false} // if needed for Step3Form
+                    isCustomerEdit={false} // if needed for Step3Form
                 />
             )}
             {step === 4 && (
@@ -321,7 +321,9 @@ export default function EditQuote() {
                     onBack={() => setStep(3)}
                     emailSent={emailSent}
                     onEmail={() => setEmailSent(true)}
-                    isRetrievedQuote={true} isAdmin={true}                    // isCustomerEdit={false} // if needed for Step4Form
+                    isRetrievedQuote={false}
+                    isAdmin={true}                    
+                    isCustomerEdit={false} // if needed for Step4Form
                 />
             )}
         </div>

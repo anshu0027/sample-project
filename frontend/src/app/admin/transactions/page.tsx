@@ -75,8 +75,8 @@ const Transactions = () => {
               paymentMethod:
                 q.source === "ADMIN"
                   ? "CASH"
-                  : q.Payment && q.Payment.length > 0
-                    ? q.Payment[0].method || "-"
+                  : q.payments && q.payments.length > 0
+                    ? q.payments[0].method || "-"
                     : "-",
             }))
           );

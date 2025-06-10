@@ -201,6 +201,7 @@ export default function EventInformation() {
         // The payload now only needs the fields being updated
         const payload: Partial<QuoteState> = {
           eventType: state.eventType,
+          maxGuests: state.maxGuests,
           honoree1FirstName: state.honoree1FirstName,
           honoree1LastName: state.honoree1LastName,
           honoree2FirstName: state.honoree2FirstName,
