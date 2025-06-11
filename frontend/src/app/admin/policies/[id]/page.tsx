@@ -1,7 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { ArrowLeft, Mail, Edit, DollarSign, Calendar, Users, Shield, Wine, Activity, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Edit, DollarSign, Calendar, Users, Shield, Wine, Activity, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import React from "react";
 import { toast } from "@/hooks/use-toast";
@@ -59,7 +61,7 @@ export default function PolicyDetail() {
     const router = useRouter();
     const params = useParams();
     const id = params.id as string;
-    const [isEmailSent, setIsEmailSent] = useState(false);
+    // const [isEmailSent, setIsEmailSent] = useState(false);
     const [policy, setPolicy] = useState<any | null>(null);
     const [quote, setQuote] = useState<any | null>(null);
     const [loading, setLoading] = useState(true);

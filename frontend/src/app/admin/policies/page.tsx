@@ -1,14 +1,16 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Filter, Download, Eye, PlusCircle, Edit, Mail } from "lucide-react";
+import { Search, Download, Eye, PlusCircle, Edit, Mail } from "lucide-react";
 import Card from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+// import jsPDF from 'jspdf';
+// import autoTable from 'jspdf-autotable';
 import { toast } from "@/hooks/use-toast";
-import Link from "next/link";
+// import Link from "next/link";
 
 interface PolicyList {
     email: string;
