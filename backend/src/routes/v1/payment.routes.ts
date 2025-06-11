@@ -7,8 +7,16 @@ import { FindOptionsWhere } from 'typeorm';
 import { Quote } from '../../entities/quote.entity';
 import { Policy } from '../../entities/policy.entity';
 import { StepStatus } from '../../entities/enums';
+import { APIContracts, APIControllers, Constants } from 'authorizenet';
 
 const router = Router();
+
+// Authorize.Net configuration
+const apiLoginId = '4qhEY277';
+const transactionKey = '97uK4gXGg496dtmZ';
+const merchantAuthenticationType = new APIContracts.MerchantAuthenticationType();
+merchantAuthenticationType.setName(process.env.AUTHORIZE_NET_API_LOGIN_ID_SANDBOX!);
+merchantAuthenticationType.setTransactionKey(process.env.AUTHORIZE_NET_TRANSACTION_KEY_SANDBOX!);
 
 // Helper function to map status for the frontend
 const mapPaymentStatus = (payment: Payment) => {
@@ -170,6 +178,155 @@ router.post('/', async (req: Request, res: Response) => {
     } catch (error) {
         await queryRunner.rollbackTransaction();
         console.error('POST /api/v1/payment error:', error);
+        res.status(500).json({ 
+            error: 'Failed to process payment',
+            details: error instanceof Error ? error.message : 'Unknown error'
+        });
+    } finally {
+        await queryRunner.release();
+    }
+});
+
+// --- POST /api/v1/payment/authorize-net ---
+router.post('/authorize-net', async (req: Request, res: Response) => {
+    const queryRunner = AppDataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+        const { quoteId, amount, opaqueData } = req.body;
+
+        if (!quoteId || !amount || !opaqueData) {
+            res.status(400).json({ 
+                error: 'Missing required fields. Need quoteId, amount, and opaqueData',
+                received: { quoteId, amount, opaqueData }
+            });
+            return;
+        }
+
+        // Format amount to 2 decimal places
+        const formattedAmount = parseFloat(amount).toFixed(2);
+
+        // Create the payment data for a credit card
+        const creditCard = new APIContracts.OpaqueDataType();
+        creditCard.setDataDescriptor(opaqueData.dataDescriptor);
+        creditCard.setDataValue(opaqueData.dataValue);
+
+        // Create a transaction
+        const paymentType = new APIContracts.PaymentType();
+        paymentType.setOpaqueData(creditCard);
+
+        // Create the transaction request
+        const transactionRequestType = new APIContracts.TransactionRequestType();
+        transactionRequestType.setTransactionType(APIContracts.TransactionTypeEnum.AUTHCAPTURETRANSACTION);
+        transactionRequestType.setPayment(paymentType);
+        transactionRequestType.setAmount(formattedAmount);
+
+        // Assemble the complete transaction request
+        const createRequest = new APIContracts.CreateTransactionRequest();
+        createRequest.setMerchantAuthentication(merchantAuthenticationType);
+        createRequest.setTransactionRequest(transactionRequestType);
+
+        // Create the controller
+        const ctrl = new APIControllers.CreateTransactionController(createRequest.getJSON());
+
+        // Execute the API call using Promise
+        const response = await new Promise<APIContracts.CreateTransactionResponse>((resolve, reject) => {
+            ctrl.execute(() => {
+                const apiResponse = ctrl.getResponse();
+                if (apiResponse) {
+                    resolve(new APIContracts.CreateTransactionResponse(apiResponse));
+                } else {
+                    reject(new Error('No response from payment gateway'));
+                }
+            });
+        });
+
+        // Handle the response
+        if (response.getMessages().getResultCode() === APIContracts.MessageTypeEnum.OK) {
+            if (response.getTransactionResponse().getResponseCode() === "1") {
+                // Transaction was successful
+                const paymentRepository = queryRunner.manager.getRepository(Payment);
+                const quoteRepository = queryRunner.manager.getRepository(Quote);
+
+                // Create payment record
+                const newPayment = paymentRepository.create({
+                    amount: parseFloat(formattedAmount),
+                    quoteId: parseInt(quoteId),
+                    method: 'Credit Card',
+                    status: PaymentStatus.SUCCESS,
+                    reference: response.getTransactionResponse().getTransId(),
+                });
+
+                const savedPayment = await paymentRepository.save(newPayment);
+
+                // Convert quote to policy
+                const quote = await quoteRepository.findOne({
+                    where: { id: parseInt(quoteId) },
+                    relations: ['event', 'event.venue', 'policyHolder']
+                });
+
+                if (quote) {
+                    // Update quote status
+                    quote.status = StepStatus.COMPLETE;
+                    await quoteRepository.save(quote);
+
+                    // Create policy from quote
+                    const policyRepository = queryRunner.manager.getRepository(Policy);
+                    const quoteNumberParts = quote.quoteNumber.split('-');
+                    const lastPart = quoteNumberParts[quoteNumberParts.length - 1];
+                    const newPolicy = policyRepository.create({
+                        policyNumber: `PI-${lastPart}`,
+                        event: quote.event,
+                        policyHolder: quote.policyHolder,
+                        payments: [savedPayment],
+                        quote: quote
+                    });
+
+                    const savedPolicy = await policyRepository.save(newPolicy);
+
+                    // Update payment with policy ID
+                    savedPayment.policyId = savedPolicy.id;
+                    await paymentRepository.save(savedPayment);
+                }
+
+                await queryRunner.commitTransaction();
+
+                // Fetch the complete payment with relations
+                const completePayment = await paymentRepository.findOne({
+                    where: { id: savedPayment.id },
+                    relations: ['policy', 'policy.quote', 'quote', 'quote.policyHolder', 'quote.event', 'quote.event.venue']
+                });
+
+                res.status(201).json({
+                    message: 'Payment processed successfully',
+                    payment: completePayment,
+                    transactionId: response.getTransactionResponse().getTransId()
+                });
+            } else {
+                // Transaction failed
+                const errorMessage = response.getTransactionResponse().getErrors()[0].getErrorText();
+                await queryRunner.rollbackTransaction();
+                res.status(400).json({
+                    error: 'Payment failed',
+                    message: errorMessage,
+                    responseCode: response.getTransactionResponse().getResponseCode()
+                });
+            }
+        } else {
+            // API call failed
+            const errorMessage = response.getMessages().getMessage()[0].getText();
+            await queryRunner.rollbackTransaction();
+            res.status(400).json({
+                error: 'Payment processing failed',
+                message: errorMessage,
+                resultCode: response.getMessages().getResultCode()
+            });
+        }
+
+    } catch (error) {
+        await queryRunner.rollbackTransaction();
+        console.error('POST /api/v1/payment/authorize-net error:', error);
         res.status(500).json({ 
             error: 'Failed to process payment',
             details: error instanceof Error ? error.message : 'Unknown error'

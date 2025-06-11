@@ -4,211 +4,354 @@ import { useState, useEffect } from "react";
 import { CreditCard, Banknote, QrCode } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { toast } from "@/hooks/use-toast";
+import Input from "@/components/ui/Input";
+
+// Declare window.Accept for TypeScript
+declare global {
+  interface Window {
+    Accept: any;
+  }
+}
 
 const paymentOptions = [
+  { label: "Credit Card", value: "card", icon: <CreditCard size={20} /> },
   { label: "Net Banking", value: "netbanking", icon: <Banknote size={20} /> },
   { label: "UPI", value: "upi", icon: <QrCode size={20} /> },
-  { label: "Credit Card", value: "card", icon: <CreditCard size={20} /> },
 ];
 
 export default function Payment() {
   const router = useRouter();
-  const [selected, setSelected] = useState("netbanking");
+  const [selected, setSelected] = useState("card");
   const [processing, setProcessing] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
-  const [isRetrieved, setIsRetrieved] = useState(false);
+  const [quoteDetails, setQuoteDetails] = useState<any>(null);
+  const [cardData, setCardData] = useState({
+    cardNumber: "",
+    expiryMonth: "",
+    expiryYear: "",
+    cvv: "",
+  });
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      setIsRetrieved(localStorage.getItem("retrievedQuote") === "true");
-    }
-    const timer = setTimeout(() => setPageLoading(false), 200);
-    return () => clearTimeout(timer);
-  }, []);
+    const fetchQuoteDetails = async () => {
+      try {
+        const quoteNumber = localStorage.getItem("quoteNumber");
+        if (!quoteNumber) {
+          toast({
+            title: "No quote found",
+            description: "Please start a new quote to proceed with payment.",
+            variant: "destructive",
+          });
+          router.push("/");
+          return;
+        }
 
-  // ==================================================================
-  // ===== THE ONLY CHANGES ARE IN THIS FUNCTION ======================
-  // ==================================================================
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/quotes?quoteNumber=${quoteNumber}`);
+        const data = await response.json();
+        
+        if (response.ok && data.quote) {
+          setQuoteDetails(data.quote);
+          localStorage.setItem("retrievedQuote", "true");
+        } else {
+          throw new Error(data.error || "Failed to fetch quote details");
+        }
+      } catch (error) {
+        console.error("Failed to fetch quote details:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load quote details. Please try again.",
+          variant: "destructive",
+        });
+        router.push("/");
+      } finally {
+        setPageLoading(false);
+      }
+    };
+
+    // Load Authorize.Net Accept.js script
+    const script = document.createElement("script");
+    script.src = "https://jstest.authorize.net/v1/Accept.js";
+    script.async = true;
+    script.charset = "utf-8";
+    script.onload = () => console.log("Authorize.Net Accept.js loaded successfully");
+    script.onerror = () => {
+      console.error("Failed to load Authorize.Net Accept.js");
+      toast({
+        title: "Payment gateway script failed to load",
+        description: "Please refresh or try again later.",
+        variant: "destructive",
+      });
+    };
+    document.body.appendChild(script);
+
+    fetchQuoteDetails();
+  }, [router]);
+
   const handlePay = async () => {
+    if (processing) return; // Prevent double submission
     setProcessing(true);
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
     try {
-          let quoteNumberForRedirect: string | null = null; 
-      const quoteNumber = localStorage.getItem("quoteNumber");
-      if (!quoteNumber) {
-        throw new Error("Missing quote number. Please start a new quote.");
+      if (!quoteDetails) {
+        throw new Error("Quote details not loaded. Please refresh the page.");
       }
-      
+
       if (!selected) {
         throw new Error("Please select a payment method.");
       }
-            quoteNumberForRedirect = quoteNumber; 
-      
-      // 1. Get the latest quote details from the new backend
-      const quoteRes = await fetch(`${apiUrl}/quotes?quoteNumber=${quoteNumber}`);
-      const quoteData = await quoteRes.json();
-      
-      if (!quoteRes.ok || !quoteData.quote) {
-        throw new Error(quoteData.error || "Failed to fetch quote details.");
-      }
 
-      console.log('Quote data:', quoteData);
-      
-      // Extract the quote from the response
-      const quote = quoteData.quote;
-      if (!quote || !quote.id) {
-        throw new Error("Invalid quote data received");
-      }
+      if (selected === "card") {
+        if (!window.Accept) {
+          throw new Error("Payment gateway not loaded. Please wait a moment and try again.");
+        }
 
-      // Get the total premium from the quote
-      const totalPremium = quote.TOTALPREMIUM || quote.totalPremium;
-      if (!totalPremium || totalPremium <= 0) {
-        throw new Error("Invalid total premium amount. Please contact support.");
-      }
-      console.log('Total premium:', totalPremium);
-      
-      // 2. Create the payment record via the new backend
-      const paymentRes = await fetch(`${apiUrl}/payment`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          amount: totalPremium,
-          quoteId: quote.id,
-          method: selected,
-          status: "SUCCESS",
-          reference: `PAY-${Date.now()}`
-        })
-      });
-  
-      if (!paymentRes.ok) {
-        const paymentErrorData = await paymentRes.json();
-        console.error('Payment error response:', paymentErrorData);
-        throw new Error(paymentErrorData.error || "Payment failed.");
-      }
+        if (!cardData.cardNumber || !cardData.expiryMonth || !cardData.expiryYear || !cardData.cvv) {
+          throw new Error("Please fill in all card details.");
+        }
 
-      const paymentData = await paymentRes.json();
-      console.log('Payment successful:', paymentData);
-  
-      // 3. Show success message
-      toast.success("Payment successful!");
-      
-      // 4. Clear any stored data
-      localStorage.removeItem("quoteNumber");
-      if (isRetrieved) {
-        localStorage.removeItem("retrievedQuote");
+        // Ensure API Login ID and Client Key are available
+        const apiLoginId = process.env.NEXT_PUBLIC_AUTHORIZE_NET_API_LOGIN_ID;
+        const clientKey = process.env.NEXT_PUBLIC_AUTHORIZE_NET_CLIENT_KEY;
+
+        if (!apiLoginId || !clientKey) {
+          console.error("Authorize.Net API Login ID or Client Key is missing from environment variables.");
+          throw new Error("Payment gateway configuration error. Please contact support.");
+        }
+
+        // Prepare card data with correct formatting
+        const formattedCardNumber = cardData.cardNumber.replace(/\s/g, "");
+        const formattedMonth = cardData.expiryMonth.padStart(2, '0'); // Ensure MM format (e.g., "01", "07", "12")
+        const formattedYear = `20${cardData.expiryYear}`; // Convert YY to YYYY (e.g., "24" to "2024")
+
+        // Get the secure payment data from Accept.js
+        const secureData = {
+          authData: {
+            apiLoginID: apiLoginId,
+            clientKey: clientKey,
+          },
+          cardData: {
+            cardNumber: formattedCardNumber,
+            month: formattedMonth,
+            year: formattedYear,
+            cardCode: cardData.cvv,
+          },
+        };
+        console.log("Dispatching data to Authorize.Net:", JSON.stringify(secureData, null, 2)); // For debugging
+
+        // Get the secure payment data using Promise
+        const opaqueData = await new Promise((resolve, reject) => {
+          window.Accept.dispatchData(secureData, (response: any) => {
+            if (response.messages.resultCode === "Error") {
+              const errorMessage = response.messages.message[0].text;
+              console.error("Authorize.Net error:", errorMessage);
+              reject(new Error(errorMessage));
+              return;
+            }
+            resolve(response.opaqueData);
+          });
+        });
+
+        // Process the payment with the secure data
+        await processPayment(opaqueData);
+      } else {
+        // Handle other payment methods (netbanking, UPI)
+        toast({
+          title: "Coming soon",
+          description: "This payment method is not yet available.",
+          variant: "default",
+        });
       }
-      
-      // 5. Redirect to the review page with success parameters
-      const redirectUrl = isRetrieved 
-        ? `/customer/review?payment=success&method=${selected}&retrieved=true&qn=${quoteNumberForRedirect}`
-        : `/customer/review?payment=success&method=${selected}&qn=${quoteNumberForRedirect}`;
-      
-      console.log('Redirecting to:', redirectUrl);
-      router.push(redirectUrl);
     } catch (error) {
-      console.error('Payment error:', error);
-      const message = error instanceof Error ? error.message : "Payment failed. Please try again.";
-      toast.error(message);
+      const message = error instanceof Error ? error.message : "An unknown error occurred";
+      toast({
+        title: "Payment failed",
+        description: message,
+        variant: "destructive",
+      });
     } finally {
       setProcessing(false);
     }
   };
-  // ==================================================================
-  // ==================================================================
-  // ==================================================================
 
-  const PaymentPageSkeleton = () => (
-    <div className="max-w-md mx-auto mt-20 p-8 bg-white rounded-2xl shadow-2xl border border-blue-100 flex flex-col items-center animate-pulse">
-      <div className="h-10 bg-gray-300 rounded w-3/4 mb-8"></div>
-      <div className="space-y-4 w-full mb-10">
-        {[...Array(3)].map((_, i) => (
-          <div key={i} className="flex items-center gap-4 p-4 border border-gray-200 rounded-xl">
-            <div className="h-6 w-6 bg-gray-300 rounded"></div>
-            <div className="h-6 bg-gray-300 rounded w-1/2"></div>
-          </div>
-        ))}
-      </div>
-      <div className="h-12 bg-blue-300 rounded-md w-full text-lg py-3 mt-2"></div>
-      <div className="h-4 bg-gray-200 rounded w-1/2 mt-6"></div>
-    </div>
-  );
+  const processPayment = async (opaqueData: any) => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payment/authorize-net`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          quoteId: quoteDetails.id,
+          amount: quoteDetails.totalPremium,
+          opaqueData,
+        }),
+      });
 
-  if (pageLoading || processing) {
-    return <PaymentPageSkeleton />;
+      const data = await response.json();
+
+      if (response.ok) {
+        // Store policy information in localStorage
+        if (data.payment?.policy) {
+          localStorage.setItem("policyNumber", data.payment.policy.policyNumber);
+          localStorage.setItem("policyId", data.payment.policy.id.toString());
+        }
+
+        toast({
+          title: "Payment successful",
+          description: "Your payment has been processed successfully.",
+          variant: "default",
+        });
+
+        // Clear quote data from localStorage
+        localStorage.removeItem("quoteNumber");
+        localStorage.removeItem("retrievedQuote");
+
+        // Check if this is a retrieved quote
+        const isRetrieved = localStorage.getItem("retrievedQuote") === "true";
+        
+        // Redirect to review page with payment success parameters
+        router.push(`/customer/review?payment=success&method=card&qn=${quoteDetails.quoteNumber}${isRetrieved ? '&retrieved=true' : ''}`);
+      } else {
+        throw new Error(data.message || "Payment failed");
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Payment processing failed";
+      toast({
+        title: "Payment failed",
+        description: message,
+        variant: "destructive",
+      });
+      throw error; // Re-throw to be caught by the main try-catch
+    }
+  };
+
+  if (pageLoading) {
+    return <div className="p-8 text-center">Loading payment page...</div>;
   }
 
   return (
-    <div className="max-w-md mx-auto mt-20 p-8 bg-white rounded-2xl shadow-2xl border border-blue-100 flex flex-col items-center">
-      <h2 className="text-3xl font-extrabold text-blue-900 mb-8 text-center drop-shadow">
-        Dummy Payment Gateway
-      </h2>
-      <div className="space-y-4 w-full mb-10">
-        {paymentOptions.map((opt) => (
-          <label
-            key={opt.value}
-            className={`flex items-center gap-4 p-4 border rounded-xl cursor-pointer transition-all duration-150 ${
-              selected === opt.value
-                ? "border-blue-500 bg-blue-50 shadow-md"
-                : "border-gray-200 bg-white"
-            } focus-within:ring-2 focus-within:ring-blue-400`}
-            tabIndex={0}
-            aria-checked={selected === opt.value}
-            role="radio"
-          >
-            <input
-              type="radio"
-              name="payment"
-              value={opt.value}
-              checked={selected === opt.value}
-              onChange={() => setSelected(opt.value)}
-              className="accent-blue-600 focus:ring-2 focus:ring-blue-400"
-            />
-            {opt.icon}
-            <span className="font-semibold text-gray-800 text-lg">
-              {opt.label}
-            </span>
-          </label>
-        ))}
-      </div>
-      <Button
-        variant="primary"
-        size="lg"
-        onClick={handlePay}
-        disabled={processing}
-        className="w-full text-lg py-3 mt-2"
-      >
-        {processing ? (
-          <span className="flex items-center justify-center gap-2">
-            <svg
-              className="animate-spin h-5 w-5 text-white"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              ></circle>
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8v8z"
-              ></path>
-            </svg>
-            Processing...
-          </span>
-        ) : (
-          "Pay Now"
+    <div className="container mx-auto px-4 py-8">
+      <div className="max-w-2xl mx-auto">
+        <h1 className="text-3xl font-bold mb-8 text-center">Payment Details</h1>
+
+        {quoteDetails && (
+          <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 className="text-xl font-semibold mb-4">Quote Summary</h2>
+            <div className="space-y-2">
+              <p><span className="font-medium">Quote Number:</span> {quoteDetails.quoteNumber}</p>
+              <p><span className="font-medium">Total Premium:</span> ${quoteDetails.totalPremium}</p>
+            </div>
+          </div>
         )}
-      </Button>
-      <p className="text-xs text-gray-500 mt-6 text-center">
-        This is a demo payment page. No real transaction will occur.
-      </p>
+
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h2 className="text-xl font-semibold mb-6">Select Payment Method</h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            {paymentOptions.map((option) => (
+              <button
+                key={option.value}
+                onClick={() => setSelected(option.value)}
+                className={`flex items-center justify-center gap-2 p-4 rounded-lg border-2 transition-colors ${
+                  selected === option.value
+                    ? "border-blue-500 bg-blue-50"
+                    : "border-gray-200 hover:border-blue-300"
+                }`}
+              >
+                {option.icon}
+                <span>{option.label}</span>
+              </button>
+            ))}
+          </div>
+
+          {selected === "card" && (
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Card Number
+                </label>
+                <Input
+                  type="text"
+                  value={cardData.cardNumber}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, "");
+                    const formatted = value.replace(/(\d{4})/g, "$1 ").trim();
+                    setCardData({ ...cardData, cardNumber: formatted });
+                  }}
+                  placeholder="1234 5678 9012 3456"
+                  maxLength={19}
+                  className="w-full"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Expiry Date
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Input
+                      type="text"
+                      value={cardData.expiryMonth}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, "");
+                        if (value.length <= 2 && parseInt(value) <= 12) {
+                          setCardData({ ...cardData, expiryMonth: value });
+                        }
+                      }}
+                      placeholder="MM"
+                      maxLength={2}
+                      className="w-full"
+                    />
+                    <Input
+                      type="text"
+                      value={cardData.expiryYear}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, "");
+                        if (value.length <= 2) {
+                          setCardData({ ...cardData, expiryYear: value });
+                        }
+                      }}
+                      placeholder="YY"
+                      maxLength={2}
+                      className="w-full"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    CVV
+                  </label>
+                  <Input
+                    type="text"
+                    value={cardData.cvv}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, "");
+                      if (value.length <= 4) {
+                        setCardData({ ...cardData, cvv: value });
+                      }
+                    }}
+                    placeholder="123"
+                    maxLength={4}
+                    className="w-full"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="mt-8">
+            <Button
+              onClick={handlePay}
+              disabled={processing}
+              className="w-full"
+            >
+              {processing ? "Processing..." : `Pay $${quoteDetails?.totalPremium || 0}`}
+            </Button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

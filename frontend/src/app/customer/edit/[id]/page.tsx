@@ -36,6 +36,50 @@ interface QuoteFormState {
   venueState: string;
   venueZip: string;
   venueAsInsured: boolean;
+  // Reception venue fields
+  receptionLocationType: string;
+  receptionIndoorOutdoor: string;
+  receptionVenueName: string;
+  receptionVenueAddress1: string;
+  receptionVenueAddress2: string;
+  receptionVenueCountry: string;
+  receptionVenueCity: string;
+  receptionVenueState: string;
+  receptionVenueZip: string;
+  receptionVenueAsInsured: boolean;
+  // Brunch venue fields
+  brunchLocationType: string;
+  brunchIndoorOutdoor: string;
+  brunchVenueName: string;
+  brunchVenueAddress1: string;
+  brunchVenueAddress2: string;
+  brunchVenueCountry: string;
+  brunchVenueCity: string;
+  brunchVenueState: string;
+  brunchVenueZip: string;
+  brunchVenueAsInsured: boolean;
+  // Rehearsal venue fields
+  rehearsalLocationType: string;
+  rehearsalIndoorOutdoor: string;
+  rehearsalVenueName: string;
+  rehearsalVenueAddress1: string;
+  rehearsalVenueAddress2: string;
+  rehearsalVenueCountry: string;
+  rehearsalVenueCity: string;
+  rehearsalVenueState: string;
+  rehearsalVenueZip: string;
+  rehearsalVenueAsInsured: boolean;
+  // Rehearsal dinner venue fields
+  rehearsalDinnerLocationType: string;
+  rehearsalDinnerIndoorOutdoor: string;
+  rehearsalDinnerVenueName: string;
+  rehearsalDinnerVenueAddress1: string;
+  rehearsalDinnerVenueAddress2: string;
+  rehearsalDinnerVenueCountry: string;
+  rehearsalDinnerVenueCity: string;
+  rehearsalDinnerVenueState: string;
+  rehearsalDinnerVenueZip: string;
+  rehearsalDinnerVenueAsInsured: boolean;
   firstName: string;
   lastName: string;
   phone: string;
@@ -72,6 +116,7 @@ function flattenQuote(quote: any): QuoteFormState {
     honoree1LastName: quote.event?.honoree1LastName || "",
     honoree2FirstName: quote.event?.honoree2FirstName || "",
     honoree2LastName: quote.event?.honoree2LastName || "",
+    // Main venue fields
     ceremonyLocationType: quote.event?.venue?.ceremonyLocationType || "",
     indoorOutdoor: quote.event?.venue?.indoorOutdoor || "",
     venueName: quote.event?.venue?.name || "",
@@ -82,6 +127,50 @@ function flattenQuote(quote: any): QuoteFormState {
     venueState: quote.event?.venue?.state || "",
     venueZip: quote.event?.venue?.zip || "",
     venueAsInsured: quote.event?.venue?.venueAsInsured || false,
+    // Reception venue fields
+    receptionLocationType: quote.event?.venue?.receptionLocationType || "",
+    receptionIndoorOutdoor: quote.event?.venue?.receptionIndoorOutdoor || "",
+    receptionVenueName: quote.event?.venue?.receptionVenueName || "",
+    receptionVenueAddress1: quote.event?.venue?.receptionVenueAddress1 || "",
+    receptionVenueAddress2: quote.event?.venue?.receptionVenueAddress2 || "",
+    receptionVenueCountry: quote.event?.venue?.receptionVenueCountry || "",
+    receptionVenueCity: quote.event?.venue?.receptionVenueCity || "",
+    receptionVenueState: quote.event?.venue?.receptionVenueState || "",
+    receptionVenueZip: quote.event?.venue?.receptionVenueZip || "",
+    receptionVenueAsInsured: quote.event?.venue?.receptionVenueAsInsured || false,
+    // Brunch venue fields
+    brunchLocationType: quote.event?.venue?.brunchLocationType || "",
+    brunchIndoorOutdoor: quote.event?.venue?.brunchIndoorOutdoor || "",
+    brunchVenueName: quote.event?.venue?.brunchVenueName || "",
+    brunchVenueAddress1: quote.event?.venue?.brunchVenueAddress1 || "",
+    brunchVenueAddress2: quote.event?.venue?.brunchVenueAddress2 || "",
+    brunchVenueCountry: quote.event?.venue?.brunchVenueCountry || "",
+    brunchVenueCity: quote.event?.venue?.brunchVenueCity || "",
+    brunchVenueState: quote.event?.venue?.brunchVenueState || "",
+    brunchVenueZip: quote.event?.venue?.brunchVenueZip || "",
+    brunchVenueAsInsured: quote.event?.venue?.brunchVenueAsInsured || false,
+    // Rehearsal venue fields
+    rehearsalLocationType: quote.event?.venue?.rehearsalLocationType || "",
+    rehearsalIndoorOutdoor: quote.event?.venue?.rehearsalIndoorOutdoor || "",
+    rehearsalVenueName: quote.event?.venue?.rehearsalVenueName || "",
+    rehearsalVenueAddress1: quote.event?.venue?.rehearsalVenueAddress1 || "",
+    rehearsalVenueAddress2: quote.event?.venue?.rehearsalVenueAddress2 || "",
+    rehearsalVenueCountry: quote.event?.venue?.rehearsalVenueCountry || "",
+    rehearsalVenueCity: quote.event?.venue?.rehearsalVenueCity || "",
+    rehearsalVenueState: quote.event?.venue?.rehearsalVenueState || "",
+    rehearsalVenueZip: quote.event?.venue?.rehearsalVenueZip || "",
+    rehearsalVenueAsInsured: quote.event?.venue?.rehearsalVenueAsInsured || false,
+    // Rehearsal dinner venue fields
+    rehearsalDinnerLocationType: quote.event?.venue?.rehearsalDinnerLocationType || "",
+    rehearsalDinnerIndoorOutdoor: quote.event?.venue?.rehearsalDinnerIndoorOutdoor || "",
+    rehearsalDinnerVenueName: quote.event?.venue?.rehearsalDinnerVenueName || "",
+    rehearsalDinnerVenueAddress1: quote.event?.venue?.rehearsalDinnerVenueAddress1 || "",
+    rehearsalDinnerVenueAddress2: quote.event?.venue?.rehearsalDinnerVenueAddress2 || "",
+    rehearsalDinnerVenueCountry: quote.event?.venue?.rehearsalDinnerVenueCountry || "",
+    rehearsalDinnerVenueCity: quote.event?.venue?.rehearsalDinnerVenueCity || "",
+    rehearsalDinnerVenueState: quote.event?.venue?.rehearsalDinnerVenueState || "",
+    rehearsalDinnerVenueZip: quote.event?.venue?.rehearsalDinnerVenueZip || "",
+    rehearsalDinnerVenueAsInsured: quote.event?.venue?.rehearsalDinnerVenueAsInsured || false,
     firstName: quote.policyHolder?.firstName || "",
     lastName: quote.policyHolder?.lastName || "",
     phone: quote.policyHolder?.phone || "",
