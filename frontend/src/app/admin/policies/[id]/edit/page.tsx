@@ -16,10 +16,10 @@ const Step4Form = dynamic(() => import('@/components/quote/Step4Form'), { ssr: f
 
 function flattenPolicy(policy: any): PolicyVersionData | null {
     if (!policy) return null;
-    
+
     // Get the data from either the policy directly or from its quote
     const data = policy.quote || policy;
-    
+
     return {
         residentState: data.residentState || data.policyHolder?.state || '',
         eventType: data.event?.eventType || '',
@@ -197,58 +197,45 @@ export default function EditPolicy() {
     // ===== API CHANGE #1: Fetching the initial policy data ==========
     // ==================================================================
     useEffect(() => {
-        async function fetchPolicyAndVersions() {
+        async function fetchData() {
             setIsLoading(true);
             const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
             try {
-                // First try to get the policy by ID
+                // Phase 1: Fetch policy (fast render)
                 const res = await fetch(`${apiUrl}/policies/${id}`);
-                if (!res.ok) {
-                    // If that fails, try to get it by quote number
-                    const quoteRes = await fetch(`${apiUrl}/quotes?quoteNumber=${id}`);
-                    if (!quoteRes.ok) {
-                        throw new Error("Policy not found.");
-                    }
-                    const quoteData = await quoteRes.json();
-                    if (!quoteData.quote) {
-                        throw new Error("Quote not found.");
-                    }
-                    // If we found the quote, get the associated policy
-                    const policyRes = await fetch(`${apiUrl}/policies/${quoteData.quote.policyId}`);
-                    if (!policyRes.ok) {
-                        throw new Error("Associated policy not found.");
-                    }
-                    const policyData = await policyRes.json();
-                    setFormState(flattenPolicy(policyData.policy));
-                    
-                    // Load versions separately
-                    const versionsRes = await fetch(`${apiUrl}/policies/${quoteData.quote.policyId}?versionsOnly=true`);
-                    if (versionsRes.ok) {
-                        const versionsData = await versionsRes.json();
-                        setPolicyVersions(versionsData.versions || []);
-                    }
-                } else {
-                    const data = await res.json();
-                    setFormState(flattenPolicy(data.policy));
-                    
-                    // Load versions separately
-                    const versionsRes = await fetch(`${apiUrl}/policies/${id}?versionsOnly=true`);
-                    if (versionsRes.ok) {
-                        const versionsData = await versionsRes.json();
-                        setPolicyVersions(versionsData.versions || []);
-                    }
-                }
+                if (!res.ok) throw new Error("Policy not found");
+                const data = await res.json();
+                setFormState(flattenPolicy(data.policy)); // 👈 Show form after this
+
+                // Phase 2: Fetch versions (background)
+                fetch(`${apiUrl}/policies/${id}/versions`)
+                    .then((vRes) => vRes.json())
+                    .then((vData) => {
+                        console.log("Fetched versions 👀", vData); // 🔍 This line right here
+                        setPolicyVersions(vData.versions || []);
+                    })
+                    .catch((err) => {
+                        console.warn("Versions fetch failed:", err);
+                    });
             } catch (error) {
                 const message = error instanceof Error ? error.message : "Unknown error";
-                toast({ title: "Failed to fetch policy data", description: message, variant: "destructive" });
+                toast({
+                    title: "Failed to fetch policy data",
+                    description: message,
+                    variant: "destructive",
+                });
             } finally {
                 setIsLoading(false);
             }
         }
+
         if (id) {
-            fetchPolicyAndVersions();
+            fetchData();
         }
     }, [id]);
+
+
 
     const handleInputChange = (field: string, value: any) => {
         setFormState((prev) => ({ ...(prev as PolicyVersionData), [field]: value }));
@@ -266,7 +253,7 @@ export default function EditPolicy() {
         try {
             // Check if data is already an object or needs parsing
             const versionData = typeof version.data === 'string' ? JSON.parse(version.data) : version.data;
-            
+
             // Ensure we keep the current policyId and policyNumber
             setFormState({
                 ...versionData,
@@ -275,17 +262,17 @@ export default function EditPolicy() {
             });
             setSelectedVersion(version);
             setRestoredFromVersion(version);
-            toast({ 
-                title: "Version restored", 
+            toast({
+                title: "Version restored",
                 description: `Loaded version from ${new Date(version.createdAt).toLocaleString()}. Save to keep changes.`,
-                variant: "default" 
+                variant: "default"
             });
         } catch (error) {
             console.error("Error parsing version data:", error);
-            toast({ 
-                title: "Failed to restore version", 
+            toast({
+                title: "Failed to restore version",
                 description: "Invalid version data format.",
-                variant: "destructive" 
+                variant: "destructive"
             });
         }
     };
@@ -365,7 +352,7 @@ export default function EditPolicy() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload),
             });
-            
+
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.error || 'Failed to update policy');
@@ -409,77 +396,77 @@ export default function EditPolicy() {
         return Object.keys(newErrors).length === 0;
     };
 
-    const fetchEventData = async () => {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-        try {
-            const res = await fetch(`${apiUrl}/policies/${id}/event`);
-            if (!res.ok) {
-                throw new Error("Failed to fetch event data");
-            }
-            const data = await res.json();
-            // Update state with event data
-            setFormState((prev) => ({ ...prev, ...data.event }));
-        } catch (error) {
-            console.error("Error fetching event data:", error);
-            toast({ title: "Failed to fetch event data", description: error.message, variant: "destructive" });
-        }
-    };
+    // const fetchEventData = async () => {
+    //     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    //     try {
+    //         const res = await fetch(`${apiUrl}/policies/${id}/event`);
+    //         if (!res.ok) {
+    //             throw new Error("Failed to fetch event data");
+    //         }
+    //         const data = await res.json();
+    //         // Update state with event data
+    //         setFormState((prev) => ({ ...prev, ...data.event }));
+    //     } catch (error) {
+    //         console.error("Error fetching event data:", error);
+    //         toast({ title: "Failed to fetch event data", description: error.message, variant: "destructive" });
+    //     }
+    // };
 
-    const fetchPolicyHolderData = async () => {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-        try {
-            const res = await fetch(`${apiUrl}/policies/${id}/policy-holder`);
-            if (!res.ok) {
-                throw new Error("Failed to fetch policy holder data");
-            }
-            const data = await res.json();
-            // Update state with policy holder data
-            setFormState((prev) => ({ ...prev, ...data.policyHolder }));
-        } catch (error) {
-            console.error("Error fetching policy holder data:", error);
-            toast({ title: "Failed to fetch policy holder data", description: error.message, variant: "destructive" });
-        }
-    };
+    // const fetchPolicyHolderData = async () => {
+    //     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    //     try {
+    //         const res = await fetch(`${apiUrl}/policies/${id}/policy-holder`);
+    //         if (!res.ok) {
+    //             throw new Error("Failed to fetch policy holder data");
+    //         }
+    //         const data = await res.json();
+    //         // Update state with policy holder data
+    //         setFormState((prev) => ({ ...prev, ...data.policyHolder }));
+    //     } catch (error) {
+    //         console.error("Error fetching policy holder data:", error);
+    //         toast({ title: "Failed to fetch policy holder data", description: error.message, variant: "destructive" });
+    //     }
+    // };
 
-    const fetchPaymentsData = async () => {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-        try {
-            const res = await fetch(`${apiUrl}/policies/${id}/payments`);
-            if (!res.ok) {
-                throw new Error("Failed to fetch payments data");
-            }
-            const data = await res.json();
-            // Update state with payments data
-            setFormState((prev) => ({ ...prev, payments: data.payments }));
-        } catch (error) {
-            console.error("Error fetching payments data:", error);
-            toast({ title: "Failed to fetch payments data", description: error.message, variant: "destructive" });
-        }
-    };
+    // const fetchPaymentsData = async () => {
+    //     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    //     try {
+    //         const res = await fetch(`${apiUrl}/policies/${id}/payments`);
+    //         if (!res.ok) {
+    //             throw new Error("Failed to fetch payments data");
+    //         }
+    //         const data = await res.json();
+    //         // Update state with payments data
+    //         setFormState((prev) => ({ ...prev, payments: data.payments }));
+    //     } catch (error) {
+    //         console.error("Error fetching payments data:", error);
+    //         toast({ title: "Failed to fetch payments data", description: error.message, variant: "destructive" });
+    //     }
+    // };
 
-    useEffect(() => {
-        async function fetchPolicy() {
-            setIsLoading(true);
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-            try {
-                // Fetch the main policy data
-                const res = await fetch(`${apiUrl}/policies/${id}`);
-                if (!res.ok) {
-                    throw new Error("Policy not found.");
-                }
-                const data = await res.json();
-                setFormState(flattenPolicy(data.policy));
-            } catch (error) {
-                const message = error instanceof Error ? error.message : "Unknown error";
-                toast({ title: "Failed to fetch policy data", description: message, variant: "destructive" });
-            } finally {
-                setIsLoading(false);
-            }
-        }
-        if (id) {
-            fetchPolicy();
-        }
-    }, [id]);
+    // useEffect(() => {
+    //     async function fetchPolicy() {
+    //         setIsLoading(true);
+    //         const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    //         try {
+    //             // Fetch the main policy data
+    //             const res = await fetch(`${apiUrl}/policies/${id}`);
+    //             if (!res.ok) {
+    //                 throw new Error("Policy not found.");
+    //             }
+    //             const data = await res.json();
+    //             setFormState(flattenPolicy(data.policy));
+    //         } catch (error) {
+    //             const message = error instanceof Error ? error.message : "Unknown error";
+    //             toast({ title: "Failed to fetch policy data", description: message, variant: "destructive" });
+    //         } finally {
+    //             setIsLoading(false);
+    //         }
+    //     }
+    //     if (id) {
+    //         fetchPolicy();
+    //     }
+    // }, [id]);
 
     const handleVersionClick = async (versionId: number) => {
         setIsLoadingVersion(true);
@@ -497,7 +484,6 @@ export default function EditPolicy() {
             toast({ title: "Version loaded", description: `Version from ${new Date(versionData.createdAt).toLocaleString()} loaded.`, variant: "default" });
         } catch (error) {
             console.error("Error fetching version data:", error);
-            toast({ title: "Failed to load version", description: error.message, variant: "destructive" });
         } finally {
             setIsLoadingVersion(false);
         }
@@ -529,8 +515,8 @@ export default function EditPolicy() {
                 <h1 className="text-2xl text-center sm:text-left font-bold text-gray-900 order-1 sm:order-none w-full sm:w-auto">Edit Policy</h1>
                 <div className="flex flex-col-reverse items-center w-full sm:flex-row sm:items-center sm:w-auto gap-2 order-2 sm:order-none">
                     {policyVersions.length > 0 && (
-                        <div 
-                            className="relative inline-block w-full sm:w-auto" 
+                        <div
+                            className="relative inline-block w-full sm:w-auto"
                             ref={versionDropdownRef}
                             onMouseEnter={() => setIsHovering(true)}
                             onMouseLeave={() => setIsHovering(false)}
@@ -558,11 +544,10 @@ export default function EditPolicy() {
                                                 return (
                                                     <button
                                                         key={version.id}
-                                                        className={`w-full text-left px-3 py-2 rounded-md transition-colors ${
-                                                            selectedVersion?.id === version.id 
-                                                            ? 'bg-blue-50 text-blue-700' 
-                                                            : 'hover:bg-gray-50'
-                                                        }`}
+                                                        className={`w-full text-left px-3 py-2 rounded-md transition-colors ${selectedVersion?.id === version.id
+                                                                ? 'bg-blue-50 text-blue-700'
+                                                                : 'hover:bg-gray-50'
+                                                            }`}
                                                         onClick={() => {
                                                             handleRestoreVersion(version);
                                                             if (!isHovering) {
@@ -602,10 +587,10 @@ export default function EditPolicy() {
             {/* Form Steps */}
             <div className="mb-8 flex flex-row max-w-4xl justify-center mx-auto items-center gap-2 sm:gap-3 md:gap-10">
                 {[1, 2, 3, 4].map(s => (
-                    <Button 
-                        key={s} 
-                        className="flex-1 min-w-0 text-center rounded-full md:flex-initial md:w-48" 
-                        variant={step === s ? 'primary' : 'outline'} 
+                    <Button
+                        key={s}
+                        className="flex-1 min-w-0 text-center rounded-full md:flex-initial md:w-48"
+                        variant={step === s ? 'primary' : 'outline'}
                         onClick={() => setStep(s)}
                     >
                         {`Step ${s}`}

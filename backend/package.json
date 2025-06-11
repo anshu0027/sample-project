@@ -10,7 +10,8 @@
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "typeorm": "typeorm-ts-node-commonjs -d src/data-source.ts",
     "typeorm:migrate": "ts-node --esm ./node_modules/typeorm/cli.js migration:run -d src/data-source.ts",
-    "typeorm:generate": "ts-node --esm ./node_modules/typeorm/cli.js migration:generate -d src/data-source.ts"
+    "typeorm:generate": "ts-node --esm ./node_modules/typeorm/cli.js migration:generate -d src/data-source.ts",
+    "typeorm:revert": "ts-node --esm ./node_modules/typeorm/cli.js migration:revert -d src/data-source.ts"
   },
   "keywords": [],
   "author": "",

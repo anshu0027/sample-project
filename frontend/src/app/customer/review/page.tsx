@@ -534,6 +534,42 @@ export default function Review() {
     return <ReviewPageSkeleton />;
   }
 
+  // Add a function to render additional venue information if eventType is 'wedding'
+  const renderAdditionalVenues = () => {
+    if (state.eventType !== 'wedding') return null;
+    return (
+      <>
+        <ReviewSection
+          title={
+            <span className="text-lg font-bold text-blue-800">
+              Additional Venue Information
+            </span>
+          }
+          icon={<Calendar size={20} className="text-blue-600" />}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 w-full">
+            <div>
+              <ReviewItem label="Reception Venue Name" value={state.receptionVenueName} />
+              <ReviewItem label="Reception Venue Address" value={`${state.receptionVenueAddress1}${state.receptionVenueAddress2 ? `, ${state.receptionVenueAddress2}` : ''}`} />
+              <ReviewItem label="Reception Venue Location" value={`${state.receptionVenueCity}, ${state.receptionVenueState} ${state.receptionVenueZip}`} />
+              <ReviewItem label="Brunch Venue Name" value={state.brunchVenueName} />
+              <ReviewItem label="Brunch Venue Address" value={`${state.brunchVenueAddress1}${state.brunchVenueAddress2 ? `, ${state.brunchVenueAddress2}` : ''}`} />
+              <ReviewItem label="Brunch Venue Location" value={`${state.brunchVenueCity}, ${state.brunchVenueState} ${state.brunchVenueZip}`} />
+            </div>
+            <div>
+              <ReviewItem label="Rehearsal Venue Name" value={state.rehearsalVenueName} />
+              <ReviewItem label="Rehearsal Venue Address" value={`${state.rehearsalVenueAddress1}${state.rehearsalVenueAddress2 ? `, ${state.rehearsalVenueAddress2}` : ''}`} />
+              <ReviewItem label="Rehearsal Venue Location" value={`${state.rehearsalVenueCity}, ${state.rehearsalVenueState} ${state.rehearsalVenueZip}`} />
+              <ReviewItem label="Rehearsal Dinner Venue Name" value={state.rehearsalDinnerVenueName} />
+              <ReviewItem label="Rehearsal Dinner Venue Address" value={`${state.rehearsalDinnerVenueAddress1}${state.rehearsalDinnerVenueAddress2 ? `, ${state.rehearsalDinnerVenueAddress2}` : ''}`} />
+              <ReviewItem label="Rehearsal Dinner Venue Location" value={`${state.rehearsalDinnerVenueCity}, ${state.rehearsalDinnerVenueState} ${state.rehearsalDinnerVenueZip}`} />
+            </div>
+          </div>
+        </ReviewSection>
+      </>
+    );
+  };
+
   return (
     <>
       <div className="relative flex justify-center min-h-screen bg-white z-0">
@@ -884,6 +920,7 @@ export default function Review() {
       <div className="hidden lg:block fixed right-11 mr-2 top-[260px] z-10">
         <QuotePreview />
       </div>
+      {renderAdditionalVenues()}
     </>
   );
 }

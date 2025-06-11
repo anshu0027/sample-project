@@ -381,7 +381,7 @@ router.put('/:quoteNumber', async (req: Request, res: Response) => {
 
     // Handle venue updates
     const venueRepository = AppDataSource.getRepository(Venue);
-    if (quoteToUpdate.event && (fields.venueName || fields.venueAddress1 || fields.venueAddress2 || fields.venueCity || fields.venueState || fields.venueZip || fields.venueCountry || fields.ceremonyLocationType || fields.indoorOutdoor)) {
+    if (quoteToUpdate.event && (fields.venueName || fields.venueAddress1 || fields.venueAddress2 || fields.venueCity || fields.venueState || fields.venueZip || fields.venueCountry || fields.ceremonyLocationType || fields.indoorOutdoor || fields.receptionLocationType || fields.receptionIndoorOutdoor || fields.receptionVenueName || fields.receptionVenueAddress1 || fields.receptionVenueAddress2 || fields.receptionVenueCountry || fields.receptionVenueCity || fields.receptionVenueState || fields.receptionVenueZip || fields.receptionVenueAsInsured || fields.brunchLocationType || fields.brunchIndoorOutdoor || fields.brunchVenueName || fields.brunchVenueAddress1 || fields.brunchVenueAddress2 || fields.brunchVenueCountry || fields.brunchVenueCity || fields.brunchVenueState || fields.brunchVenueZip || fields.brunchVenueAsInsured || fields.rehearsalLocationType || fields.rehearsalIndoorOutdoor || fields.rehearsalVenueName || fields.rehearsalVenueAddress1 || fields.rehearsalVenueAddress2 || fields.rehearsalVenueCountry || fields.rehearsalVenueCity || fields.rehearsalVenueState || fields.rehearsalVenueZip || fields.rehearsalVenueAsInsured || fields.rehearsalDinnerLocationType || fields.rehearsalDinnerIndoorOutdoor || fields.rehearsalDinnerVenueName || fields.rehearsalDinnerVenueAddress1 || fields.rehearsalDinnerVenueAddress2 || fields.rehearsalDinnerVenueCountry || fields.rehearsalDinnerVenueCity || fields.rehearsalDinnerVenueState || fields.rehearsalDinnerVenueZip || fields.rehearsalDinnerVenueAsInsured)) {
       let venue = quoteToUpdate.event.venue;
       if (!venue) {
         venue = venueRepository.create();
@@ -402,12 +402,50 @@ router.put('/:quoteNumber', async (req: Request, res: Response) => {
         zip: fields.venueZip || '',
         country: fields.venueCountry || '',
         locationType: fields.ceremonyLocationType || '',
-        ceremonyLocationType: fields.ceremonyLocationType || '',
         indoorOutdoor: fields.indoorOutdoor || '',
-        eventId: quoteToUpdate.event.id
+        receptionLocationType: fields.receptionLocationType || '',
+        receptionIndoorOutdoor: fields.receptionIndoorOutdoor || '',
+        receptionVenueName: fields.receptionVenueName || '',
+        receptionVenueAddress1: fields.receptionVenueAddress1 || '',
+        receptionVenueAddress2: fields.receptionVenueAddress2 || '',
+        receptionVenueCountry: fields.receptionVenueCountry || '',
+        receptionVenueCity: fields.receptionVenueCity || '',
+        receptionVenueState: fields.receptionVenueState || '',
+        receptionVenueZip: fields.receptionVenueZip || '',
+        receptionVenueAsInsured: fields.receptionVenueAsInsured || false,
+        brunchLocationType: fields.brunchLocationType || '',
+        brunchIndoorOutdoor: fields.brunchIndoorOutdoor || '',
+        brunchVenueName: fields.brunchVenueName || '',
+        brunchVenueAddress1: fields.brunchVenueAddress1 || '',
+        brunchVenueAddress2: fields.brunchVenueAddress2 || '',
+        brunchVenueCountry: fields.brunchVenueCountry || '',
+        brunchVenueCity: fields.brunchVenueCity || '',
+        brunchVenueState: fields.brunchVenueState || '',
+        brunchVenueZip: fields.brunchVenueZip || '',
+        brunchVenueAsInsured: fields.brunchVenueAsInsured || false,
+        rehearsalLocationType: fields.rehearsalLocationType || '',
+        rehearsalIndoorOutdoor: fields.rehearsalIndoorOutdoor || '',
+        rehearsalVenueName: fields.rehearsalVenueName || '',
+        rehearsalVenueAddress1: fields.rehearsalVenueAddress1 || '',
+        rehearsalVenueAddress2: fields.rehearsalVenueAddress2 || '',
+        rehearsalVenueCountry: fields.rehearsalVenueCountry || '',
+        rehearsalVenueCity: fields.rehearsalVenueCity || '',
+        rehearsalVenueState: fields.rehearsalVenueState || '',
+        rehearsalVenueZip: fields.rehearsalVenueZip || '',
+        rehearsalVenueAsInsured: fields.rehearsalVenueAsInsured || false,
+        rehearsalDinnerLocationType: fields.rehearsalDinnerLocationType || '',
+        rehearsalDinnerIndoorOutdoor: fields.rehearsalDinnerIndoorOutdoor || '',
+        rehearsalDinnerVenueName: fields.rehearsalDinnerVenueName || '',
+        rehearsalDinnerVenueAddress1: fields.rehearsalDinnerVenueAddress1 || '',
+        rehearsalDinnerVenueAddress2: fields.rehearsalDinnerVenueAddress2 || '',
+        rehearsalDinnerVenueCountry: fields.rehearsalDinnerVenueCountry || '',
+        rehearsalDinnerVenueCity: fields.rehearsalDinnerVenueCity || '',
+        rehearsalDinnerVenueState: fields.rehearsalDinnerVenueState || '',
+        rehearsalDinnerVenueZip: fields.rehearsalDinnerVenueZip || '',
+        rehearsalDinnerVenueAsInsured: fields.rehearsalDinnerVenueAsInsured || false
       };
       
-      console.log('Creating/updating venue with fields:', venueFields);
+      console.log('Updating venue with fields:', venueFields);
       venueRepository.merge(venue, venueFields);
       await venueRepository.save(venue);
     }
@@ -496,60 +534,56 @@ router.delete('/:quoteNumber', async (req: Request, res: Response) => {
     console.log('Event ID:', quote.event?.id);
     console.log('Policy Holder ID:', quote.policyHolder?.id);
 
-    // Delete in correct order to handle foreign key constraints
-    if (quote.payments?.length) {
-      console.log('Deleting payments for quote:', quote.id);
-      await queryRunner.manager.delete('PAYMENTS', { quoteId: quote.id });
-    }
+    try {
+      // 1. Delete payments first (they reference the quote)
+      if (quote.payments?.length) {
+        console.log('Deleting payments for quote:', quote.id);
+        await queryRunner.manager.delete('PAYMENTS', { quoteId: quote.id });
+      }
 
-    // If there's a policy, we need to delete all related records first
-    if (quote.policy) {
-      console.log('Processing policy deletion for policy:', quote.policy.id);
-      
-      // Delete policy versions first
-      if (quote.policy.versions?.length) {
+      // 2. Delete policy versions (they reference the policy)
+      if (quote.policy?.versions?.length) {
         console.log('Deleting policy versions for policy:', quote.policy.id);
         await queryRunner.manager.delete('POLICY_VERSIONS', { policyId: quote.policy.id });
       }
 
-      // Delete events linked to the policy
-      console.log('Deleting events linked to policy:', quote.policy.id);
-      await queryRunner.manager.delete('EVENTS', { policyId: quote.policy.id });
+      // 3. Delete policy holder (it references the policy)
+      if (quote.policyHolder) {
+        console.log('Deleting policy holder:', quote.policyHolder.id);
+        await queryRunner.manager.delete('POLICY_HOLDERS', { id: quote.policyHolder.id });
+      }
 
-      // Delete policy holders linked to the policy
-      console.log('Deleting policy holders linked to policy:', quote.policy.id);
-      await queryRunner.manager.delete('POLICY_HOLDERS', { policyId: quote.policy.id });
+      // 4. Delete venue (it's referenced by the event)
+      if (quote.event?.venue) {
+        console.log('Deleting venue:', quote.event.venue.id);
+        await queryRunner.manager.delete('VENUES', { id: quote.event.venue.id });
+      }
 
-      // Now we can delete the policy
-      console.log('Deleting policy:', quote.policy.id);
-      await queryRunner.manager.delete('POLICIES', { id: quote.policy.id });
+      // 5. Delete event (it references the policy)
+      if (quote.event) {
+        console.log('Deleting event:', quote.event.id);
+        await queryRunner.manager.delete('EVENTS', { id: quote.event.id });
+      }
+
+      // 6. Delete policy (after all its references are removed)
+      if (quote.policy) {
+        console.log('Deleting policy:', quote.policy.id);
+        await queryRunner.manager.delete('POLICIES', { id: quote.policy.id });
+      }
+
+      // 7. Finally delete the quote
+      console.log('Deleting quote:', quote.id);
+      await quoteRepository.remove(quote);
+      
+      await queryRunner.commitTransaction();
+      console.log('Successfully deleted quote and all related records');
+      res.json({ message: 'Quote and all related records deleted successfully' });
+
+    } catch (deleteError) {
+      console.error('Error during deletion:', deleteError);
+      await queryRunner.rollbackTransaction();
+      throw deleteError;
     }
-
-    // Delete venue if it exists
-    if (quote.event?.venue) {
-      console.log('Deleting venue:', quote.event.venue.id);
-      await queryRunner.manager.delete('VENUES', { id: quote.event.venue.id });
-    }
-
-    // Delete event if it exists
-    if (quote.event) {
-      console.log('Deleting event:', quote.event.id);
-      await queryRunner.manager.delete('EVENTS', { id: quote.event.id });
-    }
-
-    // Delete policy holder if it exists
-    if (quote.policyHolder) {
-      console.log('Deleting policy holder:', quote.policyHolder.id);
-      await queryRunner.manager.delete('POLICY_HOLDERS', { id: quote.policyHolder.id });
-    }
-
-    // Finally delete the quote
-    console.log('Deleting quote:', quote.id);
-    await quoteRepository.remove(quote);
-    await queryRunner.commitTransaction();
-
-    console.log('Successfully deleted quote and all related records');
-    res.json({ message: 'Quote and all related records (including policy) deleted successfully' });
 
   } catch (error) {
     await queryRunner.rollbackTransaction();

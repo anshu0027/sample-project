@@ -86,7 +86,9 @@ interface Quote {
 
 function flattenQuote(quote: any): Quote | null {
     if (!quote) return null;
-    return {
+    console.log('Raw quote data:', JSON.stringify(quote, null, 2));
+    
+    const flattened = {
         id: quote.id,
         quoteNumber: quote.quoteNumber,
         eventType: quote.event?.eventType || quote.eventType || '',
@@ -130,39 +132,43 @@ function flattenQuote(quote: any): Quote | null {
         zip: quote.policyHolder?.zip || '',
         legalNotices: quote.policyHolder?.legalNotices || false,
         completingFormName: quote.policyHolder?.completingFormName || quote.completingFormName || '',
-        receptionVenueName: quote.event?.receptionVenue?.name || '',
-        receptionVenueAddress1: quote.event?.receptionVenue?.address1 || '',
-        receptionVenueAddress2: quote.event?.receptionVenue?.address2 || '',
-        receptionVenueCity: quote.event?.receptionVenue?.city || '',
-        receptionVenueState: quote.event?.receptionVenue?.state || '',
-        receptionVenueZip: quote.event?.receptionVenue?.zip || '',
-        receptionVenueCountry: quote.event?.receptionVenue?.country || '',
-        receptionVenueAsInsured: quote.event?.receptionVenue?.venueAsInsured || false,
-        rehearsalVenueName: quote.event?.rehearsalVenue?.name || '',
-        rehearsalVenueAddress1: quote.event?.rehearsalVenue?.address1 || '',
-        rehearsalVenueAddress2: quote.event?.rehearsalVenue?.address2 || '',
-        rehearsalVenueCity: quote.event?.rehearsalVenue?.city || '',
-        rehearsalVenueState: quote.event?.rehearsalVenue?.state || '',
-        rehearsalVenueZip: quote.event?.rehearsalVenue?.zip || '',
-        rehearsalVenueCountry: quote.event?.rehearsalVenue?.country || '',
-        rehearsalVenueAsInsured: quote.event?.rehearsalVenue?.venueAsInsured || false,
-        rehearsalDinnerVenueName: quote.event?.rehearsalDinnerVenue?.name || '',
-        rehearsalDinnerVenueAddress1: quote.event?.rehearsalDinnerVenue?.address1 || '',
-        rehearsalDinnerVenueAddress2: quote.event?.rehearsalDinnerVenue?.address2 || '',
-        rehearsalDinnerVenueCity: quote.event?.rehearsalDinnerVenue?.city || '',
-        rehearsalDinnerVenueState: quote.event?.rehearsalDinnerVenue?.state || '',
-        rehearsalDinnerVenueZip: quote.event?.rehearsalDinnerVenue?.zip || '',
-        rehearsalDinnerVenueCountry: quote.event?.rehearsalDinnerVenue?.country || '',
-        rehearsalDinnerVenueAsInsured: quote.event?.rehearsalDinnerVenue?.venueAsInsured || false,
-        brunchVenueName: quote.event?.brunchVenue?.name || '',
-        brunchVenueAddress1: quote.event?.brunchVenue?.address1 || '',
-        brunchVenueAddress2: quote.event?.brunchVenue?.address2 || '',
-        brunchVenueCity: quote.event?.brunchVenue?.city || '',
-        brunchVenueState: quote.event?.brunchVenue?.state || '',
-        brunchVenueZip: quote.event?.brunchVenue?.zip || '',
-        brunchVenueCountry: quote.event?.brunchVenue?.country || '',
-        brunchVenueAsInsured: quote.event?.brunchVenue?.venueAsInsured || false,
+        // Additional venues for wedding events
+        receptionVenueName: quote.event?.venue?.receptionVenueName || '',
+        receptionVenueAddress1: quote.event?.venue?.receptionVenueAddress1 || '',
+        receptionVenueAddress2: quote.event?.venue?.receptionVenueAddress2 || '',
+        receptionVenueCity: quote.event?.venue?.receptionVenueCity || '',
+        receptionVenueState: quote.event?.venue?.receptionVenueState || '',
+        receptionVenueZip: quote.event?.venue?.receptionVenueZip || '',
+        receptionVenueCountry: quote.event?.venue?.receptionVenueCountry || '',
+        receptionVenueAsInsured: quote.event?.venue?.receptionVenueAsInsured || false,
+        rehearsalVenueName: quote.event?.venue?.rehearsalVenueName || '',
+        rehearsalVenueAddress1: quote.event?.venue?.rehearsalVenueAddress1 || '',
+        rehearsalVenueAddress2: quote.event?.venue?.rehearsalVenueAddress2 || '',
+        rehearsalVenueCity: quote.event?.venue?.rehearsalVenueCity || '',
+        rehearsalVenueState: quote.event?.venue?.rehearsalVenueState || '',
+        rehearsalVenueZip: quote.event?.venue?.rehearsalVenueZip || '',
+        rehearsalVenueCountry: quote.event?.venue?.rehearsalVenueCountry || '',
+        rehearsalVenueAsInsured: quote.event?.venue?.rehearsalVenueAsInsured || false,
+        rehearsalDinnerVenueName: quote.event?.venue?.rehearsalDinnerVenueName || '',
+        rehearsalDinnerVenueAddress1: quote.event?.venue?.rehearsalDinnerVenueAddress1 || '',
+        rehearsalDinnerVenueAddress2: quote.event?.venue?.rehearsalDinnerVenueAddress2 || '',
+        rehearsalDinnerVenueCity: quote.event?.venue?.rehearsalDinnerVenueCity || '',
+        rehearsalDinnerVenueState: quote.event?.venue?.rehearsalDinnerVenueState || '',
+        rehearsalDinnerVenueZip: quote.event?.venue?.rehearsalDinnerVenueZip || '',
+        rehearsalDinnerVenueCountry: quote.event?.venue?.rehearsalDinnerVenueCountry || '',
+        rehearsalDinnerVenueAsInsured: quote.event?.venue?.rehearsalDinnerVenueAsInsured || false,
+        brunchVenueName: quote.event?.venue?.brunchVenueName || '',
+        brunchVenueAddress1: quote.event?.venue?.brunchVenueAddress1 || '',
+        brunchVenueAddress2: quote.event?.venue?.brunchVenueAddress2 || '',
+        brunchVenueCity: quote.event?.venue?.brunchVenueCity || '',
+        brunchVenueState: quote.event?.venue?.brunchVenueState || '',
+        brunchVenueZip: quote.event?.venue?.brunchVenueZip || '',
+        brunchVenueCountry: quote.event?.venue?.brunchVenueCountry || '',
+        brunchVenueAsInsured: quote.event?.venue?.brunchVenueAsInsured || false,
     };
+    
+    console.log('Flattened quote data:', JSON.stringify(flattened, null, 2));
+    return flattened;
 }
 
 export default function QuoteDetail() {
@@ -184,14 +190,18 @@ export default function QuoteDetail() {
             setError("");
             const apiUrl = process.env.NEXT_PUBLIC_API_URL;
             try {
+                console.log('Fetching quote with ID:', id);
                 const res = await fetch(`${apiUrl}/quotes?quoteNumber=${id}`);
                 if (!res.ok) {
                     const errData = await res.json();
+                    console.error('Error response:', errData);
                     throw new Error(errData.error || "Failed to fetch quote");
                 }
                 const data = await res.json();
+                console.log('API response:', data);
                 setQuote(flattenQuote(data.quote || null));
             } catch (err: unknown) {
+                console.error('Fetch error:', err);
                 setError(err instanceof Error ? err.message : "Unknown error");
             } finally {
                 setLoading(false);
@@ -612,70 +622,81 @@ export default function QuoteDetail() {
                     </div>
 
                     {/* Additional Venue Information for Weddings */}
-                    {quote.eventType?.toLowerCase() === 'wedding' && (
-                        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                            {/* Reception Venue */}
-                            <div className="md:col-span-2">
-                                <h3 className="text-sm font-medium text-gray-500 mb-2">Reception Venue</h3>
-                                <div className="bg-gray-50 p-4 rounded-lg">
-                                    <p className="text-sm sm:text-base font-medium">{quote.receptionVenueName || "-"}</p>
-                                    <p className="text-sm sm:text-base font-medium">{quote.receptionVenueAddress1 || "-"} {quote.receptionVenueAddress2 ? `, ${quote.receptionVenueAddress2}` : ""}</p>
-                                    <p className="text-sm sm:text-base font-medium">{quote.receptionVenueCity || "-"}, {quote.receptionVenueState || "-"} {quote.receptionVenueZip || "-"}</p>
-                                    <p className="text-sm sm:text-base font-medium">{quote.receptionVenueCountry || "-"}</p>
-                                    <div className="mt-2">
-                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${quote.receptionVenueAsInsured ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}>
-                                            {quote.receptionVenueAsInsured ? "Venue As Additional Insured" : "Venue Not Additional Insured"}
-                                        </span>
+                    {quote?.eventType?.toLowerCase() === 'wedding' && (
+                        <div className="mt-6">
+                            <h2 className="text-base sm:text-lg font-semibold mb-4 text-gray-900 border-b pb-2">Additional Venue Information</h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                                {/* Reception Venue */}
+                                {(quote.receptionVenueName || quote.receptionVenueAddress1) && (
+                                    <div className="md:col-span-2">
+                                        <h3 className="text-sm font-medium text-gray-500 mb-2">Reception Venue</h3>
+                                        <div className="bg-gray-50 p-4 rounded-lg">
+                                            <p className="text-sm sm:text-base font-medium">{quote.receptionVenueName || "-"}</p>
+                                            <p className="text-sm sm:text-base font-medium">{quote.receptionVenueAddress1 || "-"} {quote.receptionVenueAddress2 ? `, ${quote.receptionVenueAddress2}` : ""}</p>
+                                            <p className="text-sm sm:text-base font-medium">{quote.receptionVenueCity || "-"}, {quote.receptionVenueState || "-"} {quote.receptionVenueZip || "-"}</p>
+                                            <p className="text-sm sm:text-base font-medium">{quote.receptionVenueCountry || "-"}</p>
+                                            <div className="mt-2">
+                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${quote.receptionVenueAsInsured ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}>
+                                                    {quote.receptionVenueAsInsured ? "Venue As Additional Insured" : "Venue Not Additional Insured"}
+                                                </span>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
+                                )}
 
-                            {/* Rehearsal Venue */}
-                            <div className="md:col-span-2">
-                                <h3 className="text-sm font-medium text-gray-500 mb-2">Rehearsal Venue</h3>
-                                <div className="bg-gray-50 p-4 rounded-lg">
-                                    <p className="text-sm sm:text-base font-medium">{quote.rehearsalVenueName || "-"}</p>
-                                    <p className="text-sm sm:text-base font-medium">{quote.rehearsalVenueAddress1 || "-"} {quote.rehearsalVenueAddress2 ? `, ${quote.rehearsalVenueAddress2}` : ""}</p>
-                                    <p className="text-sm sm:text-base font-medium">{quote.rehearsalVenueCity || "-"}, {quote.rehearsalVenueState || "-"} {quote.rehearsalVenueZip || "-"}</p>
-                                    <p className="text-sm sm:text-base font-medium">{quote.rehearsalVenueCountry || "-"}</p>
-                                    <div className="mt-2">
-                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${quote.rehearsalVenueAsInsured ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}>
-                                            {quote.rehearsalVenueAsInsured ? "Venue As Additional Insured" : "Venue Not Additional Insured"}
-                                        </span>
+                                {/* Rehearsal Venue */}
+                                {(quote.rehearsalVenueName || quote.rehearsalVenueAddress1) && (
+                                    <div className="md:col-span-2">
+                                        <h3 className="text-sm font-medium text-gray-500 mb-2">Rehearsal Venue</h3>
+                                        <div className="bg-gray-50 p-4 rounded-lg">
+                                            <p className="text-sm sm:text-base font-medium">{quote.rehearsalVenueName || "-"}</p>
+                                            <p className="text-sm sm:text-base font-medium">{quote.rehearsalVenueAddress1 || "-"} {quote.rehearsalVenueAddress2 ? `, ${quote.rehearsalVenueAddress2}` : ""}</p>
+                                            <p className="text-sm sm:text-base font-medium">{quote.rehearsalVenueCity || "-"}, {quote.rehearsalVenueState || "-"} {quote.rehearsalVenueZip || "-"}</p>
+                                            <p className="text-sm sm:text-base font-medium">{quote.rehearsalVenueCountry || "-"}</p>
+                                            <div className="mt-2">
+                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${quote.rehearsalVenueAsInsured ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}>
+                                                    {quote.rehearsalVenueAsInsured ? "Venue As Additional Insured" : "Venue Not Additional Insured"}
+                                                </span>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
+                                )}
 
-                            {/* Rehearsal Dinner Venue */}
-                            <div className="md:col-span-2">
-                                <h3 className="text-sm font-medium text-gray-500 mb-2">Rehearsal Dinner Venue</h3>
-                                <div className="bg-gray-50 p-4 rounded-lg">
-                                    <p className="text-sm sm:text-base font-medium">{quote.rehearsalDinnerVenueName || "-"}</p>
-                                    <p className="text-sm sm:text-base font-medium">{quote.rehearsalDinnerVenueAddress1 || "-"} {quote.rehearsalDinnerVenueAddress2 ? `, ${quote.rehearsalDinnerVenueAddress2}` : ""}</p>
-                                    <p className="text-sm sm:text-base font-medium">{quote.rehearsalDinnerVenueCity || "-"}, {quote.rehearsalDinnerVenueState || "-"} {quote.rehearsalDinnerVenueZip || "-"}</p>
-                                    <p className="text-sm sm:text-base font-medium">{quote.rehearsalDinnerVenueCountry || "-"}</p>
-                                    <div className="mt-2">
-                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${quote.rehearsalDinnerVenueAsInsured ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}>
-                                            {quote.rehearsalDinnerVenueAsInsured ? "Venue As Additional Insured" : "Venue Not Additional Insured"}
-                                        </span>
+                                {/* Rehearsal Dinner Venue */}
+                                {(quote.rehearsalDinnerVenueName || quote.rehearsalDinnerVenueAddress1) && (
+                                    <div className="md:col-span-2">
+                                        <h3 className="text-sm font-medium text-gray-500 mb-2">Rehearsal Dinner Venue</h3>
+                                        <div className="bg-gray-50 p-4 rounded-lg">
+                                            <p className="text-sm sm:text-base font-medium">{quote.rehearsalDinnerVenueName || "-"}</p>
+                                            <p className="text-sm sm:text-base font-medium">{quote.rehearsalDinnerVenueAddress1 || "-"} {quote.rehearsalDinnerVenueAddress2 ? `, ${quote.rehearsalDinnerVenueAddress2}` : ""}</p>
+                                            <p className="text-sm sm:text-base font-medium">{quote.rehearsalDinnerVenueCity || "-"}, {quote.rehearsalDinnerVenueState || "-"} {quote.rehearsalDinnerVenueZip || "-"}</p>
+                                            <p className="text-sm sm:text-base font-medium">{quote.rehearsalDinnerVenueCountry || "-"}</p>
+                                            <div className="mt-2">
+                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${quote.rehearsalDinnerVenueAsInsured ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}>
+                                                    {quote.rehearsalDinnerVenueAsInsured ? "Venue As Additional Insured" : "Venue Not Additional Insured"}
+                                                </span>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
+                                )}
 
-                            {/* Brunch Venue */}
-                            <div className="md:col-span-2">
-                                <h3 className="text-sm font-medium text-gray-500 mb-2">Brunch Venue</h3>
-                                <div className="bg-gray-50 p-4 rounded-lg">
-                                    <p className="text-sm sm:text-base font-medium">{quote.brunchVenueName || "-"}</p>
-                                    <p className="text-sm sm:text-base font-medium">{quote.brunchVenueAddress1 || "-"} {quote.brunchVenueAddress2 ? `, ${quote.brunchVenueAddress2}` : ""}</p>
-                                    <p className="text-sm sm:text-base font-medium">{quote.brunchVenueCity || "-"}, {quote.brunchVenueState || "-"} {quote.brunchVenueZip || "-"}</p>
-                                    <p className="text-sm sm:text-base font-medium">{quote.brunchVenueCountry || "-"}</p>
-                                    <div className="mt-2">
-                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${quote.brunchVenueAsInsured ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}>
-                                            {quote.brunchVenueAsInsured ? "Venue As Additional Insured" : "Venue Not Additional Insured"}
-                                        </span>
+                                {/* Brunch Venue */}
+                                {(quote.brunchVenueName || quote.brunchVenueAddress1) && (
+                                    <div className="md:col-span-2">
+                                        <h3 className="text-sm font-medium text-gray-500 mb-2">Brunch Venue</h3>
+                                        <div className="bg-gray-50 p-4 rounded-lg">
+                                            <p className="text-sm sm:text-base font-medium">{quote.brunchVenueName || "-"}</p>
+                                            <p className="text-sm sm:text-base font-medium">{quote.brunchVenueAddress1 || "-"} {quote.brunchVenueAddress2 ? `, ${quote.brunchVenueAddress2}` : ""}</p>
+                                            <p className="text-sm sm:text-base font-medium">{quote.brunchVenueCity || "-"}, {quote.brunchVenueState || "-"} {quote.brunchVenueZip || "-"}</p>
+                                            <p className="text-sm sm:text-base font-medium">{quote.brunchVenueCountry || "-"}</p>
+                                            <div className="mt-2">
+                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${quote.brunchVenueAsInsured ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}>
+                                                    {quote.brunchVenueAsInsured ? "Venue As Additional Insured" : "Venue Not Additional Insured"}
+                                                </span>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
+                                )}
                             </div>
                         </div>
                     )}

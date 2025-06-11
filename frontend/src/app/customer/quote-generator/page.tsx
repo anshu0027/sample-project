@@ -778,7 +778,7 @@ export default function QuoteGenerator() {
             </span>
           }
           icon={<DollarSign size={24} className="text-blue-600" />}
-          className="mb-6 sm:mb-8 border-0 bg-white shadow-lg"
+          className="mb-6 sm:mb-8 border-0 bg-white shadow-lg scroll-mt-24"
           footer={
             <div className="flex justify-end">
               <Button
