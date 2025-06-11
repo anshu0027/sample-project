@@ -651,14 +651,14 @@ async function generateInsuranceDeclarationPage2PDFBuffer(quoteData: any): Promi
 
   // Additional Venues for Wedding Events
   const eventType = quoteData.event?.eventType || quoteData.quote?.event?.eventType || quoteData.policy?.event?.eventType;
-  const venue = quoteData.event?.venue || quoteData.quote?.event?.venue || quoteData.policy?.event?.venue;
+  const venueData = quoteData.event?.venue || quoteData.quote?.event?.venue || quoteData.policy?.event?.venue;
 
-  if (eventType === "Wedding") {
+  if (eventType && eventType.toLowerCase() === "wedding") {
     const additionalVenues = [
-      { name: "Reception Venue", value: venue?.receptionVenueName },
-      { name: "Rehearsal Venue", value: venue?.rehearsalVenueName },
-      { name: "Rehearsal Dinner Venue", value: venue?.rehearsalDinnerVenueName },
-      { name: "Brunch Venue", value: venue?.brunchVenueName }
+      { name: "Reception Venue", value: venueData?.receptionVenueName },
+      { name: "Rehearsal Venue", value: venueData?.rehearsalVenueName },
+      { name: "Rehearsal Dinner Venue", value: venueData?.rehearsalDinnerVenueName },
+      { name: "Brunch Venue", value: venueData?.brunchVenueName }
     ];
 
     for (const venue of additionalVenues) {

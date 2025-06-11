@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import path from 'path'; // Import the 'path' module
 import { AppDataSource } from './data-source';
 // Import your future routes here
 import quoteRoutes from './routes/v1/quote.routes';
@@ -22,6 +23,9 @@ app.use(cors({
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Serve static files from the 'public' directory
+app.use(express.static(path.join(process.cwd(), 'public')));
 
 // Health check route
 app.get('/api/health', (req, res) => {
@@ -48,6 +52,7 @@ AppDataSource.initialize()
     
     // Start server
     const PORT = process.env.PORT || 8000;
+    
     app.listen(PORT, () => {
       console.log(`Backend server running on http://localhost:${PORT}`);
     });
