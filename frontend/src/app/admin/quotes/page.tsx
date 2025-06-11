@@ -612,13 +612,13 @@ export default function Quotes() {
                                             </Button>
                                             {quote.status !== 'Converted' && (
                                                 <>
-                                                    <Button
+                                                    {/* <Button
                                                         variant="outline"
                                                         size="sm"
                                                         onClick={() => handleEditQuote(quote.quoteNumber)}
                                                     >
                                                         <Edit size={16} />
-                                                    </Button>
+                                                    </Button> */}
                                                     {/* <Button
                                                         variant="outline"
                                                         size="sm"

@@ -54,7 +54,9 @@ const Transactions = () => {
 
       function generateTransactionId(quoteNum: string): string {
         if (quoteNum && quoteNum.startsWith("Q")) {
-          return "T" + quoteNum.substring(1);
+          // Extract the last 4 digits after removing the date part
+          const lastDigits = quoteNum.split('-').pop();
+          return "T-" + lastDigits;
         }
         return quoteNum || "N/A";
       }

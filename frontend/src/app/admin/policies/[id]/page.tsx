@@ -1,16 +1,14 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { ArrowLeft, Mail, Edit, DollarSign, Calendar, Users, Shield, Wine, Activity, AlertTriangle, FileText, Download } from "lucide-react";
+import { ArrowLeft, Mail, Edit, DollarSign, Calendar, Users, Shield, Wine, Activity, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import React from "react";
 import { toast } from "@/hooks/use-toast";
 
 function flattenPolicy(policy: any) {
     if (!policy) return null;
-    console.log('Raw policy data:', JSON.stringify(policy, null, 2));
-    
-    const flattened = {
+    return {
         id: policy.id,
         quoteNumber: policy.quoteNumber,
         eventType: policy.event?.eventType || '',
@@ -31,7 +29,7 @@ function flattenPolicy(policy: any) {
         honoree1LastName: policy.event?.honoree1LastName || '',
         honoree2FirstName: policy.event?.honoree2FirstName || '',
         honoree2LastName: policy.event?.honoree2LastName || '',
-        ceremonyLocationType: policy.event?.venue?.ceremonyLocationType || '',
+        locationType: policy.event?.venue?.locationType || '',
         indoorOutdoor: policy.event?.venue?.indoorOutdoor || '',
         venueName: policy.event?.venue?.name || '',
         venueAddress1: policy.event?.venue?.address1 || '',
@@ -54,43 +52,7 @@ function flattenPolicy(policy: any) {
         zip: policy.policyHolder?.zip || '',
         legalNotices: policy.policyHolder?.legalNotices || false,
         completingFormName: policy.policyHolder?.completingFormName || '',
-        // Additional venues for wedding events
-        receptionVenueName: policy.event?.venue?.receptionVenueName || '',
-        receptionVenueAddress1: policy.event?.venue?.receptionVenueAddress1 || '',
-        receptionVenueAddress2: policy.event?.venue?.receptionVenueAddress2 || '',
-        receptionVenueCity: policy.event?.venue?.receptionVenueCity || '',
-        receptionVenueState: policy.event?.venue?.receptionVenueState || '',
-        receptionVenueZip: policy.event?.venue?.receptionVenueZip || '',
-        receptionVenueCountry: policy.event?.venue?.receptionVenueCountry || '',
-        receptionVenueAsInsured: policy.event?.venue?.receptionVenueAsInsured || false,
-        rehearsalVenueName: policy.event?.venue?.rehearsalVenueName || '',
-        rehearsalVenueAddress1: policy.event?.venue?.rehearsalVenueAddress1 || '',
-        rehearsalVenueAddress2: policy.event?.venue?.rehearsalVenueAddress2 || '',
-        rehearsalVenueCity: policy.event?.venue?.rehearsalVenueCity || '',
-        rehearsalVenueState: policy.event?.venue?.rehearsalVenueState || '',
-        rehearsalVenueZip: policy.event?.venue?.rehearsalVenueZip || '',
-        rehearsalVenueCountry: policy.event?.venue?.rehearsalVenueCountry || '',
-        rehearsalVenueAsInsured: policy.event?.venue?.rehearsalVenueAsInsured || false,
-        rehearsalDinnerVenueName: policy.event?.venue?.rehearsalDinnerVenueName || '',
-        rehearsalDinnerVenueAddress1: policy.event?.venue?.rehearsalDinnerVenueAddress1 || '',
-        rehearsalDinnerVenueAddress2: policy.event?.venue?.rehearsalDinnerVenueAddress2 || '',
-        rehearsalDinnerVenueCity: policy.event?.venue?.rehearsalDinnerVenueCity || '',
-        rehearsalDinnerVenueState: policy.event?.venue?.rehearsalDinnerVenueState || '',
-        rehearsalDinnerVenueZip: policy.event?.venue?.rehearsalDinnerVenueZip || '',
-        rehearsalDinnerVenueCountry: policy.event?.venue?.rehearsalDinnerVenueCountry || '',
-        rehearsalDinnerVenueAsInsured: policy.event?.venue?.rehearsalDinnerVenueAsInsured || false,
-        brunchVenueName: policy.event?.venue?.brunchVenueName || '',
-        brunchVenueAddress1: policy.event?.venue?.brunchVenueAddress1 || '',
-        brunchVenueAddress2: policy.event?.venue?.brunchVenueAddress2 || '',
-        brunchVenueCity: policy.event?.venue?.brunchVenueCity || '',
-        brunchVenueState: policy.event?.venue?.brunchVenueState || '',
-        brunchVenueZip: policy.event?.venue?.brunchVenueZip || '',
-        brunchVenueCountry: policy.event?.venue?.brunchVenueCountry || '',
-        brunchVenueAsInsured: policy.event?.venue?.brunchVenueAsInsured || false,
     };
-    
-    console.log('Flattened policy data:', JSON.stringify(flattened, null, 2));
-    return flattened;
 }
 
 export default function PolicyDetail() {
@@ -99,6 +61,7 @@ export default function PolicyDetail() {
     const id = params.id as string;
     const [isEmailSent, setIsEmailSent] = useState(false);
     const [policy, setPolicy] = useState<any | null>(null);
+    const [quote, setQuote] = useState<any | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
@@ -111,19 +74,183 @@ export default function PolicyDetail() {
             setError("");
             const apiUrl = process.env.NEXT_PUBLIC_API_URL;
             try {
-                console.log('Fetching policy with ID:', id);
-                const res = await fetch(`${apiUrl}/policies/${id}`);
-                if (!res.ok) {
-                    const errData = await res.json();
-                    console.error('Error response:', errData);
-                    throw new Error(errData.error || "Failed to fetch policy");
-                }
+                const res = await fetch(`${apiUrl}/policies/${id}`, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!res.ok) throw new Error("Policy not found");
                 const data = await res.json();
-                console.log('API response:', data);
-                setPolicy(flattenPolicy(data.policy || null));
-            } catch (err: unknown) {
-                console.error('Fetch error:', err);
-                setError(err instanceof Error ? err.message : "Unknown error");
+                
+                console.log('=== Raw Policy Data ===');
+                console.log('Full API response:', data);
+                console.log('Policy data:', data.policy);
+                console.log('Event data:', data.policy?.event);
+                console.log('Venue data:', data.policy?.event?.venue);
+                
+                if (!data.policy) {
+                    throw new Error("Policy data is missing");
+                }
+
+                // Flatten the policy data to include venue information
+                const flattenedPolicy = {
+                    ...data.policy,
+                    // Main venue fields
+                    venueName: data.policy.event?.venue?.name || '',
+                    venueAddress1: data.policy.event?.venue?.address1 || '',
+                    venueAddress2: data.policy.event?.venue?.address2 || '',
+                    venueCountry: data.policy.event?.venue?.country || '',
+                    venueCity: data.policy.event?.venue?.city || '',
+                    venueState: data.policy.event?.venue?.state || '',
+                    venueZip: data.policy.event?.venue?.zip || '',
+                    ceremonyLocationType: data.policy.event?.venue?.locationType || '',
+                    indoorOutdoor: data.policy.event?.venue?.indoorOutdoor || '',
+                    venueAsInsured: data.policy.event?.venue?.venueAsInsured || false,
+                    // Additional venue fields for wedding events
+                    receptionLocationType: data.policy.event?.venue?.receptionLocationType || '',
+                    receptionIndoorOutdoor: data.policy.event?.venue?.receptionIndoorOutdoor || '',
+                    receptionVenueName: data.policy.event?.venue?.receptionVenueName || '',
+                    receptionVenueAddress1: data.policy.event?.venue?.receptionVenueAddress1 || '',
+                    receptionVenueAddress2: data.policy.event?.venue?.receptionVenueAddress2 || '',
+                    receptionVenueCountry: data.policy.event?.venue?.receptionVenueCountry || '',
+                    receptionVenueCity: data.policy.event?.venue?.receptionVenueCity || '',
+                    receptionVenueState: data.policy.event?.venue?.receptionVenueState || '',
+                    receptionVenueZip: data.policy.event?.venue?.receptionVenueZip || '',
+                    receptionVenueAsInsured: data.policy.event?.venue?.receptionVenueAsInsured || false,
+                    brunchLocationType: data.policy.event?.venue?.brunchLocationType || '',
+                    brunchIndoorOutdoor: data.policy.event?.venue?.brunchIndoorOutdoor || '',
+                    brunchVenueName: data.policy.event?.venue?.brunchVenueName || '',
+                    brunchVenueAddress1: data.policy.event?.venue?.brunchVenueAddress1 || '',
+                    brunchVenueAddress2: data.policy.event?.venue?.brunchVenueAddress2 || '',
+                    brunchVenueCountry: data.policy.event?.venue?.brunchVenueCountry || '',
+                    brunchVenueCity: data.policy.event?.venue?.brunchVenueCity || '',
+                    brunchVenueState: data.policy.event?.venue?.brunchVenueState || '',
+                    brunchVenueZip: data.policy.event?.venue?.brunchVenueZip || '',
+                    brunchVenueAsInsured: data.policy.event?.venue?.brunchVenueAsInsured || false,
+                    rehearsalLocationType: data.policy.event?.venue?.rehearsalLocationType || '',
+                    rehearsalIndoorOutdoor: data.policy.event?.venue?.rehearsalIndoorOutdoor || '',
+                    rehearsalVenueName: data.policy.event?.venue?.rehearsalVenueName || '',
+                    rehearsalVenueAddress1: data.policy.event?.venue?.rehearsalVenueAddress1 || '',
+                    rehearsalVenueAddress2: data.policy.event?.venue?.rehearsalVenueAddress2 || '',
+                    rehearsalVenueCountry: data.policy.event?.venue?.rehearsalVenueCountry || '',
+                    rehearsalVenueCity: data.policy.event?.venue?.rehearsalVenueCity || '',
+                    rehearsalVenueState: data.policy.event?.venue?.rehearsalVenueState || '',
+                    rehearsalVenueZip: data.policy.event?.venue?.rehearsalVenueZip || '',
+                    rehearsalVenueAsInsured: data.policy.event?.venue?.rehearsalVenueAsInsured || false,
+                    rehearsalDinnerLocationType: data.policy.event?.venue?.rehearsalDinnerLocationType || '',
+                    rehearsalDinnerIndoorOutdoor: data.policy.event?.venue?.rehearsalDinnerIndoorOutdoor || '',
+                    rehearsalDinnerVenueName: data.policy.event?.venue?.rehearsalDinnerVenueName || '',
+                    rehearsalDinnerVenueAddress1: data.policy.event?.venue?.rehearsalDinnerVenueAddress1 || '',
+                    rehearsalDinnerVenueAddress2: data.policy.event?.venue?.rehearsalDinnerVenueAddress2 || '',
+                    rehearsalDinnerVenueCountry: data.policy.event?.venue?.rehearsalDinnerVenueCountry || '',
+                    rehearsalDinnerVenueCity: data.policy.event?.venue?.rehearsalDinnerVenueCity || '',
+                    rehearsalDinnerVenueState: data.policy.event?.venue?.rehearsalDinnerVenueState || '',
+                    rehearsalDinnerVenueZip: data.policy.event?.venue?.rehearsalDinnerVenueZip || '',
+                    rehearsalDinnerVenueAsInsured: data.policy.event?.venue?.rehearsalDinnerVenueAsInsured || false
+                };
+
+                console.log('=== Flattened Policy Data ===');
+                console.log('Flattened policy:', flattenedPolicy);
+                console.log('Venue name:', flattenedPolicy.venueName);
+                console.log('Reception venue:', flattenedPolicy.receptionVenueName);
+                console.log('Brunch venue:', flattenedPolicy.brunchVenueName);
+                console.log('Rehearsal venue:', flattenedPolicy.rehearsalVenueName);
+                console.log('Rehearsal dinner venue:', flattenedPolicy.rehearsalDinnerVenueName);
+
+                setPolicy(flattenedPolicy);
+                
+                // Only fetch quote if we have a quote number
+                if (data.policy.quote?.quoteNumber) {
+                    try {
+                        const quoteRes = await fetch(`${apiUrl}/quotes?quoteNumber=${data.policy.quote.quoteNumber}`, {
+                            headers: {
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        
+                        if (quoteRes.ok) {
+                            const quoteData = await quoteRes.json();
+                            console.log('=== Quote Data ===');
+                            console.log('Quote data:', quoteData.quote);
+                            
+                            // Merge quote data with existing policy data
+                            const mergedPolicy = {
+                                ...flattenedPolicy,
+                                ...flattenPolicy(quoteData.quote),
+                                // Ensure venue data from policy is preserved
+                                venueName: flattenedPolicy.venueName,
+                                venueAddress1: flattenedPolicy.venueAddress1,
+                                venueAddress2: flattenedPolicy.venueAddress2,
+                                venueCountry: flattenedPolicy.venueCountry,
+                                venueCity: flattenedPolicy.venueCity,
+                                venueState: flattenedPolicy.venueState,
+                                venueZip: flattenedPolicy.venueZip,
+                                ceremonyLocationType: flattenedPolicy.ceremonyLocationType,
+                                indoorOutdoor: flattenedPolicy.indoorOutdoor,
+                                venueAsInsured: flattenedPolicy.venueAsInsured,
+                                // Additional venue fields
+                                receptionLocationType: flattenedPolicy.receptionLocationType,
+                                receptionIndoorOutdoor: flattenedPolicy.receptionIndoorOutdoor,
+                                receptionVenueName: flattenedPolicy.receptionVenueName,
+                                receptionVenueAddress1: flattenedPolicy.receptionVenueAddress1,
+                                receptionVenueAddress2: flattenedPolicy.receptionVenueAddress2,
+                                receptionVenueCountry: flattenedPolicy.receptionVenueCountry,
+                                receptionVenueCity: flattenedPolicy.receptionVenueCity,
+                                receptionVenueState: flattenedPolicy.receptionVenueState,
+                                receptionVenueZip: flattenedPolicy.receptionVenueZip,
+                                receptionVenueAsInsured: flattenedPolicy.receptionVenueAsInsured,
+                                brunchLocationType: flattenedPolicy.brunchLocationType,
+                                brunchIndoorOutdoor: flattenedPolicy.brunchIndoorOutdoor,
+                                brunchVenueName: flattenedPolicy.brunchVenueName,
+                                brunchVenueAddress1: flattenedPolicy.brunchVenueAddress1,
+                                brunchVenueAddress2: flattenedPolicy.brunchVenueAddress2,
+                                brunchVenueCountry: flattenedPolicy.brunchVenueCountry,
+                                brunchVenueCity: flattenedPolicy.brunchVenueCity,
+                                brunchVenueState: flattenedPolicy.brunchVenueState,
+                                brunchVenueZip: flattenedPolicy.brunchVenueZip,
+                                brunchVenueAsInsured: flattenedPolicy.brunchVenueAsInsured,
+                                rehearsalLocationType: flattenedPolicy.rehearsalLocationType,
+                                rehearsalIndoorOutdoor: flattenedPolicy.rehearsalIndoorOutdoor,
+                                rehearsalVenueName: flattenedPolicy.rehearsalVenueName,
+                                rehearsalVenueAddress1: flattenedPolicy.rehearsalVenueAddress1,
+                                rehearsalVenueAddress2: flattenedPolicy.rehearsalVenueAddress2,
+                                rehearsalVenueCountry: flattenedPolicy.rehearsalVenueCountry,
+                                rehearsalVenueCity: flattenedPolicy.rehearsalVenueCity,
+                                rehearsalVenueState: flattenedPolicy.rehearsalVenueState,
+                                rehearsalVenueZip: flattenedPolicy.rehearsalVenueZip,
+                                rehearsalVenueAsInsured: flattenedPolicy.rehearsalVenueAsInsured,
+                                rehearsalDinnerLocationType: flattenedPolicy.rehearsalDinnerLocationType,
+                                rehearsalDinnerIndoorOutdoor: flattenedPolicy.rehearsalDinnerIndoorOutdoor,
+                                rehearsalDinnerVenueName: flattenedPolicy.rehearsalDinnerVenueName,
+                                rehearsalDinnerVenueAddress1: flattenedPolicy.rehearsalDinnerVenueAddress1,
+                                rehearsalDinnerVenueAddress2: flattenedPolicy.rehearsalDinnerVenueAddress2,
+                                rehearsalDinnerVenueCountry: flattenedPolicy.rehearsalDinnerVenueCountry,
+                                rehearsalDinnerVenueCity: flattenedPolicy.rehearsalDinnerVenueCity,
+                                rehearsalDinnerVenueState: flattenedPolicy.rehearsalDinnerVenueState,
+                                rehearsalDinnerVenueZip: flattenedPolicy.rehearsalDinnerVenueZip,
+                                rehearsalDinnerVenueAsInsured: flattenedPolicy.rehearsalDinnerVenueAsInsured
+                            };
+                            
+                            console.log('=== Merged Policy Data ===');
+                            console.log('Merged policy:', mergedPolicy);
+                            
+                            setPolicy(mergedPolicy);
+                            setQuote(quoteData.quote);
+                        }
+                    } catch (error) {
+                        console.warn('Failed to fetch quote:', error);
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching policy:', error);
+                toast({
+                    title: "Failed to fetch policy data",
+                    description: error instanceof Error ? error.message : "Unknown error",
+                    variant: "destructive",
+                });
             } finally {
                 setLoading(false);
             }
@@ -137,74 +264,38 @@ export default function PolicyDetail() {
     // ==================================================================
     // ===== API CHANGE #2: Sending the policy email ==================
     // ==================================================================
-    const handleEmailPolicy = async () => {
-        const recipientEmail = policy?.email;
-        if (!recipientEmail) {
-            toast.error("No email found for this policy.");
-            return;
-        }
-        setIsEmailSent(true);
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-        try {
-            // Use the new backend endpoint to send the email
-            const res = await fetch(`${apiUrl}/email/send`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    to: recipientEmail,
-                    type: 'policy',
-                    data: policy // Send the entire flattened policy object
-                })
-            });
-            if (res.ok) {
-                toast.success("Policy emailed successfully!");
-            } else {
-                const data = await res.json();
-                throw new Error(data.error || "Failed to send email");
-            }
-        } catch (err) {
-            const message = err instanceof Error ? err.message : "An unknown error occurred.";
-            toast.error(message);
-        } finally {
-            setIsEmailSent(false);
-        }
-    };
-
-    const handleVersionClick = async (versionId: number) => {
-        try {
-            const response = await fetch(`/api/v1/policies/${id}/versions/${versionId}`, {
-                method: 'GET',
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to fetch version');
-            }
-
-            // Get the blob from the response
-            const blob = await response.blob();
-            
-            // Create a URL for the blob
-            const url = window.URL.createObjectURL(blob);
-            
-            // Create a temporary link element
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `policy_version_${versionId}.pdf`;
-            
-            // Append to body, click, and remove
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            // Clean up the URL
-            window.URL.revokeObjectURL(url);
-
-        } catch (error) {
-            console.error('Error fetching version:', error);
-            toast.error('Failed to download version');
-        }
-    };
-
+    // const handleEmailPolicy = async () => {
+    //     const recipientEmail = policy?.email;
+    //     if (!recipientEmail) {
+    //         toast.error("No email found for this policy.");
+    //         return;
+    //     }
+    //     setIsEmailSent(true);
+    //     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    //     try {
+    //         // Use the new backend endpoint to send the email
+    //         const res = await fetch(`${apiUrl}/email/send`, {
+    //             method: "POST",
+    //             headers: { "Content-Type": "application/json" },
+    //             body: JSON.stringify({
+    //                 to: recipientEmail,
+    //                 type: 'policy',
+    //                 data: policy // Send the entire flattened policy object
+    //             })
+    //         });
+    //         if (res.ok) {
+    //             toast.success("Policy emailed successfully!");
+    //         } else {
+    //             const data = await res.json();
+    //             throw new Error(data.error || "Failed to send email");
+    //         }
+    //     } catch (err) {
+    //         const message = err instanceof Error ? err.message : "An unknown error occurred.";
+    //         toast.error(message);
+    //     } finally {
+    //         setIsEmailSent(false);
+    //     }
+    // };
     // Skeleton Component
     const PolicyDetailSkeleton = () => (
         <div className="bg-gray-50 min-h-screen animate-pulse">
@@ -292,7 +383,9 @@ export default function PolicyDetail() {
                                 <ArrowLeft size={20} />
                             </button>
                             <div>
-                                <h1 className="text-2xl font-bold text-gray-900">Policy #{policy.quoteNumber}</h1>
+                                <h1 className="text-2xl font-bold text-gray-900">
+                                    Policy Details - {policy.policyNumber}
+                                </h1>
                                 <div className="flex items-center mt-1">
                                     <span className="text-sm text-gray-500">Issued {policy.createdAt ? new Date(policy.createdAt).toLocaleDateString() : "-"}</span>
                                     <span className="mx-2 text-gray-300">•</span>
@@ -303,9 +396,9 @@ export default function PolicyDetail() {
                             </div>
                         </div>
                         <div className="flex gap-3">
-                            <Button variant="outline" onClick={handleEmailPolicy} disabled={isEmailSent}>
+                            {/* <Button variant="outline" onClick={handleEmailPolicy} disabled={isEmailSent}>
                                 <Mail size={18} /> {isEmailSent ? "Sending..." : "Email Policy"}
-                            </Button>
+                            </Button> */}
                             <Button variant="outline" onClick={handleEdit}>
                                 <Edit size={18} /> Edit Policy
                             </Button>
@@ -463,7 +556,7 @@ export default function PolicyDetail() {
                         </div>
                         <div>
                             <h3 className="text-sm font-medium text-gray-500">Ceremony Location Type</h3>
-                            <p className="mt-1 text-sm sm:text-base font-medium">{policy.ceremonyLocationType || "-"}</p>
+                            <p className="mt-1 text-sm sm:text-base font-medium">{policy.locationType || "-"}</p>
                         </div>
                         <div>
                             <h3 className="text-sm font-medium text-gray-500">Indoor/Outdoor</h3>
@@ -484,75 +577,75 @@ export default function PolicyDetail() {
                     </div>
 
                     {/* Additional Venue Information for Weddings */}
-                    {policy.eventType?.toLowerCase() === 'wedding' && (
-                        <div className="mt-6">
-                            <h2 className="text-base sm:text-lg font-semibold mb-4 text-gray-900 border-b pb-2">Additional Venue Information</h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                                {/* Reception Venue */}
-                                <div className="md:col-span-2">
-                                    <h3 className="text-sm font-medium text-gray-500 mb-2">Reception Venue</h3>
-                                    <div className="bg-gray-50 p-4 rounded-lg">
-                                        <p className="text-sm sm:text-base font-medium">{policy.receptionVenueName || "-"}</p>
-                                        <p className="text-sm sm:text-base font-medium">{policy.receptionVenueAddress1 || "-"} {policy.receptionVenueAddress2 ? `, ${policy.receptionVenueAddress2}` : ""}</p>
-                                        <p className="text-sm sm:text-base font-medium">{policy.receptionVenueCity || "-"}, {policy.receptionVenueState || "-"} {policy.receptionVenueZip || "-"}</p>
-                                        <p className="text-sm sm:text-base font-medium">{policy.receptionVenueCountry || "-"}</p>
-                                        <div className="mt-2">
-                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${policy.receptionVenueAsInsured ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}>
-                                                {policy.receptionVenueAsInsured ? "Venue As Additional Insured" : "Venue Not Additional Insured"}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Rehearsal Venue */}
-                                <div className="md:col-span-2">
-                                    <h3 className="text-sm font-medium text-gray-500 mb-2">Rehearsal Venue</h3>
-                                    <div className="bg-gray-50 p-4 rounded-lg">
-                                        <p className="text-sm sm:text-base font-medium">{policy.rehearsalVenueName || "-"}</p>
-                                        <p className="text-sm sm:text-base font-medium">{policy.rehearsalVenueAddress1 || "-"} {policy.rehearsalVenueAddress2 ? `, ${policy.rehearsalVenueAddress2}` : ""}</p>
-                                        <p className="text-sm sm:text-base font-medium">{policy.rehearsalVenueCity || "-"}, {policy.rehearsalVenueState || "-"} {policy.rehearsalVenueZip || "-"}</p>
-                                        <p className="text-sm sm:text-base font-medium">{policy.rehearsalVenueCountry || "-"}</p>
-                                        <div className="mt-2">
-                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${policy.rehearsalVenueAsInsured ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}>
-                                                {policy.rehearsalVenueAsInsured ? "Venue As Additional Insured" : "Venue Not Additional Insured"}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Rehearsal Dinner Venue */}
-                                <div className="md:col-span-2">
-                                    <h3 className="text-sm font-medium text-gray-500 mb-2">Rehearsal Dinner Venue</h3>
-                                    <div className="bg-gray-50 p-4 rounded-lg">
-                                        <p className="text-sm sm:text-base font-medium">{policy.rehearsalDinnerVenueName || "-"}</p>
-                                        <p className="text-sm sm:text-base font-medium">{policy.rehearsalDinnerVenueAddress1 || "-"} {policy.rehearsalDinnerVenueAddress2 ? `, ${policy.rehearsalDinnerVenueAddress2}` : ""}</p>
-                                        <p className="text-sm sm:text-base font-medium">{policy.rehearsalDinnerVenueCity || "-"}, {policy.rehearsalDinnerVenueState || "-"} {policy.rehearsalDinnerVenueZip || "-"}</p>
-                                        <p className="text-sm sm:text-base font-medium">{policy.rehearsalDinnerVenueCountry || "-"}</p>
-                                        <div className="mt-2">
-                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${policy.rehearsalDinnerVenueAsInsured ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}>
-                                                {policy.rehearsalDinnerVenueAsInsured ? "Venue As Additional Insured" : "Venue Not Additional Insured"}
-                                            </span>
-                                        </div>
+                    {policy.eventType === 'wedding' && (
+                        <>
+                            <h2 className="text-lg font-semibold mb-4 text-gray-900 border-b pb-2">Additional Venue Information</h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {/* Reception Venue */}
+                                <div>
+                                    <h3 className="text-sm font-medium text-gray-500">Reception Venue</h3>
+                                    <p className="mt-1 font-medium">{policy.receptionVenueName || "-"}</p>
+                                    <p className="text-sm text-gray-600">{policy.receptionVenueAddress1 || "-"}</p>
+                                    <p className="text-sm text-gray-600">
+                                        {policy.receptionVenueCity || "-"}, {policy.receptionVenueState || "-"} {policy.receptionVenueZip || "-"}
+                                    </p>
+                                    <p className="text-sm text-gray-600">{policy.receptionVenueCountry || "-"}</p>
+                                    <div className="mt-2">
+                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${policy.receptionVenueAsInsured ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}>
+                                            {policy.receptionVenueAsInsured ? "Venue As Additional Insured" : "Venue Not Additional Insured"}
+                                        </span>
                                     </div>
                                 </div>
 
                                 {/* Brunch Venue */}
-                                <div className="md:col-span-2">
-                                    <h3 className="text-sm font-medium text-gray-500 mb-2">Brunch Venue</h3>
-                                    <div className="bg-gray-50 p-4 rounded-lg">
-                                        <p className="text-sm sm:text-base font-medium">{policy.brunchVenueName || "-"}</p>
-                                        <p className="text-sm sm:text-base font-medium">{policy.brunchVenueAddress1 || "-"} {policy.brunchVenueAddress2 ? `, ${policy.brunchVenueAddress2}` : ""}</p>
-                                        <p className="text-sm sm:text-base font-medium">{policy.brunchVenueCity || "-"}, {policy.brunchVenueState || "-"} {policy.brunchVenueZip || "-"}</p>
-                                        <p className="text-sm sm:text-base font-medium">{policy.brunchVenueCountry || "-"}</p>
-                                        <div className="mt-2">
-                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${policy.brunchVenueAsInsured ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}>
-                                                {policy.brunchVenueAsInsured ? "Venue As Additional Insured" : "Venue Not Additional Insured"}
-                                            </span>
-                                        </div>
+                                <div>
+                                    <h3 className="text-sm font-medium text-gray-500">Brunch Venue</h3>
+                                    <p className="mt-1 font-medium">{policy.brunchVenueName || "-"}</p>
+                                    <p className="text-sm text-gray-600">{policy.brunchVenueAddress1 || "-"}</p>
+                                    <p className="text-sm text-gray-600">
+                                        {policy.brunchVenueCity || "-"}, {policy.brunchVenueState || "-"} {policy.brunchVenueZip || "-"}
+                                    </p>
+                                    <p className="text-sm text-gray-600">{policy.brunchVenueCountry || "-"}</p>
+                                    <div className="mt-2">
+                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${policy.brunchVenueAsInsured ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}>
+                                            {policy.brunchVenueAsInsured ? "Venue As Additional Insured" : "Venue Not Additional Insured"}
+                                        </span>
+                                </div>
+                            </div>
+
+                            {/* Rehearsal Venue */}
+                                <div>
+                                    <h3 className="text-sm font-medium text-gray-500">Rehearsal Venue</h3>
+                                    <p className="mt-1 font-medium">{policy.rehearsalVenueName || "-"}</p>
+                                    <p className="text-sm text-gray-600">{policy.rehearsalVenueAddress1 || "-"}</p>
+                                    <p className="text-sm text-gray-600">
+                                        {policy.rehearsalVenueCity || "-"}, {policy.rehearsalVenueState || "-"} {policy.rehearsalVenueZip || "-"}
+                                    </p>
+                                    <p className="text-sm text-gray-600">{policy.rehearsalVenueCountry || "-"}</p>
+                                    <div className="mt-2">
+                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${policy.rehearsalVenueAsInsured ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}>
+                                            {policy.rehearsalVenueAsInsured ? "Venue As Additional Insured" : "Venue Not Additional Insured"}
+                                        </span>
+                                </div>
+                            </div>
+
+                            {/* Rehearsal Dinner Venue */}
+                                <div>
+                                    <h3 className="text-sm font-medium text-gray-500">Rehearsal Dinner Venue</h3>
+                                    <p className="mt-1 font-medium">{policy.rehearsalDinnerVenueName || "-"}</p>
+                                    <p className="text-sm text-gray-600">{policy.rehearsalDinnerVenueAddress1 || "-"}</p>
+                                    <p className="text-sm text-gray-600">
+                                        {policy.rehearsalDinnerVenueCity || "-"}, {policy.rehearsalDinnerVenueState || "-"} {policy.rehearsalDinnerVenueZip || "-"}
+                                    </p>
+                                    <p className="text-sm text-gray-600">{policy.rehearsalDinnerVenueCountry || "-"}</p>
+                                    <div className="mt-2">
+                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${policy.rehearsalDinnerVenueAsInsured ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}>
+                                            {policy.rehearsalDinnerVenueAsInsured ? "Venue As Additional Insured" : "Venue Not Additional Insured"}
+                                        </span>
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        </>
                     )}
                 </div>
 
@@ -560,10 +653,10 @@ export default function PolicyDetail() {
                 <div className="bg-white shadow-sm rounded-xl p-6 mt-6">
                     <h2 className="text-lg font-semibold mb-4 text-gray-900 border-b pb-2">Additional Information</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
+                        {/* <div>
                             <h3 className="text-sm font-medium text-gray-500">Additional Email</h3>
                             <p className="mt-1 font-medium">{policy.additionalEmail || "-"}</p>
-                        </div>
+                        </div> */}
                         <div>
                             <h3 className="text-sm font-medium text-gray-500">Hear About Us</h3>
                             <p className="mt-1 font-medium">{policy.hearAboutUs || "-"}</p>
@@ -578,27 +671,6 @@ export default function PolicyDetail() {
                         </div>
                     </div>
                 </div>
-
-                {policy.versions && policy.versions.length > 0 && (
-                    <div className="mt-4">
-                        <h3 className="text-lg font-semibold mb-2">Version History</h3>
-                        <div className="space-y-2">
-                            {policy.versions.map((version) => (
-                                <div
-                                    key={version.id}
-                                    className="flex items-center justify-between p-2 bg-gray-50 rounded hover:bg-gray-100 cursor-pointer"
-                                    onClick={() => handleVersionClick(version.id)}
-                                >
-                                    <div className="flex items-center space-x-2">
-                                        <FileText className="h-4 w-4 text-blue-600" />
-                                        <span>Version from {new Date(version.createdAt).toLocaleString()}</span>
-                                    </div>
-                                    <Download className="h-4 w-4 text-gray-500" />
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
             </div>
         </div>
     );

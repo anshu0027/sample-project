@@ -289,7 +289,9 @@ async function generateInsuranceDeclarationPDFBuffer(quoteData: any): Promise<Ui
   doc.text(
     quoteData.event?.eventDate
       ? new Date(quoteData.event.eventDate).toLocaleDateString()
-      : "N/A",
+      : quoteData.quote?.event?.eventDate
+        ? new Date(quoteData.quote.event.eventDate).toLocaleDateString()
+        : "N/A",
     147, yPos + 20
   );
 
@@ -619,23 +621,22 @@ async function generateInsuranceDeclarationPage2PDFBuffer(quoteData: any): Promi
   yPos += 5;
 
   // Event Location Table
-  for (let i = 1; i <= 4; i++) {
-    doc.setDrawColor(128, 128, 128);
-    doc.rect(15, yPos, 10, 6);
-    doc.rect(25, yPos, pageWidth - 40, 6);
-    doc.setTextColor(0, 0, 0);
-    doc.setFont("helvetica", "bold");
-    doc.text(`${i}.`, 17, yPos + 4);
+  let venueCount = 1;
+  
+  // Main Ceremony Venue
+  doc.setDrawColor(128, 128, 128);
+  doc.rect(15, yPos, 10, 6);
+  doc.rect(25, yPos, pageWidth - 40, 6);
+  doc.setTextColor(0, 0, 0);
+  doc.setFont("helvetica", "bold");
+  doc.text(`${venueCount}.`, 17, yPos + 4);
 
-    // Yellow highlight for first location
-    if (i === 1) {
-      doc.setFillColor(255, 255, 255);
-      doc.rect(26, yPos + 1, pageWidth - 42, 4, "F");
-      doc.text((quoteData.event?.venue?.address1 || "N/A") + ", " + (quoteData.event?.venue?.city || "N/A") + ", " + (quoteData.event?.venue?.state || "N/A") + " " + (quoteData.event?.venue?.zip || "N/A"), 27, yPos + 4);
-    }
-
-    yPos += 6;
-  }
+  // Yellow highlight for venue
+  doc.setFillColor(255, 255, 255);
+  doc.rect(26, yPos + 1, pageWidth - 42, 4, "F");
+  doc.setFont("helvetica", "normal");
+  doc.text((quoteData.event?.venue?.address1 || "N/A") + ", " + (quoteData.event?.venue?.city || "N/A") + ", " + (quoteData.event?.venue?.state || "N/A") + " " + (quoteData.event?.venue?.zip || "N/A"), 27, yPos + 4);
+  yPos += 6;
 
   yPos += 10;
 
@@ -648,22 +649,47 @@ async function generateInsuranceDeclarationPage2PDFBuffer(quoteData: any): Promi
 
   yPos += 5;
 
-  // Additional Insured Table
-  for (let i = 1; i <= 4; i++) {
+  // Additional Venues for Wedding Events
+  const eventType = quoteData.event?.eventType || quoteData.quote?.event?.eventType || quoteData.policy?.event?.eventType;
+  const venue = quoteData.event?.venue || quoteData.quote?.event?.venue || quoteData.policy?.event?.venue;
+
+  if (eventType === "Wedding") {
+    const additionalVenues = [
+      { name: "Reception Venue", value: venue?.receptionVenueName },
+      { name: "Rehearsal Venue", value: venue?.rehearsalVenueName },
+      { name: "Rehearsal Dinner Venue", value: venue?.rehearsalDinnerVenueName },
+      { name: "Brunch Venue", value: venue?.brunchVenueName }
+    ];
+
+    for (const venue of additionalVenues) {
+      if (venue.value) {
+        doc.setDrawColor(128, 128, 128);
+        doc.rect(15, yPos, 10, 6);
+        doc.rect(25, yPos, pageWidth - 40, 6);
+        doc.setTextColor(0, 0, 0);
+        doc.setFont("helvetica", "bold");
+        doc.text(`${venueCount}.`, 17, yPos + 4);
+
+        doc.setFillColor(255, 255, 255);
+        doc.rect(26, yPos + 1, pageWidth - 42, 4, "F");
+        doc.setFont("helvetica", "normal");
+        doc.text(`${venue.name}: ${venue.value}`, 27, yPos + 4);
+        yPos += 6;
+        venueCount++;
+      }
+    }
+  }
+
+  // Fill remaining additional insured slots
+  while (venueCount <= 4) {
     doc.setDrawColor(128, 128, 128);
     doc.rect(15, yPos, 10, 6);
     doc.rect(25, yPos, pageWidth - 40, 6);
     doc.setTextColor(0, 0, 0);
     doc.setFont("helvetica", "bold");
-
-    // Yellow highlight for first number
-    if (i === 1) {
-      doc.setFillColor(255, 255, 255);
-      doc.rect(15 + 1, yPos + 1, 8, 4, "F");
-    }
-
-    doc.text(`${i}.`, 17, yPos + 4);
+    doc.text(`${venueCount}.`, 17, yPos + 4);
     yPos += 6;
+    venueCount++;
   }
 
   yPos += 10;

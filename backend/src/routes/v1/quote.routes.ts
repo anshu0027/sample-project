@@ -448,6 +448,25 @@ router.put('/:quoteNumber', async (req: Request, res: Response) => {
       console.log('Updating venue with fields:', venueFields);
       venueRepository.merge(venue, venueFields);
       await venueRepository.save(venue);
+      
+      // Ensure venue is properly associated with the event
+      if (quoteToUpdate.event) {
+        console.log('Before association - Event:', quoteToUpdate.event);
+        console.log('Before association - Venue:', venue);
+        
+        quoteToUpdate.event.venue = venue;
+        await eventRepository.save(quoteToUpdate.event);
+        
+        console.log('After association - Event:', quoteToUpdate.event);
+        console.log('After association - Venue:', venue);
+        
+        // Verify the relationship
+        const savedEvent = await eventRepository.findOne({
+          where: { id: quoteToUpdate.event.id },
+          relations: ['venue']
+        });
+        console.log('Verified event-venue relationship:', savedEvent);
+      }
     }
 
     // Handle policy holder updates

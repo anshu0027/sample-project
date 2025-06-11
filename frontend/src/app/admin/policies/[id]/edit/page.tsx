@@ -19,73 +19,77 @@ function flattenPolicy(policy: any): PolicyVersionData | null {
 
     // Get the data from either the policy directly or from its quote
     const data = policy.quote || policy;
+    const event = data.event || policy.event;
+    const venue = event?.venue || policy.event?.venue;
 
     return {
         residentState: data.residentState || data.policyHolder?.state || '',
-        eventType: data.event?.eventType || '',
-        eventDate: data.event?.eventDate || '',
-        maxGuests: String(data.event?.maxGuests || ''),
+        eventType: event?.eventType || '',
+        eventDate: event?.eventDate || '',
+        maxGuests: event?.maxGuests?.toString() || '',
         email: data.email || '',
         coverageLevel: data.coverageLevel ?? null,
         liabilityCoverage: data.liabilityCoverage ?? '',
         liquorLiability: data.liquorLiability ?? false,
         covidDisclosure: data.covidDisclosure ?? false,
         specialActivities: data.specialActivities ?? false,
-        honoree1FirstName: data.event?.honoree1FirstName || '',
-        honoree1LastName: data.event?.honoree1LastName || '',
-        honoree2FirstName: data.event?.honoree2FirstName || '',
-        honoree2LastName: data.event?.honoree2LastName || '',
-        ceremonyLocationType: data.event?.venue?.ceremonyLocationType || '',
-        indoorOutdoor: data.event?.venue?.indoorOutdoor || '',
-        venueName: data.event?.venue?.name || '',
-        venueAddress1: data.event?.venue?.address1 || '',
-        venueAddress2: data.event?.venue?.address2 || '',
-        venueCountry: data.event?.venue?.country || '',
-        venueCity: data.event?.venue?.city || '',
-        venueState: data.event?.venue?.state || '',
-        venueZip: data.event?.venue?.zip || '',
-        venueAsInsured: data.event?.venue?.venueAsInsured || false,
+        honoree1FirstName: event?.honoree1FirstName || '',
+        honoree1LastName: event?.honoree1LastName || '',
+        honoree2FirstName: event?.honoree2FirstName || '',
+        honoree2LastName: event?.honoree2LastName || '',
+        // Main venue fields
+        ceremonyLocationType: venue?.locationType || '',
+        indoorOutdoor: venue?.indoorOutdoor || '',
+        venueName: venue?.name || '',
+        venueAddress1: venue?.address1 || '',
+        venueAddress2: venue?.address2 || '',
+        venueCountry: venue?.country || '',
+        venueCity: venue?.city || '',
+        venueState: venue?.state || '',
+        venueZip: venue?.zip || '',
+        venueAsInsured: venue?.venueAsInsured || false,
         // Additional venue fields
-        receptionLocationType: data.event?.venue?.receptionLocationType || '',
-        receptionIndoorOutdoor: data.event?.venue?.receptionIndoorOutdoor || '',
-        receptionVenueName: data.event?.venue?.receptionVenueName || '',
-        receptionVenueAddress1: data.event?.venue?.receptionVenueAddress1 || '',
-        receptionVenueAddress2: data.event?.venue?.receptionVenueAddress2 || '',
-        receptionVenueCountry: data.event?.venue?.receptionVenueCountry || '',
-        receptionVenueCity: data.event?.venue?.receptionVenueCity || '',
-        receptionVenueState: data.event?.venue?.receptionVenueState || '',
-        receptionVenueZip: data.event?.venue?.receptionVenueZip || '',
-        receptionVenueAsInsured: data.event?.venue?.receptionVenueAsInsured || false,
-        brunchLocationType: data.event?.venue?.brunchLocationType || '',
-        brunchIndoorOutdoor: data.event?.venue?.brunchIndoorOutdoor || '',
-        brunchVenueName: data.event?.venue?.brunchVenueName || '',
-        brunchVenueAddress1: data.event?.venue?.brunchVenueAddress1 || '',
-        brunchVenueAddress2: data.event?.venue?.brunchVenueAddress2 || '',
-        brunchVenueCountry: data.event?.venue?.brunchVenueCountry || '',
-        brunchVenueCity: data.event?.venue?.brunchVenueCity || '',
-        brunchVenueState: data.event?.venue?.brunchVenueState || '',
-        brunchVenueZip: data.event?.venue?.brunchVenueZip || '',
-        brunchVenueAsInsured: data.event?.venue?.brunchVenueAsInsured || false,
-        rehearsalLocationType: data.event?.venue?.rehearsalLocationType || '',
-        rehearsalIndoorOutdoor: data.event?.venue?.rehearsalIndoorOutdoor || '',
-        rehearsalVenueName: data.event?.venue?.rehearsalVenueName || '',
-        rehearsalVenueAddress1: data.event?.venue?.rehearsalVenueAddress1 || '',
-        rehearsalVenueAddress2: data.event?.venue?.rehearsalVenueAddress2 || '',
-        rehearsalVenueCountry: data.event?.venue?.rehearsalVenueCountry || '',
-        rehearsalVenueCity: data.event?.venue?.rehearsalVenueCity || '',
-        rehearsalVenueState: data.event?.venue?.rehearsalVenueState || '',
-        rehearsalVenueZip: data.event?.venue?.rehearsalVenueZip || '',
-        rehearsalVenueAsInsured: data.event?.venue?.rehearsalVenueAsInsured || false,
-        rehearsalDinnerLocationType: data.event?.venue?.rehearsalDinnerLocationType || '',
-        rehearsalDinnerIndoorOutdoor: data.event?.venue?.rehearsalDinnerIndoorOutdoor || '',
-        rehearsalDinnerVenueName: data.event?.venue?.rehearsalDinnerVenueName || '',
-        rehearsalDinnerVenueAddress1: data.event?.venue?.rehearsalDinnerVenueAddress1 || '',
-        rehearsalDinnerVenueAddress2: data.event?.venue?.rehearsalDinnerVenueAddress2 || '',
-        rehearsalDinnerVenueCountry: data.event?.venue?.rehearsalDinnerVenueCountry || '',
-        rehearsalDinnerVenueCity: data.event?.venue?.rehearsalDinnerVenueCity || '',
-        rehearsalDinnerVenueState: data.event?.venue?.rehearsalDinnerVenueState || '',
-        rehearsalDinnerVenueZip: data.event?.venue?.rehearsalDinnerVenueZip || '',
-        rehearsalDinnerVenueAsInsured: data.event?.venue?.rehearsalDinnerVenueAsInsured || false,
+        receptionLocationType: venue?.receptionLocationType || '',
+        receptionIndoorOutdoor: venue?.receptionIndoorOutdoor || '',
+        receptionVenueName: venue?.receptionVenueName || '',
+        receptionVenueAddress1: venue?.receptionVenueAddress1 || '',
+        receptionVenueAddress2: venue?.receptionVenueAddress2 || '',
+        receptionVenueCountry: venue?.receptionVenueCountry || '',
+        receptionVenueCity: venue?.receptionVenueCity || '',
+        receptionVenueState: venue?.receptionVenueState || '',
+        receptionVenueZip: venue?.receptionVenueZip || '',
+        receptionVenueAsInsured: venue?.receptionVenueAsInsured || false,
+        brunchLocationType: venue?.brunchLocationType || '',
+        brunchIndoorOutdoor: venue?.brunchIndoorOutdoor || '',
+        brunchVenueName: venue?.brunchVenueName || '',
+        brunchVenueAddress1: venue?.brunchVenueAddress1 || '',
+        brunchVenueAddress2: venue?.brunchVenueAddress2 || '',
+        brunchVenueCountry: venue?.brunchVenueCountry || '',
+        brunchVenueCity: venue?.brunchVenueCity || '',
+        brunchVenueState: venue?.brunchVenueState || '',
+        brunchVenueZip: venue?.brunchVenueZip || '',
+        brunchVenueAsInsured: venue?.brunchVenueAsInsured || false,
+        rehearsalLocationType: venue?.rehearsalLocationType || '',
+        rehearsalIndoorOutdoor: venue?.rehearsalIndoorOutdoor || '',
+        rehearsalVenueName: venue?.rehearsalVenueName || '',
+        rehearsalVenueAddress1: venue?.rehearsalVenueAddress1 || '',
+        rehearsalVenueAddress2: venue?.rehearsalVenueAddress2 || '',
+        rehearsalVenueCountry: venue?.rehearsalVenueCountry || '',
+        rehearsalVenueCity: venue?.rehearsalVenueCity || '',
+        rehearsalVenueState: venue?.rehearsalVenueState || '',
+        rehearsalVenueZip: venue?.rehearsalVenueZip || '',
+        rehearsalVenueAsInsured: venue?.rehearsalVenueAsInsured || false,
+        rehearsalDinnerLocationType: venue?.rehearsalDinnerLocationType || '',
+        rehearsalDinnerIndoorOutdoor: venue?.rehearsalDinnerIndoorOutdoor || '',
+        rehearsalDinnerVenueName: venue?.rehearsalDinnerVenueName || '',
+        rehearsalDinnerVenueAddress1: venue?.rehearsalDinnerVenueAddress1 || '',
+        rehearsalDinnerVenueAddress2: venue?.rehearsalDinnerVenueAddress2 || '',
+        rehearsalDinnerVenueCountry: venue?.rehearsalDinnerVenueCountry || '',
+        rehearsalDinnerVenueCity: venue?.rehearsalDinnerVenueCity || '',
+        rehearsalDinnerVenueState: venue?.rehearsalDinnerVenueState || '',
+        rehearsalDinnerVenueZip: venue?.rehearsalDinnerVenueZip || '',
+        rehearsalDinnerVenueAsInsured: venue?.rehearsalDinnerVenueAsInsured || false,
+        // Policy holder fields
         firstName: data.policyHolder?.firstName || '',
         lastName: data.policyHolder?.lastName || '',
         phone: data.policyHolder?.phone || '',
@@ -98,6 +102,7 @@ function flattenPolicy(policy: any): PolicyVersionData | null {
         zip: data.policyHolder?.zip || '',
         legalNotices: data.policyHolder?.legalNotices || false,
         completingFormName: data.policyHolder?.completingFormName || '',
+        // Quote fields
         quoteNumber: data.quoteNumber || policy.quote?.quoteNumber || '',
         totalPremium: data.totalPremium || policy.quote?.totalPremium || 0,
         basePremium: data.basePremium || policy.quote?.basePremium || 0,
@@ -203,16 +208,58 @@ export default function EditPolicy() {
 
             try {
                 // Phase 1: Fetch policy (fast render)
-                const res = await fetch(`${apiUrl}/policies/${id}`);
+                const res = await fetch(`${apiUrl}/policies/${id}`, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
                 if (!res.ok) throw new Error("Policy not found");
                 const data = await res.json();
-                setFormState(flattenPolicy(data.policy)); // 👈 Show form after this
+                
+                // Debug logs for raw data
+                console.log('=== Raw API Response ===');
+                console.log('Full API response:', data);
+                console.log('Policy data:', data.policy);
+                console.log('Event data:', data.policy?.event);
+                console.log('Venue data:', data.policy?.event?.venue);
+                console.log('Quote data:', data.policy?.quote);
+                console.log('Quote event data:', data.policy?.quote?.event);
+                console.log('Quote venue data:', data.policy?.quote?.event?.venue);
+
+                if (!data.policy) {
+                    throw new Error("Policy data is missing");
+                }
+
+                // Ensure we have all the necessary relations
+                if (!data.policy.event) {
+                    console.warn('Event data is missing');
+                }
+                if (!data.policy.event?.venue) {
+                    console.warn('Venue data is missing');
+                }
+
+                const flattenedData = flattenPolicy(data.policy);
+                
+                // Debug logs for flattened data
+                // console.log('=== Flattened Data ===');
+                // console.log('Full flattened data:', flattenedData);
+                // console.log('Max guests:', flattenedData.maxGuests);
+                // console.log('Venue name:', flattenedData.venueName);
+                // console.log('Venue address:', flattenedData.venueAddress1);
+                // console.log('Reception venue:', flattenedData.receptionVenueName);
+                // console.log('Brunch venue:', flattenedData.brunchVenueName);
+                // console.log('Rehearsal venue:', flattenedData.rehearsalVenueName);
+                // console.log('Rehearsal dinner venue:', flattenedData.rehearsalDinnerVenueName);
+
+                setFormState(flattenedData);
 
                 // Phase 2: Fetch versions (background)
                 fetch(`${apiUrl}/policies/${id}/versions`)
                     .then((vRes) => vRes.json())
                     .then((vData) => {
-                        console.log("Fetched versions 👀", vData); // 🔍 This line right here
+                        console.log("Fetched versions:", vData);
                         setPolicyVersions(vData.versions || []);
                     })
                     .catch((err) => {
@@ -220,6 +267,7 @@ export default function EditPolicy() {
                     });
             } catch (error) {
                 const message = error instanceof Error ? error.message : "Unknown error";
+                console.error('Error fetching policy:', error);
                 toast({
                     title: "Failed to fetch policy data",
                     description: message,

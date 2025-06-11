@@ -33,13 +33,27 @@ router.get('/:id', async (req: Request, res: Response) => {
         const policyRepository = AppDataSource.getRepository(Policy);
         const policy = await policyRepository.findOne({
             where: { id: Number(id) },
-            relations: ['quote', 'quote.event', 'quote.event.venue', 'quote.policyHolder', 'event', 'event.venue', 'policyHolder', 'payments'],
+            relations: [
+                'quote',
+                'quote.event',
+                'quote.event.venue',
+                'quote.policyHolder',
+                'event',
+                'event.venue',
+                'policyHolder',
+                'payments',
+                'versions'
+            ],
         });
 
         if (!policy) {
             res.status(404).json({ error: 'Policy not found' });
             return;
         }
+
+        // Log the policy data for debugging
+        console.log('Policy data being sent:', JSON.stringify(policy, null, 2));
+
         res.json({ policy });
 
     } catch (error) {
@@ -218,7 +232,7 @@ router.put('/:id', async (req: Request, res: Response) => {
             eventRepository.merge(event, {
                 eventType: fields.eventType,
                 eventDate: fields.eventDate,
-                maxGuests: fields.maxGuests,
+                maxGuests: fields.maxGuests?.toString(), // Ensure maxGuests is saved as string
                 honoree1FirstName: fields.honoree1FirstName,
                 honoree1LastName: fields.honoree1LastName,
                 honoree2FirstName: fields.honoree2FirstName,
@@ -233,10 +247,31 @@ router.put('/:id', async (req: Request, res: Response) => {
         if (fields.venueName || fields.venueAddress1 || fields.venueAddress2 || 
             fields.venueCountry || fields.venueCity || fields.venueState || 
             fields.venueZip || fields.ceremonyLocationType || 
-            fields.indoorOutdoor || fields.venueAsInsured) {
+            fields.indoorOutdoor || fields.venueAsInsured ||
+            // Additional venue fields for wedding events
+            fields.receptionVenueName || fields.receptionVenueAddress1 || fields.receptionVenueAddress2 ||
+            fields.receptionVenueCountry || fields.receptionVenueCity || fields.receptionVenueState ||
+            fields.receptionVenueZip || fields.receptionVenueAsInsured ||
+            fields.brunchVenueName || fields.brunchVenueAddress1 || fields.brunchVenueAddress2 ||
+            fields.brunchVenueCountry || fields.brunchVenueCity || fields.brunchVenueState ||
+            fields.brunchVenueZip || fields.brunchVenueAsInsured ||
+            fields.rehearsalVenueName || fields.rehearsalVenueAddress1 || fields.rehearsalVenueAddress2 ||
+            fields.rehearsalVenueCountry || fields.rehearsalVenueCity || fields.rehearsalVenueState ||
+            fields.rehearsalVenueZip || fields.rehearsalVenueAsInsured ||
+            fields.rehearsalDinnerVenueName || fields.rehearsalDinnerVenueAddress1 || fields.rehearsalDinnerVenueAddress2 ||
+            fields.rehearsalDinnerVenueCountry || fields.rehearsalDinnerVenueCity || fields.rehearsalDinnerVenueState ||
+            fields.rehearsalDinnerVenueZip || fields.rehearsalDinnerVenueAsInsured) {
+            
+            console.log('=== Venue Update Debug ===');
+            console.log('Fields received:', fields);
+            console.log('Policy record before update:', policyRecord);
+            console.log('Event before update:', policyRecord.event);
+            console.log('Venue before update:', policyRecord.event?.venue);
             
             const venueRepository = AppDataSource.getRepository(Venue);
             const venue = policyRecord.event?.venue || new Venue();
+            
+            console.log('Venue entity before merge:', venue);
             
             venueRepository.merge(venue, {
                 name: fields.venueName,
@@ -248,12 +283,58 @@ router.put('/:id', async (req: Request, res: Response) => {
                 zip: fields.venueZip,
                 ceremonyLocationType: fields.ceremonyLocationType,
                 indoorOutdoor: fields.indoorOutdoor,
-                venueAsInsured: fields.venueAsInsured
+                venueAsInsured: fields.venueAsInsured,
+                // Additional venue fields for wedding events
+                receptionLocationType: fields.receptionLocationType,
+                receptionIndoorOutdoor: fields.receptionIndoorOutdoor,
+                receptionVenueName: fields.receptionVenueName,
+                receptionVenueAddress1: fields.receptionVenueAddress1,
+                receptionVenueAddress2: fields.receptionVenueAddress2,
+                receptionVenueCountry: fields.receptionVenueCountry,
+                receptionVenueCity: fields.receptionVenueCity,
+                receptionVenueState: fields.receptionVenueState,
+                receptionVenueZip: fields.receptionVenueZip,
+                receptionVenueAsInsured: fields.receptionVenueAsInsured,
+                brunchLocationType: fields.brunchLocationType,
+                brunchIndoorOutdoor: fields.brunchIndoorOutdoor,
+                brunchVenueName: fields.brunchVenueName,
+                brunchVenueAddress1: fields.brunchVenueAddress1,
+                brunchVenueAddress2: fields.brunchVenueAddress2,
+                brunchVenueCountry: fields.brunchVenueCountry,
+                brunchVenueCity: fields.brunchVenueCity,
+                brunchVenueState: fields.brunchVenueState,
+                brunchVenueZip: fields.brunchVenueZip,
+                brunchVenueAsInsured: fields.brunchVenueAsInsured,
+                rehearsalLocationType: fields.rehearsalLocationType,
+                rehearsalIndoorOutdoor: fields.rehearsalIndoorOutdoor,
+                rehearsalVenueName: fields.rehearsalVenueName,
+                rehearsalVenueAddress1: fields.rehearsalVenueAddress1,
+                rehearsalVenueAddress2: fields.rehearsalVenueAddress2,
+                rehearsalVenueCountry: fields.rehearsalVenueCountry,
+                rehearsalVenueCity: fields.rehearsalVenueCity,
+                rehearsalVenueState: fields.rehearsalVenueState,
+                rehearsalVenueZip: fields.rehearsalVenueZip,
+                rehearsalVenueAsInsured: fields.rehearsalVenueAsInsured,
+                rehearsalDinnerLocationType: fields.rehearsalDinnerLocationType,
+                rehearsalDinnerIndoorOutdoor: fields.rehearsalDinnerIndoorOutdoor,
+                rehearsalDinnerVenueName: fields.rehearsalDinnerVenueName,
+                rehearsalDinnerVenueAddress1: fields.rehearsalDinnerVenueAddress1,
+                rehearsalDinnerVenueAddress2: fields.rehearsalDinnerVenueAddress2,
+                rehearsalDinnerVenueCountry: fields.rehearsalDinnerVenueCountry,
+                rehearsalDinnerVenueCity: fields.rehearsalDinnerVenueCity,
+                rehearsalDinnerVenueState: fields.rehearsalDinnerVenueState,
+                rehearsalDinnerVenueZip: fields.rehearsalDinnerVenueZip,
+                rehearsalDinnerVenueAsInsured: fields.rehearsalDinnerVenueAsInsured
             });
             
+            console.log('Venue entity after merge:', venue);
+            
             await venueRepository.save(venue);
+            console.log('Venue saved successfully:', venue);
+            
             if (policyRecord.event) {
                 policyRecord.event.venue = venue;
+                console.log('Venue attached to event:', policyRecord.event.venue);
             }
         }
 
