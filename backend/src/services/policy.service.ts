@@ -12,7 +12,7 @@ export async function createPolicyFromQuote(quoteId: number): Promise<Policy> {
 
         const quote = await quoteRepository.findOne({
             where: { id: quoteId },
-            relations: ['policy'], // Check if a policy is already linked
+            relations: ['policy', 'event', 'event.venue', 'policyHolder'], // Include all necessary relations
         });
 
         if (!quote) {
@@ -24,19 +24,33 @@ export async function createPolicyFromQuote(quoteId: number): Promise<Policy> {
             return quote.policy;
         }
 
-        // 1. Create the new policy
+        // 1. Create the new policy with all necessary data
         const policyPrefix = 'PI';
         const policyNumber = generateUniqueId(policyPrefix);
         const newPolicy = policyRepository.create({
             policyNumber,
             quote: quote,
+            event: quote.event,
+            policyHolder: quote.policyHolder,
         });
-        await policyRepository.save(newPolicy);
 
-        // 2. Mark the quote as converted
+        // 2. Save the policy first to establish the relationship
+        const savedPolicy = await policyRepository.save(newPolicy);
+
+        // 3. Mark the quote as converted
         quote.convertedToPolicy = true;
         await quoteRepository.save(quote);
 
-        return newPolicy;
+        // 4. Return the complete policy with all relations
+        const completePolicy = await policyRepository.findOne({
+            where: { id: savedPolicy.id },
+            relations: ['quote', 'event', 'event.venue', 'policyHolder']
+        });
+
+        if (!completePolicy) {
+            throw new Error('Failed to retrieve created policy');
+        }
+
+        return completePolicy;
     });
 }

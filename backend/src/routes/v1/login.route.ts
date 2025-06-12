@@ -3,10 +3,10 @@ import type { Request, Response } from 'express';
 
 const router = express.Router();
 
-const LoginID = "admin123";
+const LoginID = "admin@weddingguard.com";
 const LoginPassword = "admin123";
 
-router.post('/login', (req: Request, res: Response): void => {
+router.post('/', (req: Request, res: Response): void => {
     const { id, password } = req.body;
 
     // Verify admin credentials

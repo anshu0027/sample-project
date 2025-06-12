@@ -9,6 +9,7 @@ import policyRoutes from './routes/v1/policy.routes';
 import policyListRoutes from './routes/v1/policy-list.routes';
 import adminRoutes from './routes/v1/admin.routes';
 import paymentRoutes from './routes/v1/payment.routes';
+import loginRoutes from './routes/v1/login.route';
 
 const app = express();
 
@@ -44,6 +45,13 @@ app.use('/api/v1/policies', policyRoutes);
 app.use('/api/v1/policy-list', policyListRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/payment', paymentRoutes);
+app.use('/api/v1/login', loginRoutes);
+
+// Error handling middleware
+app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error('Unhandled error:', err);
+  res.status(500).json({ error: 'Internal Server Error' });
+});
 
 // Initialize database connection
 AppDataSource.initialize()

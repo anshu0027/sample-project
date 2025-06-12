@@ -2,6 +2,7 @@
 import { Router, Request, Response } from 'express';
 import { AppDataSource } from '../../data-source';
 import { Policy } from '../../entities/policy.entity';
+import { QuoteSource, PaymentStatus } from '../../entities/enums';
 
 const router = Router();
 
@@ -53,6 +54,12 @@ router.get('/', async (req: Request, res: Response) => {
                 payment
             });
 
+            // Determine payment status
+            let paymentStatus = payment?.status || 'PENDING';
+            if (policy.quote?.source === QuoteSource.ADMIN) {
+                paymentStatus = PaymentStatus.SUCCESS;
+            }
+
             // Format the data for the frontend
             const formattedPolicy = {
                 id: policy.id,
@@ -72,8 +79,8 @@ router.get('/', async (req: Request, res: Response) => {
                 },
                 eventType: event?.eventType || null,
                 eventDate: event?.eventDate || null,
-                totalPremium: payment?.amount || policy.quote?.totalPremium || 0,
-                status: payment?.status || policy.quote?.status || 'PENDING',
+                totalPremium: policy.quote?.totalPremium || payment?.amount || 0,
+                status: paymentStatus,
                 createdAt: policy.createdAt,
                 updatedAt: policy.updatedAt,
                 payments: policy.payments?.map(p => ({

@@ -462,9 +462,11 @@ router.delete('/:id', async (req: Request, res: Response) => {
 // We still need the /from-quote route from the previous step
 router.post('/from-quote', async (req: Request, res: Response) => {
     try {
+        console.log('Received request body:', req.body);
         const { quoteNumber, forceConvert } = req.body;
 
         if (!quoteNumber) {
+            console.error('Missing quoteNumber in request');
             res.status(400).json({ error: 'Missing quoteNumber' });
             return;
         }
@@ -472,28 +474,40 @@ router.post('/from-quote', async (req: Request, res: Response) => {
         const quoteRepository = AppDataSource.getRepository(Quote);
         const policyRepository = AppDataSource.getRepository(Policy);
 
+        console.log('Looking up quote:', quoteNumber);
         const quote = await quoteRepository.findOne({
             where: { quoteNumber },
-            relations: ['policy'],
+            relations: ['policy', 'event', 'event.venue', 'policyHolder'],
         });
 
         if (!quote) {
+            console.error('Quote not found:', quoteNumber);
             res.status(404).json({ error: 'Quote not found' });
             return;
         }
 
+        console.log('Found quote:', {
+            id: quote.id,
+            quoteNumber: quote.quoteNumber,
+            source: quote.source,
+            convertedToPolicy: quote.convertedToPolicy,
+            hasEvent: !!quote.event,
+            hasPolicyHolder: !!quote.policyHolder
+        });
+
         if (quote.convertedToPolicy) {
+            console.error('Quote already converted:', quoteNumber);
             res.status(400).json({ error: 'Quote is already converted to a policy' });
             return;
         }
 
-        // --- START: NEW LOGIC ---
-        // Update the quote status to COMPLETE as part of this atomic operation.
+        // Update the quote status to COMPLETE
         quote.status = StepStatus.COMPLETE;
         await quoteRepository.save(quote);
-        // --- END: NEW LOGIC ---
+        console.log('Updated quote status to COMPLETE');
 
         if (quote.source === QuoteSource.ADMIN && !forceConvert) {
+            console.log('Admin quote requires manual conversion');
             res.status(400).json({
                 error: 'Admin-generated quotes require manual conversion confirmation',
                 requiresManualConversion: true,
@@ -501,16 +515,33 @@ router.post('/from-quote', async (req: Request, res: Response) => {
             return;
         }
 
+        console.log('Creating policy from quote');
         const policy = await createPolicyFromQuote(quote.id);
+        console.log('Created policy:', {
+            id: policy.id,
+            policyNumber: policy.policyNumber
+        });
 
+        // Fetch the complete policy with all relations
+        const completePolicy = await policyRepository.findOne({
+            where: { id: policy.id },
+            relations: ['quote', 'event', 'event.venue', 'policyHolder']
+        });
+
+        console.log('Sending success response');
         res.status(201).json({
             message: 'Quote converted to policy successfully',
             policyNumber: policy.policyNumber,
-            policy: policy,
+            policy: completePolicy || policy,
         });
 
     } catch (error) {
         console.error('POST /from-quote error:', error);
+        console.error('Error details:', {
+            name: error.name,
+            message: error.message,
+            stack: error.stack
+        });
         const message = error instanceof Error ? error.message : 'Server error';
         res.status(500).json({ error: message });
     }

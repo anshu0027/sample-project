@@ -229,25 +229,44 @@ export default function Quotes() {
         if (!window.confirm('Are you sure you want to convert this quote to a policy?')) return;
         const apiUrl = process.env.NEXT_PUBLIC_API_URL;
         try {
+            console.log('Converting quote to policy:', quoteNumber);
+            const requestBody = {
+                quoteNumber,
+                forceConvert: true
+            };
+            console.log('Request body:', requestBody);
+
             const res = await fetch(`${apiUrl}/policies/from-quote`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    quoteNumber,
-                    forceConvert: true
-                })
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(requestBody)
             });
+
+            const responseData = await res.json();
+            console.log('Response status:', res.status);
+            console.log('Response data:', responseData);
+
             if (res.ok) {
-                const data = await res.json();
-                toast({ title: "Success", description: `Quote converted to policy! Policy Number: ${data.policyNumber}`, variant: "default" });
+                toast({ 
+                    title: "Success", 
+                    description: `Quote converted to policy! Policy Number: ${responseData.policyNumber}`, 
+                    variant: "default" 
+                });
                 fetchQuotes(); // Refetch all quotes to update the list
             } else {
-                const error = await res.json();
-                throw new Error(error.error || "Failed to convert quote.");
+                throw new Error(responseData.error || "Failed to convert quote.");
             }
         } catch (error) {
+            console.error('Error converting quote to policy:', error);
             const message = error instanceof Error ? error.message : "An unknown error occurred.";
-            toast({ title: "Error", description: message, variant: "destructive" });
+            toast({ 
+                title: "Error", 
+                description: message, 
+                variant: "destructive" 
+            });
         }
     };
 
