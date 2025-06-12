@@ -48,7 +48,7 @@ app.get('/api/health', (_req, res) => {
 });
 
 // Root route
-app.get('/', (req, res) => {
+app.get('/', (_req, res) => {
   res.json({ message: 'Wedding Insurance API is running' });
 });
 
@@ -62,7 +62,7 @@ app.use('/api/v1/payment', paymentRoutes);
 app.use('/api/v1/login', loginRoutes);
 
 // Error handling middleware
-app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
+app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error('Unhandled error:', err);
   res.status(500).json({ error: 'Internal Server Error' });
 });
