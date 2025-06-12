@@ -12,11 +12,13 @@ import { APIContracts, APIControllers, Constants } from 'authorizenet';
 const router = Router();
 
 // Authorize.Net configuration
-const apiLoginId = '4qhEY277';
-const transactionKey = '97uK4gXGg496dtmZ';
+const apiLoginId = process.env.AUTHORIZE_NET_API_LOGIN_ID_SANDBOX;
+const transactionKey = process.env.AUTHORIZE_NET_TRANSACTION_KEY_SANDBOX;
+
 const merchantAuthenticationType = new APIContracts.MerchantAuthenticationType();
-merchantAuthenticationType.setName(process.env.AUTHORIZE_NET_API_LOGIN_ID_SANDBOX!);
-merchantAuthenticationType.setTransactionKey(process.env.AUTHORIZE_NET_TRANSACTION_KEY_SANDBOX!);
+
+merchantAuthenticationType.setName(apiLoginId!);
+merchantAuthenticationType.setTransactionKey(transactionKey!);
 
 // Helper function to map status for the frontend
 const mapPaymentStatus = (payment: Payment) => {
@@ -117,8 +119,8 @@ router.post('/', async (req: Request, res: Response) => {
 
         const newPayment = paymentRepository.create({
             amount: parseFloat(amount),
-            quoteId: quoteId ? parseInt(quoteId) : null,
-            policyId: policyId ? parseInt(policyId) : null,
+            quoteId: quoteId ? parseInt(quoteId) : undefined,
+            policyId: policyId ? parseInt(policyId) : undefined,
             method: method || 'Online',
             status: status as PaymentStatus,
             reference: reference || `PAY-${Date.now()}`,
@@ -195,8 +197,10 @@ router.post('/authorize-net', async (req: Request, res: Response) => {
 
     try {
         const { quoteId, amount, opaqueData } = req.body;
+        console.log('Received payment request:', { quoteId, amount, opaqueData });
 
         if (!quoteId || !amount || !opaqueData) {
+            console.error('Missing required fields:', { quoteId, amount, opaqueData });
             res.status(400).json({ 
                 error: 'Missing required fields. Need quoteId, amount, and opaqueData',
                 received: { quoteId, amount, opaqueData }
@@ -204,8 +208,18 @@ router.post('/authorize-net', async (req: Request, res: Response) => {
             return;
         }
 
+        if (!opaqueData.dataDescriptor || !opaqueData.dataValue) {
+            console.error('Invalid opaqueData format:', opaqueData);
+            res.status(400).json({
+                error: 'Invalid opaqueData format. Need dataDescriptor and dataValue',
+                received: opaqueData
+            });
+            return;
+        }
+
         // Format amount to 2 decimal places
         const formattedAmount = parseFloat(amount).toFixed(2);
+        console.log('Formatted amount:', formattedAmount);
 
         // Create the payment data for a credit card
         const creditCard = new APIContracts.OpaqueDataType();
@@ -227,6 +241,7 @@ router.post('/authorize-net', async (req: Request, res: Response) => {
         createRequest.setMerchantAuthentication(merchantAuthenticationType);
         createRequest.setTransactionRequest(transactionRequestType);
 
+        console.log('Sending request to Authorize.Net...');
         // Create the controller
         const ctrl = new APIControllers.CreateTransactionController(createRequest.getJSON());
 
@@ -240,6 +255,12 @@ router.post('/authorize-net', async (req: Request, res: Response) => {
                     reject(new Error('No response from payment gateway'));
                 }
             });
+        });
+
+        console.log('Authorize.Net response:', {
+            resultCode: response.getMessages().getResultCode(),
+            responseCode: response.getTransactionResponse()?.getResponseCode(),
+            message: response.getMessages().getMessage()[0]?.getText()
         });
 
         // Handle the response

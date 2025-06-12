@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -175,6 +176,12 @@ export default function Payment() {
 
   const processPayment = async (opaqueData: any) => {
     try {
+      console.log('Sending payment request with data:', {
+        quoteId: quoteDetails.id,
+        amount: quoteDetails.totalPremium,
+        opaqueData
+      });
+
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payment/authorize-net`, {
         method: "POST",
         headers: {
@@ -188,6 +195,7 @@ export default function Payment() {
       });
 
       const data = await response.json();
+      console.log('Payment response:', data);
 
       if (response.ok) {
         // Store policy information in localStorage
@@ -212,9 +220,12 @@ export default function Payment() {
         // Redirect to review page with payment success parameters
         router.push(`/customer/review?payment=success&method=card&qn=${quoteDetails.quoteNumber}${isRetrieved ? '&retrieved=true' : ''}`);
       } else {
-        throw new Error(data.message || "Payment failed");
+        console.error('Payment failed with status:', response.status);
+        console.error('Error details:', data);
+        throw new Error(data.message || data.error || "Payment failed");
       }
     } catch (error) {
+      console.error('Payment processing error:', error);
       const message = error instanceof Error ? error.message : "Payment processing failed";
       toast({
         title: "Payment failed",
