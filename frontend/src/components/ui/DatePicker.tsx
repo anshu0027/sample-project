@@ -44,7 +44,9 @@ const DatePicker: React.FC<DatePickerProps> = ({
   };
 
   return (
-    <div className={clsx("relative", className)}> {/* Apply the passed className to the wrapper div */}
+    <div className={clsx('relative', className)}>
+      {' '}
+      {/* Apply the passed className to the wrapper div */}
       <input
         type="date"
         value={formatDateForInput(selected)}
@@ -52,13 +54,14 @@ const DatePicker: React.FC<DatePickerProps> = ({
         min={minDate ? formatDateForInput(minDate) : undefined}
         max={maxDate ? formatDateForInput(maxDate) : undefined}
         // placeholderText={placeholderText}
-        className={clsx( // Styles for the input element itself
-          "block w-full rounded-xl shadow-sm py-2 px-3 transition-colors text-center border", // Adjusted padding for native date input
-          "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500",
-          error 
-            ? "border-red-400 text-red-900 placeholder-red-300 bg-red-50"  // Matched Input.tsx error style
-            : "border-gray-200 text-gray-900 placeholder-gray-400", // Matched Input.tsx default style
-          disabled && "bg-gray-100 text-gray-500 cursor-not-allowed"
+        className={clsx(
+          // Styles for the input element itself
+          'block w-full rounded-xl shadow-sm py-2 px-3 transition-colors text-center border', // Adjusted padding for native date input
+          'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
+          error
+            ? 'border-red-400 text-red-900 placeholder-red-300 bg-red-50' // Matched Input.tsx error style
+            : 'border-gray-200 text-gray-900 placeholder-gray-400', // Matched Input.tsx default style
+          disabled && 'bg-gray-100 text-gray-500 cursor-not-allowed',
         )}
         disabled={disabled}
       />

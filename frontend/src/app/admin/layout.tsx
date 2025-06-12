@@ -1,6 +1,6 @@
-"use client";
-import AdminLayout from "@/components/admin/AdminLayout";
+'use client';
+import AdminLayout from '@/components/admin/AdminLayout';
 
 export default function AdminSectionLayout({ children }: { children: React.ReactNode }) {
-    return <AdminLayout>{children}</AdminLayout>;
-} 
+  return <AdminLayout>{children}</AdminLayout>;
+}

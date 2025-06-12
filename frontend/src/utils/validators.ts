@@ -6,7 +6,7 @@
  * @returns True if the string is empty, false otherwise.
  */
 export const isEmpty = (value: string): boolean => {
-  return value.trim() === "";
+  return value.trim() === '';
 };
 
 /**
@@ -89,9 +89,9 @@ export const isDateWithinTwoYears = (date: Date): boolean => {
  * @returns The formatted currency string.
  */
 export const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
     minimumFractionDigits: 2,
   }).format(amount);
 };
@@ -102,11 +102,11 @@ export const formatCurrency = (amount: number): string => {
  * @returns The formatted phone number or original string if invalid.
  */
 export const formatPhoneNumber = (phoneNumberString: string): string => {
-  const cleaned = ("" + phoneNumberString).replace(/\D/g, "");
+  const cleaned = ('' + phoneNumberString).replace(/\D/g, '');
   if (cleaned.length < 10) return phoneNumberString;
   const match = cleaned.match(/^(\d{3})(\d{3})(\d{4})$/);
   if (match) {
-    return "(" + match[1] + ") " + match[2] + "-" + match[3];
+    return '(' + match[1] + ') ' + match[2] + '-' + match[3];
   }
   return phoneNumberString;
 };

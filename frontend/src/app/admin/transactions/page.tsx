@@ -1,26 +1,19 @@
-"use client";
-import { useState, useEffect, Suspense, useRef } from "react";
-import { useRouter } from "next/navigation";
-import {
-  ArrowLeft,
-  Download,
-  DollarSign,
-  TrendingUp,
-  Calendar,
-  ChevronDown,
-} from "lucide-react";
-import Card from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
-import DatePicker from "@/components/ui/DatePicker";
+'use client';
+import { useState, useEffect, Suspense, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import { ArrowLeft, Download, DollarSign, TrendingUp, Calendar, ChevronDown } from 'lucide-react';
+import Card from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+import DatePicker from '@/components/ui/DatePicker';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { toast } from "@/hooks/use-toast";
+import { toast } from '@/hooks/use-toast';
 
 const Transactions = () => {
   const router = useRouter();
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
-  const [timeFrame, setTimeFrame] = useState("30days");
+  const [timeFrame, setTimeFrame] = useState('30days');
   const [currentPage, setCurrentPage] = useState(1);
   const [showExportDropdown, setShowExportDropdown] = useState(false);
   const exportDropdownRef = useRef<HTMLDivElement>(null);
@@ -53,16 +46,16 @@ const Transactions = () => {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
       function generateTransactionId(quoteNum: string): string {
-        if (quoteNum && quoteNum.startsWith("Q")) {
+        if (quoteNum && quoteNum.startsWith('Q')) {
           // Extract the last 4 digits after removing the date part
           const lastDigits = quoteNum.split('-').pop();
-          return "T-" + lastDigits;
+          return 'T-' + lastDigits;
         }
-        return quoteNum || "N/A";
+        return quoteNum || 'N/A';
       }
 
       try {
-        const res = await fetch(`${apiUrl}/quotes?allQuotes=true`, { method: "GET" });
+        const res = await fetch(`${apiUrl}/quotes?allQuotes=true`, { method: 'GET' });
         if (res.ok) {
           const data = await res.json();
           setTransactions(
@@ -75,19 +68,19 @@ const Transactions = () => {
               status: q.status,
               source: q.source || null,
               paymentMethod:
-                q.source === "ADMIN"
-                  ? "CASH"
+                q.source === 'ADMIN'
+                  ? 'CASH'
                   : q.payments && q.payments.length > 0
-                    ? q.payments[0].method || "-"
-                    : "-",
-            }))
+                    ? q.payments[0].method || '-'
+                    : '-',
+            })),
           );
         } else {
-          throw new Error("Failed to fetch transactions.");
+          throw new Error('Failed to fetch transactions.');
         }
       } catch (error) {
-        const message = error instanceof Error ? error.message : "An unknown error occurred.";
-        toast({ title: "Error", description: message, variant: "destructive" });
+        const message = error instanceof Error ? error.message : 'An unknown error occurred.';
+        toast({ title: 'Error', description: message, variant: 'destructive' });
       } finally {
         setLoading(false);
       }
@@ -97,17 +90,17 @@ const Transactions = () => {
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-        if (exportDropdownRef.current && !exportDropdownRef.current.contains(event.target as Node)) {
-            setShowExportDropdown(false);
-        }
+      if (exportDropdownRef.current && !exportDropdownRef.current.contains(event.target as Node)) {
+        setShowExportDropdown(false);
+      }
     }
     if (showExportDropdown) {
-        document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener('mousedown', handleClickOutside);
     } else {
-        document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener('mousedown', handleClickOutside);
     }
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-}, [showExportDropdown]);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showExportDropdown]);
 
   // Filter transactions based on date range
   const filteredTransactions = transactions.filter((transaction) => {
@@ -129,19 +122,14 @@ const Transactions = () => {
   const totalPages = Math.ceil(filteredTransactions.length / ENTRIES_PER_PAGE);
   const startIndex = (currentPage - 1) * ENTRIES_PER_PAGE;
   const endIndex = startIndex + ENTRIES_PER_PAGE;
-  const currentTransactionsOnPage = filteredTransactions.slice(
-    startIndex,
-    endIndex
-  );
+  const currentTransactionsOnPage = filteredTransactions.slice(startIndex, endIndex);
 
   // Calculate summary metrics
   const totalSales = filteredTransactions.reduce(
     (sum, transaction) => sum + (transaction.totalPremium || 0),
-    0
+    0,
   );
-  const successfulTransactions = filteredTransactions.filter(
-    (t) => t.status === "COMPLETE"
-  ).length;
+  const successfulTransactions = filteredTransactions.filter((t) => t.status === 'COMPLETE').length;
   // const failedTransactions = filteredTransactions.filter(
   //   (t) => t.status === "FAILED"
   // ).length;
@@ -158,22 +146,22 @@ const Transactions = () => {
       const diff = endDate.getTime() - startDate.getTime();
       prevEnd = new Date(startDate.getTime() - 1);
       prevStart = new Date(prevEnd.getTime() - diff);
-    } else if (timeFrame === "7days") {
+    } else if (timeFrame === '7days') {
       prevEnd = new Date();
       prevEnd.setDate(prevEnd.getDate() - 7);
       prevStart = new Date();
       prevStart.setDate(prevStart.getDate() - 14);
-    } else if (timeFrame === "30days") {
+    } else if (timeFrame === '30days') {
       prevEnd = new Date();
       prevEnd.setDate(prevEnd.getDate() - 30);
       prevStart = new Date();
       prevStart.setDate(prevStart.getDate() - 60);
-    } else if (timeFrame === "90days") {
+    } else if (timeFrame === '90days') {
       prevEnd = new Date();
       prevEnd.setDate(prevEnd.getDate() - 90);
       prevStart = new Date();
       prevStart.setDate(prevStart.getDate() - 180);
-    } else if (timeFrame === "ytd") {
+    } else if (timeFrame === 'ytd') {
       prevEnd = new Date(new Date().getFullYear(), 0, 1);
       prevStart = new Date(new Date().getFullYear() - 1, 0, 1);
     } else {
@@ -189,11 +177,9 @@ const Transactions = () => {
     return transactionDate >= prevStart && transactionDate <= prevEnd;
   });
   const prevTotalSales = prevTransactions
-    .filter((t) => t.status === "Completed")
+    .filter((t) => t.status === 'Completed')
     .reduce((sum, t) => sum + (t.totalPremium || 0), 0);
-  const prevSuccessful = prevTransactions.filter(
-    (t) => t.status === "Completed"
-  ).length;
+  const prevSuccessful = prevTransactions.filter((t) => t.status === 'Completed').length;
   // const prevFailed = prevTransactions.filter(
   //   (t) => t.status === "Failed"
   // ).length;
@@ -201,7 +187,6 @@ const Transactions = () => {
   //   (prevSuccessful / (prevSuccessful + prevFailed || 1)) *
   //   100
   // ).toFixed(1);
-
 
   // Calculate percentage changes
   function percentChange(current: number, prev: number): string | number {
@@ -226,10 +211,7 @@ const Transactions = () => {
     paymentMethod?: string | null;
   }
   const totalSalesChange = percentChange(totalSales, prevTotalSales);
-  const successfulChange = percentChange(
-    successfulTransactions,
-    prevSuccessful
-  );
+  const successfulChange = percentChange(successfulTransactions, prevSuccessful);
   // const conversionChange = percentChange(
   //   Number(conversionRate),
   //   Number(prevConversion)
@@ -237,35 +219,37 @@ const Transactions = () => {
 
   const handleExportCSV = () => {
     const headers = [
-      "Transaction ID",
-      "Quote Number", // Changed from Policy Number
-      "Policyholder Name",
-      "Date",
-      "Amount",
-      "Payment Method",
-      "Status",
+      'Transaction ID',
+      'Quote Number', // Changed from Policy Number
+      'Policyholder Name',
+      'Date',
+      'Amount',
+      'Payment Method',
+      'Status',
     ];
     const csvContent = [
-      headers.join(","),
+      headers.join(','),
       ...filteredTransactions.map((transaction) =>
-      [
-        String(transaction.transactionId).toUpperCase(),
-        String(transaction.quoteNumber || "-").toUpperCase(), // Consistently use quoteNumber
-        `${(transaction.policyHolder?.firstName || "").toUpperCase()} ${(transaction.policyHolder?.lastName || "").toUpperCase()}`.trim() || "-",
-        transaction.createdAt
-        ? new Date(transaction.createdAt).toLocaleDateString()
-        : "-",
-        transaction.totalPremium ?? "-", // Amount
-        (transaction.source === "ADMIN" ? "CASH" : transaction.paymentMethod || "-").toUpperCase(), // Payment Method
-        String(transaction.status).toUpperCase(),
-      ].join(",")
+        [
+          String(transaction.transactionId).toUpperCase(),
+          String(transaction.quoteNumber || '-').toUpperCase(), // Consistently use quoteNumber
+          `${(transaction.policyHolder?.firstName || '').toUpperCase()} ${(transaction.policyHolder?.lastName || '').toUpperCase()}`.trim() ||
+            '-',
+          transaction.createdAt ? new Date(transaction.createdAt).toLocaleDateString() : '-',
+          transaction.totalPremium ?? '-', // Amount
+          (transaction.source === 'ADMIN'
+            ? 'CASH'
+            : transaction.paymentMethod || '-'
+          ).toUpperCase(), // Payment Method
+          String(transaction.status).toUpperCase(),
+        ].join(','),
       ),
-    ].join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv" });
+    ].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
+    const a = document.createElement('a');
     a.href = url;
-    a.download = "transactions_export.csv";
+    a.download = 'transactions_export.csv';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -274,29 +258,36 @@ const Transactions = () => {
 
   const handleExportPDF = () => {
     if (filteredTransactions.length === 0) {
-      alert("No transactions available to export."); // Consider using a toast notification like in other pages
+      alert('No transactions available to export.'); // Consider using a toast notification like in other pages
       return;
     }
 
     const doc = new jsPDF();
     const tableHeaders = [
-      "Transaction ID",
-      "Quote Number",
-      "Customer",
-      "Date",
-      "Amount",
-      "Payment Method",
-      "Status",
+      'Transaction ID',
+      'Quote Number',
+      'Customer',
+      'Date',
+      'Amount',
+      'Payment Method',
+      'Status',
     ];
 
     const allTableRows = filteredTransactions.map((transaction) => [
       String(transaction.transactionId || 'N/A'),
       String(transaction.quoteNumber || 'N/A'),
-      String(`${transaction.policyHolder?.firstName || ""} ${transaction.policyHolder?.lastName || ""}`.trim() || "N/A"),
+      String(
+        `${transaction.policyHolder?.firstName || ''} ${transaction.policyHolder?.lastName || ''}`.trim() ||
+          'N/A',
+      ),
       String(transaction.createdAt ? new Date(transaction.createdAt).toLocaleDateString() : 'N/A'),
-      String(transaction.totalPremium !== null && transaction.totalPremium !== undefined ? `$${transaction.totalPremium.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "N/A"),
-      String(transaction.source === "ADMIN" ? "CASH" : transaction.paymentMethod || 'N/A'),
-      String(transaction.status || 'N/A')
+      String(
+        transaction.totalPremium !== null && transaction.totalPremium !== undefined
+          ? `$${transaction.totalPremium.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+          : 'N/A',
+      ),
+      String(transaction.source === 'ADMIN' ? 'CASH' : transaction.paymentMethod || 'N/A'),
+      String(transaction.status || 'N/A'),
     ]);
 
     const rowsPerPage = 25;
@@ -320,22 +311,29 @@ const Transactions = () => {
         didDrawPage: (data) => {
           doc.setFontSize(18);
           doc.setTextColor(40);
-          doc.text("Transaction Report", doc.internal.pageSize.getWidth() / 2, 15, { align: 'center' });
+          doc.text('Transaction Report', doc.internal.pageSize.getWidth() / 2, 15, {
+            align: 'center',
+          });
           doc.setFontSize(10);
-          doc.text(`Page ${currentPageNumForFooter} of ${numChunks}`, doc.internal.pageSize.getWidth() / 2, doc.internal.pageSize.getHeight() - 10, { align: 'center' });
+          doc.text(
+            `Page ${currentPageNumForFooter} of ${numChunks}`,
+            doc.internal.pageSize.getWidth() / 2,
+            doc.internal.pageSize.getHeight() - 10,
+            { align: 'center' },
+          );
         },
         styles: { fontSize: 8, cellPadding: 2 },
         headStyles: { fillColor: [41, 128, 185], textColor: 255, fontSize: 9, fontStyle: 'bold' },
         alternateRowStyles: { fillColor: [245, 245, 245] },
-        margin: { top: 20 }
+        margin: { top: 20 },
       });
     }
 
-    doc.save("transactions_export.pdf");
+    doc.save('transactions_export.pdf');
   };
 
   const handleBack = () => {
-    router.push("/admin");
+    router.push('/admin');
   };
 
   // Sample chart data for visual representation
@@ -378,13 +376,27 @@ const Transactions = () => {
 
   const TransactionRowSkeleton = () => (
     <tr className="animate-pulse">
-      <td className="px-6 py-4 whitespace-nowrap"><div className="h-4 bg-gray-200 rounded w-24"></div></td>
-      <td className="px-6 py-4 whitespace-nowrap"><div className="h-4 bg-gray-200 rounded w-20"></div></td>
-      <td className="px-6 py-4 whitespace-nowrap"><div className="h-4 bg-gray-200 rounded w-32"></div></td>
-      <td className="px-6 py-4 whitespace-nowrap"><div className="h-4 bg-gray-200 rounded w-16"></div></td>
-      <td className="px-6 py-4 whitespace-nowrap"><div className="h-4 bg-gray-200 rounded w-12"></div></td>
-      <td className="px-6 py-4 whitespace-nowrap"><div className="h-4 bg-gray-200 rounded w-20"></div></td>
-      <td className="px-6 py-4 whitespace-nowrap"><div className="h-6 bg-gray-200 rounded-full w-20"></div></td>
+      <td className="px-6 py-4 whitespace-nowrap">
+        <div className="h-4 bg-gray-200 rounded w-24"></div>
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap">
+        <div className="h-4 bg-gray-200 rounded w-20"></div>
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap">
+        <div className="h-4 bg-gray-200 rounded w-32"></div>
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap">
+        <div className="h-4 bg-gray-200 rounded w-16"></div>
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap">
+        <div className="h-4 bg-gray-200 rounded w-12"></div>
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap">
+        <div className="h-4 bg-gray-200 rounded w-20"></div>
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap">
+        <div className="h-6 bg-gray-200 rounded-full w-20"></div>
+      </td>
     </tr>
   );
 
@@ -392,7 +404,8 @@ const Transactions = () => {
     return (
       <div className="p-4 sm:p-6 animate-pulse">
         <div className="flex flex-col items-start sm:flex-row sm:items-center mb-6 gap-2 sm:gap-0">
-          <div className="h-9 w-48 bg-gray-200 rounded-md"></div> {/* Adjusted width for "Back to Dashboard" */}
+          <div className="h-9 w-48 bg-gray-200 rounded-md"></div>{' '}
+          {/* Adjusted width for "Back to Dashboard" */}
           <div className="h-8 w-56 bg-gray-200 rounded-md sm:ml-4"></div>
         </div>
         <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-6">
@@ -412,12 +425,16 @@ const Transactions = () => {
               <thead>
                 <tr className="bg-gray-50">
                   {[...Array(7)].map((_, i) => (
-                    <th key={i} className="px-6 py-3 text-left"><div className="h-4 bg-gray-300 rounded w-16 sm:w-20"></div></th>
+                    <th key={i} className="px-6 py-3 text-left">
+                      <div className="h-4 bg-gray-300 rounded w-16 sm:w-20"></div>
+                    </th>
                   ))}
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {[...Array(5)].map((_, i) => <TransactionRowSkeleton key={i} />)}
+                {[...Array(5)].map((_, i) => (
+                  <TransactionRowSkeleton key={i} />
+                ))}
               </tbody>
             </table>
           </div>
@@ -452,10 +469,10 @@ const Transactions = () => {
               className="block w-full appearance-none rounded-md border border-gray-300 bg-white px-3 py-2 pr-8 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               {[
-                { value: "7days", label: "Last 7 Days" },
-                { value: "30days", label: "Last 30 Days" },
-                { value: "90days", label: "Last 90 Days" },
-                { value: "custom", label: "Custom Range" },
+                { value: '7days', label: 'Last 7 Days' },
+                { value: '30days', label: 'Last 30 Days' },
+                { value: '90days', label: 'Last 90 Days' },
+                { value: 'custom', label: 'Custom Range' },
               ].map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
@@ -468,7 +485,7 @@ const Transactions = () => {
             />
           </div>
 
-          {timeFrame === "custom" && (
+          {timeFrame === 'custom' && (
             <div className="mt-2 sm:mt-0 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
               <DatePicker
                 selected={startDate}
@@ -487,52 +504,66 @@ const Transactions = () => {
           )}
         </div>
         <div className="relative w-full lg:w-auto" ref={exportDropdownRef}>
-            <Button
-                variant="outline"
-                onClick={() => setShowExportDropdown(prev => !prev)}
-                className="w-full sm:w-auto"
-            >
-                <Download size={18} className="mr-2" />
-                Export
-            </Button>
-            {showExportDropdown && (
-                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-20">
-                    <Button variant="ghost" onClick={() => { handleExportCSV(); setShowExportDropdown(false); }} className="w-full justify-start px-4 py-2 text-left text-gray-700 hover:bg-gray-100">
-                        <Download size={16} className="mr-2" />
-                        Export CSV
-                    </Button>
-                    <Button variant="ghost" onClick={() => { handleExportPDF(); setShowExportDropdown(false); }} className="w-full justify-start px-4 py-2 text-left text-gray-700 hover:bg-gray-100">
-                        <Download size={16} className="mr-2" />
-                        Export PDF
-                    </Button>
-                </div>
-            )}
+          <Button
+            variant="outline"
+            onClick={() => setShowExportDropdown((prev) => !prev)}
+            className="w-full sm:w-auto"
+          >
+            <Download size={18} className="mr-2" />
+            Export
+          </Button>
+          {showExportDropdown && (
+            <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-20">
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  handleExportCSV();
+                  setShowExportDropdown(false);
+                }}
+                className="w-full justify-start px-4 py-2 text-left text-gray-700 hover:bg-gray-100"
+              >
+                <Download size={16} className="mr-2" />
+                Export CSV
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  handleExportPDF();
+                  setShowExportDropdown(false);
+                }}
+                className="w-full justify-start px-4 py-2 text-left text-gray-700 hover:bg-gray-100"
+              >
+                <Download size={16} className="mr-2" />
+                Export PDF
+              </Button>
+            </div>
+          )}
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         <Card title="Total Revenue" className="text-gray-800" icon={<DollarSign size={18} />}>
           <div className="mt-2">
-            <div className="text-3xl font-bold text-gray-900">
-              ${totalSales.toLocaleString()}
-            </div>
+            <div className="text-3xl font-bold text-gray-900">${totalSales.toLocaleString()}</div>
             <div className="text-sm text-green-600 mt-1 flex items-center">
               <TrendingUp size={16} className="mr-1" />
               <span>
-                {Number(totalSalesChange) > 0 ? "+" : "-"}
+                {Number(totalSalesChange) > 0 ? '+' : '-'}
                 {totalSalesChange}% from previous period
               </span>
             </div>
           </div>
         </Card>
-        <Card title="Completed Transactions" className="text-gray-800" icon={<DollarSign size={18}/>}>
+        <Card
+          title="Completed Transactions"
+          className="text-gray-800"
+          icon={<DollarSign size={18} />}
+        >
           <div className="mt-2">
-            <div className="text-3xl font-bold text-gray-900">
-              {successfulTransactions}
-            </div>
+            <div className="text-3xl font-bold text-gray-900">{successfulTransactions}</div>
             <div className="text-sm text-green-600 mt-1 flex items-center">
               <TrendingUp size={16} className="mr-1" />
               <span>
-                {Number(successfulChange) > 0 ? "+" : "-"}
+                {Number(successfulChange) > 0 ? '+' : '-'}
                 {successfulChange}% from previous period
               </span>
             </div>
@@ -554,7 +585,7 @@ const Transactions = () => {
         </Card> */}
       </div>
 
-      <Card title="Recent Transactions" className="text-gray-800" icon={<Calendar size={18}/>}>
+      <Card title="Recent Transactions" className="text-gray-800" icon={<Calendar size={18} />}>
         <div className="overflow-x-auto">
           <table className="w-full text-gray-800">
             <thead>
@@ -584,41 +615,36 @@ const Transactions = () => {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {currentTransactionsOnPage.map((transaction, idx) => (
-                <tr
-                  key={transaction.quoteNumber + idx}
-                  className="hover:bg-gray-50"
-                >
+                <tr key={transaction.quoteNumber + idx} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">{transaction.transactionId}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{transaction.quoteNumber || '-'}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    {transaction.transactionId}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {transaction.quoteNumber || "-"}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {`${transaction.policyHolder?.firstName || ""} ${transaction.policyHolder?.lastName || ""
-                      }`.trim() || "-"}
+                    {`${transaction.policyHolder?.firstName || ''} ${
+                      transaction.policyHolder?.lastName || ''
+                    }`.trim() || '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     {transaction.createdAt
                       ? new Date(transaction.createdAt).toLocaleDateString()
-                      : "-"}
+                      : '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    ${transaction.totalPremium ?? "-"}
+                    ${transaction.totalPremium ?? '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap uppercase">
-                    {transaction.source === "ADMIN" ? "CASH" : transaction.paymentMethod || "-"}
+                    {transaction.source === 'ADMIN' ? 'CASH' : transaction.paymentMethod || '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
-                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${transaction.status === "COMPLETE"
-                        ? "bg-green-100 text-green-800"
-                        : transaction.status === "FAILED"
-                          ? "bg-red-100 text-red-800"
-                          : "bg-gray-100 text-gray-800"
-                        }`}
+                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                        transaction.status === 'COMPLETE'
+                          ? 'bg-green-100 text-green-800'
+                          : transaction.status === 'FAILED'
+                            ? 'bg-red-100 text-red-800'
+                            : 'bg-gray-100 text-gray-800'
+                      }`}
                     >
-                      {transaction.status || "-"}
+                      {transaction.status || '-'}
                     </span>
                   </td>
                 </tr>
@@ -629,9 +655,11 @@ const Transactions = () => {
         {/* Pagination Info and Controls */}
         <div className="mt-6 flex flex-col items-center sm:flex-row sm:justify-between gap-4 border-t border-gray-200 pt-4">
           <p className="text-sm text-gray-700 text-center sm:text-left">
-            Showing <span className="font-medium">{Math.min(endIndex, filteredTransactions.length)}</span> of <span className="font-medium">{filteredTransactions.length}</span> transactions
+            Showing{' '}
+            <span className="font-medium">{Math.min(endIndex, filteredTransactions.length)}</span>{' '}
+            of <span className="font-medium">{filteredTransactions.length}</span> transactions
           </p>
-          
+
           {totalPages > 0 && (
             <div className="flex items-center justify-center text-gray-600 sm:justify-end gap-2 w-full sm:w-auto">
               <Button
@@ -648,9 +676,7 @@ const Transactions = () => {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() =>
-                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                }
+                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                 disabled={currentPage === totalPages || totalPages === 0}
               >
                 Next

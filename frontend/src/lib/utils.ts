@@ -1,5 +1,5 @@
-import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -14,6 +14,6 @@ export function cn(...inputs: ClassValue[]) {
 export function generateUniqueId(prefix: string, length: number = 6): string {
   const randomPart = Math.floor(Math.random() * Math.pow(10, length))
     .toString()
-    .padStart(length, "0");
+    .padStart(length, '0');
   return `${prefix}-${randomPart}`;
 }

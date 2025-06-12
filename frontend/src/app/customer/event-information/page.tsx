@@ -1,24 +1,19 @@
-"use client";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { MapPin, CalendarCheck, ChevronDown } from "lucide-react";
-import { useQuote } from "@/context/QuoteContext";
-import { Button } from "@/components/ui/Button";
-import FormField from "@/components/ui/FormField";
-import Input from "@/components/ui/Input";
-import Checkbox from "@/components/ui/Checkbox";
-import {
-  VENUE_TYPES,
-  INDOOR_OUTDOOR_OPTIONS,
-  COUNTRIES,
-  US_STATES,
-} from "@/utils/constants";
-import { isEmpty, isValidZip } from "@/utils/validators";
-import dynamic from "next/dynamic";
-import { toast } from "@/hooks/use-toast";
-import type { QuoteState } from "@/context/QuoteContext";
+'use client';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { MapPin, CalendarCheck, ChevronDown } from 'lucide-react';
+import { useQuote } from '@/context/QuoteContext';
+import { Button } from '@/components/ui/Button';
+import FormField from '@/components/ui/FormField';
+import Input from '@/components/ui/Input';
+import Checkbox from '@/components/ui/Checkbox';
+import { VENUE_TYPES, INDOOR_OUTDOOR_OPTIONS, COUNTRIES, US_STATES } from '@/utils/constants';
+import { isEmpty, isValidZip } from '@/utils/validators';
+import dynamic from 'next/dynamic';
+import { toast } from '@/hooks/use-toast';
+import type { QuoteState } from '@/context/QuoteContext';
 
-const QuotePreview = dynamic(() => import("@/components/ui/QuotePreview"), {
+const QuotePreview = dynamic(() => import('@/components/ui/QuotePreview'), {
   ssr: false,
 });
 
@@ -89,15 +84,12 @@ export default function EventInformation() {
 
   useEffect(() => {
     if (isMounted && !state.step1Complete) {
-      router.replace("/customer/quote-generator");
+      router.replace('/customer/quote-generator');
     }
   }, [state.step1Complete, router, isMounted]);
 
-  const handleInputChange = (
-    field: keyof QuoteState,
-    value: string | boolean
-  ) => {
-    dispatch({ type: "UPDATE_FIELD", field, value });
+  const handleInputChange = (field: keyof QuoteState, value: string | boolean) => {
+    dispatch({ type: 'UPDATE_FIELD', field, value });
     if (errors[field]) {
       setErrors((prev) => {
         const newErrors = { ...prev };
@@ -110,15 +102,20 @@ export default function EventInformation() {
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
     const nameRegex = /^[a-zA-Z\-' ]+$/;
-    if (isEmpty(state.honoree1FirstName)) newErrors.honoree1FirstName = "Please enter the first name";
-    else if (!nameRegex.test(state.honoree1FirstName)) newErrors.honoree1FirstName = "First name contains invalid characters";
-    if (isEmpty(state.honoree1LastName)) newErrors.honoree1LastName = "Please enter the last name";
-    else if (!nameRegex.test(state.honoree1LastName)) newErrors.honoree1LastName = "Last name contains invalid characters";
-    if (isEmpty(state.ceremonyLocationType)) newErrors.ceremonyLocationType = "Please select a venue type";
-    if (isEmpty(state.indoorOutdoor)) newErrors.indoorOutdoor = "Please select indoor/outdoor option";
-    if (isEmpty(state.venueName)) newErrors.venueName = "Please enter the venue name";
-    if (isEmpty(state.venueAddress1)) newErrors.venueAddress1 = "Please enter the venue address";
-    if (isEmpty(state.venueCity)) newErrors.venueCity = "Please enter the city";
+    if (isEmpty(state.honoree1FirstName))
+      newErrors.honoree1FirstName = 'Please enter the first name';
+    else if (!nameRegex.test(state.honoree1FirstName))
+      newErrors.honoree1FirstName = 'First name contains invalid characters';
+    if (isEmpty(state.honoree1LastName)) newErrors.honoree1LastName = 'Please enter the last name';
+    else if (!nameRegex.test(state.honoree1LastName))
+      newErrors.honoree1LastName = 'Last name contains invalid characters';
+    if (isEmpty(state.ceremonyLocationType))
+      newErrors.ceremonyLocationType = 'Please select a venue type';
+    if (isEmpty(state.indoorOutdoor))
+      newErrors.indoorOutdoor = 'Please select indoor/outdoor option';
+    if (isEmpty(state.venueName)) newErrors.venueName = 'Please enter the venue name';
+    if (isEmpty(state.venueAddress1)) newErrors.venueAddress1 = 'Please enter the venue address';
+    if (isEmpty(state.venueCity)) newErrors.venueCity = 'Please enter the city';
 
     const validateVenueFields = (prefix: string) => {
       const venueName = state[`${prefix}VenueName` as keyof QuoteState] as string;
@@ -127,22 +124,25 @@ export default function EventInformation() {
       const venueState = state[`${prefix}VenueState` as keyof QuoteState] as string;
       const venueZip = state[`${prefix}VenueZip` as keyof QuoteState] as string;
 
-      if (isEmpty(venueName)) newErrors[`${prefix}VenueName`] = "Please enter the venue name";
-      if (isEmpty(venueAddress1)) newErrors[`${prefix}VenueAddress1`] = "Please enter the venue address";
-      if (isEmpty(venueCity)) newErrors[`${prefix}VenueCity`] = "Please enter the city";
+      if (isEmpty(venueName)) newErrors[`${prefix}VenueName`] = 'Please enter the venue name';
+      if (isEmpty(venueAddress1))
+        newErrors[`${prefix}VenueAddress1`] = 'Please enter the venue address';
+      if (isEmpty(venueCity)) newErrors[`${prefix}VenueCity`] = 'Please enter the city';
 
-      const isCruiseShipVenue = state[`${prefix}LocationType` as keyof QuoteState] === "cruise_ship";
+      const isCruiseShipVenue =
+        state[`${prefix}LocationType` as keyof QuoteState] === 'cruise_ship';
       if (!isCruiseShipVenue) {
-        if (isEmpty(venueState)) newErrors[`${prefix}VenueState`] = "Please select a state";
-        if (isEmpty(venueZip)) newErrors[`${prefix}VenueZip`] = "Please enter the ZIP code";
-        else if (!isValidZip(venueZip)) newErrors[`${prefix}VenueZip`] = "Please enter a valid ZIP code";
+        if (isEmpty(venueState)) newErrors[`${prefix}VenueState`] = 'Please select a state';
+        if (isEmpty(venueZip)) newErrors[`${prefix}VenueZip`] = 'Please enter the ZIP code';
+        else if (!isValidZip(venueZip))
+          newErrors[`${prefix}VenueZip`] = 'Please enter a valid ZIP code';
       }
     };
 
     if (!isCruiseShip) {
-      if (isEmpty(state.venueState)) newErrors.venueState = "Please select a state";
-      if (isEmpty(state.venueZip)) newErrors.venueZip = "Please enter the ZIP code";
-      else if (!isValidZip(state.venueZip)) newErrors.venueZip = "Please enter a valid ZIP code";
+      if (isEmpty(state.venueState)) newErrors.venueState = 'Please select a state';
+      if (isEmpty(state.venueZip)) newErrors.venueZip = 'Please enter the ZIP code';
+      else if (!isValidZip(state.venueZip)) newErrors.venueZip = 'Please enter a valid ZIP code';
     }
 
     if (state.eventType === 'wedding') {
@@ -150,28 +150,36 @@ export default function EventInformation() {
 
       // Validate Reception Venue
       validateVenueFields('reception');
-      if (isEmpty(state.receptionLocationType)) newErrors.receptionLocationType = "Please select a venue type";
-      if (isEmpty(state.receptionIndoorOutdoor)) newErrors.receptionIndoorOutdoor = "Please select indoor/outdoor option";
+      if (isEmpty(state.receptionLocationType))
+        newErrors.receptionLocationType = 'Please select a venue type';
+      if (isEmpty(state.receptionIndoorOutdoor))
+        newErrors.receptionIndoorOutdoor = 'Please select indoor/outdoor option';
 
       // Validate Brunch Venue (optional, only if name is provided)
       if (!isEmpty(state.brunchVenueName)) {
         validateVenueFields('brunch');
-        if (isEmpty(state.brunchLocationType)) newErrors.brunchLocationType = "Please select a venue type";
-        if (isEmpty(state.brunchIndoorOutdoor)) newErrors.brunchIndoorOutdoor = "Please select indoor/outdoor option";
+        if (isEmpty(state.brunchLocationType))
+          newErrors.brunchLocationType = 'Please select a venue type';
+        if (isEmpty(state.brunchIndoorOutdoor))
+          newErrors.brunchIndoorOutdoor = 'Please select indoor/outdoor option';
       }
 
       // Validate Rehearsal Venue (optional, only if name is provided)
       if (!isEmpty(state.rehearsalVenueName)) {
         validateVenueFields('rehearsal');
-        if (isEmpty(state.rehearsalLocationType)) newErrors.rehearsalLocationType = "Please select a venue type";
-        if (isEmpty(state.rehearsalIndoorOutdoor)) newErrors.rehearsalIndoorOutdoor = "Please select indoor/outdoor option";
+        if (isEmpty(state.rehearsalLocationType))
+          newErrors.rehearsalLocationType = 'Please select a venue type';
+        if (isEmpty(state.rehearsalIndoorOutdoor))
+          newErrors.rehearsalIndoorOutdoor = 'Please select indoor/outdoor option';
       }
 
       // Validate Rehearsal Dinner Venue (optional, only if name is provided)
       if (!isEmpty(state.rehearsalDinnerVenueName)) {
         validateVenueFields('rehearsalDinner');
-        if (isEmpty(state.rehearsalDinnerLocationType)) newErrors.rehearsalDinnerLocationType = "Please select a venue type";
-        if (isEmpty(state.rehearsalDinnerIndoorOutdoor)) newErrors.rehearsalDinnerIndoorOutdoor = "Please select indoor/outdoor option";
+        if (isEmpty(state.rehearsalDinnerLocationType))
+          newErrors.rehearsalDinnerLocationType = 'Please select a venue type';
+        if (isEmpty(state.rehearsalDinnerIndoorOutdoor))
+          newErrors.rehearsalDinnerIndoorOutdoor = 'Please select indoor/outdoor option';
       }
     }
 
@@ -180,7 +188,7 @@ export default function EventInformation() {
   };
 
   const handleBack = () => {
-    router.push("/customer/quote-generator");
+    router.push('/customer/quote-generator');
   };
 
   // ==================================================================
@@ -188,9 +196,9 @@ export default function EventInformation() {
   // ==================================================================
   const handleContinue = async () => {
     if (validateForm()) {
-      const storedQuoteNumber = localStorage.getItem("quoteNumber");
+      const storedQuoteNumber = localStorage.getItem('quoteNumber');
       if (!storedQuoteNumber) {
-        toast.error("Missing quote number. Please start from Step 1.");
+        toast.error('Missing quote number. Please start from Step 1.');
         return;
       }
 
@@ -280,22 +288,21 @@ export default function EventInformation() {
         }
 
         const res = await fetch(`${apiUrl}/quotes/${storedQuoteNumber}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         });
 
         if (!res.ok) {
           const errorData = await res.json();
-          throw new Error(errorData.error || "Failed to update quote.");
+          throw new Error(errorData.error || 'Failed to update quote.');
         }
 
         // If successful, update local state and proceed
-        dispatch({ type: "COMPLETE_STEP", step: 2 });
-        router.push("/customer/policy-holder");
-
+        dispatch({ type: 'COMPLETE_STEP', step: 2 });
+        router.push('/customer/policy-holder');
       } catch (error) {
-        const message = error instanceof Error ? error.message : "An unknown error occurred.";
+        const message = error instanceof Error ? error.message : 'An unknown error occurred.';
         toast.error(message);
       }
     } else {
@@ -304,7 +311,7 @@ export default function EventInformation() {
       if (firstErrorField) {
         const element = document.getElementById(firstErrorField);
         if (element) {
-          element.scrollIntoView({ behavior: "smooth", block: "center" });
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
       }
     }
@@ -317,9 +324,10 @@ export default function EventInformation() {
     title: string,
     prefix: string,
     venueState: QuoteState,
-    venueErrors: Record<string, string>
+    venueErrors: Record<string, string>,
   ) => {
-    const isCruiseShipVenue = venueState[`${prefix}CeremonyLocationType` as keyof QuoteState] === "cruise_ship";
+    const isCruiseShipVenue =
+      venueState[`${prefix}CeremonyLocationType` as keyof QuoteState] === 'cruise_ship';
 
     return (
       <div className="mb-8 shadow-lg border-0 bg-white p-8 sm:p-10 md:p-12 rounded-2xl w-full">
@@ -339,15 +347,20 @@ export default function EventInformation() {
         <div className="space-y-8 w-full px-2 sm:px-4 md:px-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
             <div className="mb-4 text-left">
-              <label htmlFor={`${prefix}LocationType`} className="block mb-1 font-medium text-gray-800">
+              <label
+                htmlFor={`${prefix}LocationType`}
+                className="block mb-1 font-medium text-gray-800"
+              >
                 Venue Type <span className="text-red-500">*</span>
               </label>
               <div className="relative w-full">
                 <select
                   id={`${prefix}LocationType`}
                   value={venueState[`${prefix}LocationType` as keyof QuoteState] as string}
-                  onChange={(e) => handleInputChange(`${prefix}LocationType` as keyof QuoteState, e.target.value)}
-                  className={`block w-full rounded-md shadow-sm border pl-3 pr-10 py-2 text-base appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${venueErrors[`${prefix}LocationType`] ? "border-red-500 text-red-900" : "border-gray-300 text-gray-900"} text-left`}
+                  onChange={(e) =>
+                    handleInputChange(`${prefix}LocationType` as keyof QuoteState, e.target.value)
+                  }
+                  className={`block w-full rounded-md shadow-sm border pl-3 pr-10 py-2 text-base appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${venueErrors[`${prefix}LocationType`] ? 'border-red-500 text-red-900' : 'border-gray-300 text-gray-900'} text-left`}
                 >
                   <option value="">Select venue type</option>
                   {VENUE_TYPES.map((option) => (
@@ -356,20 +369,30 @@ export default function EventInformation() {
                     </option>
                   ))}
                 </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" size={16} />
+                <ChevronDown
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"
+                  size={16}
+                />
               </div>
-              {venueErrors[`${prefix}LocationType`] && <p className="text-sm text-red-500 mt-1">{venueErrors[`${prefix}LocationType`]}</p>}
+              {venueErrors[`${prefix}LocationType`] && (
+                <p className="text-sm text-red-500 mt-1">{venueErrors[`${prefix}LocationType`]}</p>
+              )}
             </div>
             <div className="mb-4 text-left">
-              <label htmlFor={`${prefix}IndoorOutdoor`} className="block mb-1 font-medium text-gray-800">
+              <label
+                htmlFor={`${prefix}IndoorOutdoor`}
+                className="block mb-1 font-medium text-gray-800"
+              >
                 Indoor/Outdoor <span className="text-red-500">*</span>
               </label>
               <div className="relative w-full">
                 <select
                   id={`${prefix}IndoorOutdoor`}
                   value={venueState[`${prefix}IndoorOutdoor` as keyof QuoteState] as string}
-                  onChange={(e) => handleInputChange(`${prefix}IndoorOutdoor` as keyof QuoteState, e.target.value)}
-                  className={`block w-full rounded-md shadow-sm border pl-3 pr-10 py-2 text-base appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${venueErrors[`${prefix}IndoorOutdoor`] ? "border-red-500 text-red-900" : "border-gray-300 text-gray-900"} text-left`}
+                  onChange={(e) =>
+                    handleInputChange(`${prefix}IndoorOutdoor` as keyof QuoteState, e.target.value)
+                  }
+                  className={`block w-full rounded-md shadow-sm border pl-3 pr-10 py-2 text-base appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${venueErrors[`${prefix}IndoorOutdoor`] ? 'border-red-500 text-red-900' : 'border-gray-300 text-gray-900'} text-left`}
                 >
                   <option value="">Select option</option>
                   {INDOOR_OUTDOOR_OPTIONS.map((option) => (
@@ -378,9 +401,14 @@ export default function EventInformation() {
                     </option>
                   ))}
                 </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" size={16} />
+                <ChevronDown
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"
+                  size={16}
+                />
               </div>
-              {venueErrors[`${prefix}IndoorOutdoor`] && <p className="text-sm text-red-500 mt-1">{venueErrors[`${prefix}IndoorOutdoor`]}</p>}
+              {venueErrors[`${prefix}IndoorOutdoor`] && (
+                <p className="text-sm text-red-500 mt-1">{venueErrors[`${prefix}IndoorOutdoor`]}</p>
+              )}
             </div>
           </div>
           <div className="mb-4 text-left">
@@ -390,48 +418,243 @@ export default function EventInformation() {
             <Input
               id={`${prefix}VenueName`}
               value={venueState[`${prefix}VenueName` as keyof QuoteState] as string}
-              onChange={(e) => handleInputChange(`${prefix}VenueName` as keyof QuoteState, e.target.value)}
+              onChange={(e) =>
+                handleInputChange(`${prefix}VenueName` as keyof QuoteState, e.target.value)
+              }
               error={!!venueErrors[`${prefix}VenueName`]}
-              placeholder={isCruiseShipVenue ? "Cruise Ship Name" : "Venue Name"}
+              placeholder={isCruiseShipVenue ? 'Cruise Ship Name' : 'Venue Name'}
               className="text-left w-full"
             />
-            {venueErrors[`${prefix}VenueName`] && <p className="text-sm text-red-500 mt-1">{venueErrors[`${prefix}VenueName`]}</p>}
+            {venueErrors[`${prefix}VenueName`] && (
+              <p className="text-sm text-red-500 mt-1">{venueErrors[`${prefix}VenueName`]}</p>
+            )}
           </div>
           {isCruiseShipVenue ? (
             <>
               <div className="mb-4 text-left">
-                <label htmlFor={`${prefix}VenueAddress1`} className="block mb-1 font-medium text-gray-800">Cruise Line <span className="text-red-500">*</span></label>
-                <Input id={`${prefix}VenueAddress1`} value={venueState[`${prefix}VenueAddress1` as keyof QuoteState] as string} onChange={(e) => handleInputChange(`${prefix}VenueAddress1` as keyof QuoteState, e.target.value)} error={!!venueErrors[`${prefix}VenueAddress1`]} placeholder="e.g., Royal Caribbean" className="text-left w-full rounded-md shadow-sm border pl-3 pr-10 py-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
-                {venueErrors[`${prefix}VenueAddress1`] && <p className="text-sm text-red-500 mt-1">{venueErrors[`${prefix}VenueAddress1`]}</p>}
+                <label
+                  htmlFor={`${prefix}VenueAddress1`}
+                  className="block mb-1 font-medium text-gray-800"
+                >
+                  Cruise Line <span className="text-red-500">*</span>
+                </label>
+                <Input
+                  id={`${prefix}VenueAddress1`}
+                  value={venueState[`${prefix}VenueAddress1` as keyof QuoteState] as string}
+                  onChange={(e) =>
+                    handleInputChange(`${prefix}VenueAddress1` as keyof QuoteState, e.target.value)
+                  }
+                  error={!!venueErrors[`${prefix}VenueAddress1`]}
+                  placeholder="e.g., Royal Caribbean"
+                  className="text-left w-full rounded-md shadow-sm border pl-3 pr-10 py-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+                {venueErrors[`${prefix}VenueAddress1`] && (
+                  <p className="text-sm text-red-500 mt-1">
+                    {venueErrors[`${prefix}VenueAddress1`]}
+                  </p>
+                )}
               </div>
               <div className="mb-4 text-left">
-                <label htmlFor={`${prefix}VenueCity`} className="block mb-1 font-medium text-gray-800">Departure Port <span className="text-red-500">*</span></label>
-                <Input id={`${prefix}VenueCity`} value={venueState[`${prefix}VenueCity` as keyof QuoteState] as string} onChange={(e) => handleInputChange(`${prefix}VenueCity` as keyof QuoteState, e.target.value)} error={!!venueErrors[`${prefix}VenueCity`]} placeholder="e.g., Miami, Florida" className="text-left w-full rounded-md shadow-sm border pl-3 pr-10 py-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
-                {venueErrors[`${prefix}VenueCity`] && <p className="text-sm text-red-500 mt-1">{venueErrors[`${prefix}VenueCity`]}</p>}
+                <label
+                  htmlFor={`${prefix}VenueCity`}
+                  className="block mb-1 font-medium text-gray-800"
+                >
+                  Departure Port <span className="text-red-500">*</span>
+                </label>
+                <Input
+                  id={`${prefix}VenueCity`}
+                  value={venueState[`${prefix}VenueCity` as keyof QuoteState] as string}
+                  onChange={(e) =>
+                    handleInputChange(`${prefix}VenueCity` as keyof QuoteState, e.target.value)
+                  }
+                  error={!!venueErrors[`${prefix}VenueCity`]}
+                  placeholder="e.g., Miami, Florida"
+                  className="text-left w-full rounded-md shadow-sm border pl-3 pr-10 py-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+                {venueErrors[`${prefix}VenueCity`] && (
+                  <p className="text-sm text-red-500 mt-1">{venueErrors[`${prefix}VenueCity`]}</p>
+                )}
               </div>
             </>
           ) : (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
-                <div className="mb-4 text-left"><label htmlFor={`${prefix}VenueAddress1`} className="block mb-1 font-medium text-gray-800">Address Line 1 <span className="text-red-500">*</span></label><Input id={`${prefix}VenueAddress1`} value={venueState[`${prefix}VenueAddress1` as keyof QuoteState] as string} onChange={(e) => handleInputChange(`${prefix}VenueAddress1` as keyof QuoteState, e.target.value)} error={!!venueErrors[`${prefix}VenueAddress1`]} placeholder="Street Address" className="text-left w-full rounded-md shadow-sm border pl-3 pr-10 py-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />{venueErrors[`${prefix}VenueAddress1`] && <p className="text-sm text-red-500 mt-1">{venueErrors[`${prefix}VenueAddress1`]}</p>}</div>
-                <div className="mb-4 text-left"><label htmlFor={`${prefix}VenueAddress2`} className="block mb-1 font-medium text-gray-800">Address Line 2</label><Input id={`${prefix}VenueAddress2`} value={venueState[`${prefix}VenueAddress2` as keyof QuoteState] as string} onChange={(e) => handleInputChange(`${prefix}VenueAddress2` as keyof QuoteState, e.target.value)} placeholder="Apt, Suite, Building (optional)" className="text-left w-full rounded-md shadow-sm border pl-3 pr-10 py-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" /></div>
+                <div className="mb-4 text-left">
+                  <label
+                    htmlFor={`${prefix}VenueAddress1`}
+                    className="block mb-1 font-medium text-gray-800"
+                  >
+                    Address Line 1 <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    id={`${prefix}VenueAddress1`}
+                    value={venueState[`${prefix}VenueAddress1` as keyof QuoteState] as string}
+                    onChange={(e) =>
+                      handleInputChange(
+                        `${prefix}VenueAddress1` as keyof QuoteState,
+                        e.target.value,
+                      )
+                    }
+                    error={!!venueErrors[`${prefix}VenueAddress1`]}
+                    placeholder="Street Address"
+                    className="text-left w-full rounded-md shadow-sm border pl-3 pr-10 py-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  {venueErrors[`${prefix}VenueAddress1`] && (
+                    <p className="text-sm text-red-500 mt-1">
+                      {venueErrors[`${prefix}VenueAddress1`]}
+                    </p>
+                  )}
+                </div>
+                <div className="mb-4 text-left">
+                  <label
+                    htmlFor={`${prefix}VenueAddress2`}
+                    className="block mb-1 font-medium text-gray-800"
+                  >
+                    Address Line 2
+                  </label>
+                  <Input
+                    id={`${prefix}VenueAddress2`}
+                    value={venueState[`${prefix}VenueAddress2` as keyof QuoteState] as string}
+                    onChange={(e) =>
+                      handleInputChange(
+                        `${prefix}VenueAddress2` as keyof QuoteState,
+                        e.target.value,
+                      )
+                    }
+                    placeholder="Apt, Suite, Building (optional)"
+                    className="text-left w-full rounded-md shadow-sm border pl-3 pr-10 py-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
-                <div className="mb-4 text-left"><label htmlFor={`${prefix}VenueCountry`} className="block mb-1 font-medium text-gray-800">Country <span className="text-red-500">*</span></label><div className="relative w-full"><select id={`${prefix}VenueCountry`} value={venueState[`${prefix}VenueCountry` as keyof QuoteState] as string} onChange={(e) => handleInputChange(`${prefix}VenueCountry` as keyof QuoteState, e.target.value)} className={`block w-full rounded-md shadow-sm border pl-3 pr-10 py-2 text-base appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${venueErrors[`${prefix}VenueCountry`] ? "border-red-500 text-red-900" : "border-gray-300 text-gray-900"} text-left`}><option value="">Select country</option>{COUNTRIES.map((option) => (<option key={option.value} value={option.value}>{option.label}</option>))}</select><ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" size={16} /></div>{venueErrors[`${prefix}VenueCountry`] && <p className="text-sm text-red-500 mt-1">{venueErrors[`${prefix}VenueCountry`]}</p>}</div>
-                <div className="mb-4 text-left"><label htmlFor={`${prefix}VenueCity`} className="block mb-1 font-medium text-gray-800">City <span className="text-red-500">*</span></label><Input id={`${prefix}VenueCity`} value={venueState[`${prefix}VenueCity` as keyof QuoteState] as string} onChange={(e) => handleInputChange(`${prefix}VenueCity` as keyof QuoteState, e.target.value)} error={!!venueErrors[`${prefix}VenueCity`]} className="text-left w-full rounded-md shadow-sm border pl-3 pr-10 py-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />{venueErrors[`${prefix}VenueCity`] && <p className="text-sm text-red-500 mt-1">{venueErrors[`${prefix}VenueCity`]}</p>}</div>
+                <div className="mb-4 text-left">
+                  <label
+                    htmlFor={`${prefix}VenueCountry`}
+                    className="block mb-1 font-medium text-gray-800"
+                  >
+                    Country <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative w-full">
+                    <select
+                      id={`${prefix}VenueCountry`}
+                      value={venueState[`${prefix}VenueCountry` as keyof QuoteState] as string}
+                      onChange={(e) =>
+                        handleInputChange(
+                          `${prefix}VenueCountry` as keyof QuoteState,
+                          e.target.value,
+                        )
+                      }
+                      className={`block w-full rounded-md shadow-sm border pl-3 pr-10 py-2 text-base appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${venueErrors[`${prefix}VenueCountry`] ? 'border-red-500 text-red-900' : 'border-gray-300 text-gray-900'} text-left`}
+                    >
+                      <option value="">Select country</option>
+                      {COUNTRIES.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"
+                      size={16}
+                    />
+                  </div>
+                  {venueErrors[`${prefix}VenueCountry`] && (
+                    <p className="text-sm text-red-500 mt-1">
+                      {venueErrors[`${prefix}VenueCountry`]}
+                    </p>
+                  )}
+                </div>
+                <div className="mb-4 text-left">
+                  <label
+                    htmlFor={`${prefix}VenueCity`}
+                    className="block mb-1 font-medium text-gray-800"
+                  >
+                    City <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    id={`${prefix}VenueCity`}
+                    value={venueState[`${prefix}VenueCity` as keyof QuoteState] as string}
+                    onChange={(e) =>
+                      handleInputChange(`${prefix}VenueCity` as keyof QuoteState, e.target.value)
+                    }
+                    error={!!venueErrors[`${prefix}VenueCity`]}
+                    className="text-left w-full rounded-md shadow-sm border pl-3 pr-10 py-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  {venueErrors[`${prefix}VenueCity`] && (
+                    <p className="text-sm text-red-500 mt-1">{venueErrors[`${prefix}VenueCity`]}</p>
+                  )}
+                </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
-                <div className="mb-4 text-left"><label htmlFor={`${prefix}VenueState`} className="block mb-1 font-medium text-gray-800">State <span className="text-red-500">*</span></label><div className="relative w-full"><select id={`${prefix}VenueState`} value={venueState[`${prefix}VenueState` as keyof QuoteState] as string} onChange={(e) => handleInputChange(`${prefix}VenueState` as keyof QuoteState, e.target.value)} className={`block w-full rounded-md shadow-sm border pl-3 pr-10 py-2 text-base appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${venueErrors[`${prefix}VenueState`] ? "border-red-500 text-red-900" : "border-gray-300 text-gray-900"} text-left`}><option value="">Select state</option>{US_STATES.map((option) => (<option key={option.value} value={option.value}>{option.label}</option>))}</select><ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" size={16} /></div>{venueErrors[`${prefix}VenueState`] && <p className="text-sm text-red-500 mt-1">{venueErrors[`${prefix}VenueState`]}</p>}</div>
-                <div className="mb-4 text-left"><label htmlFor={`${prefix}VenueZip`} className="block mb-1 font-medium text-gray-800">ZIP Code <span className="text-red-500">*</span></label><Input id={`${prefix}VenueZip`} value={venueState[`${prefix}VenueZip` as keyof QuoteState] as string} onChange={(e) => handleInputChange(`${prefix}VenueZip` as keyof QuoteState, e.target.value)} error={!!venueErrors[`${prefix}VenueZip`]} className="text-left w-full rounded-md shadow-sm border pl-3 pr-10 py-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />{venueErrors[`${prefix}VenueZip`] && <p className="text-sm text-red-500 mt-1">{venueErrors[`${prefix}VenueZip`]}</p>}</div>
+                <div className="mb-4 text-left">
+                  <label
+                    htmlFor={`${prefix}VenueState`}
+                    className="block mb-1 font-medium text-gray-800"
+                  >
+                    State <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative w-full">
+                    <select
+                      id={`${prefix}VenueState`}
+                      value={venueState[`${prefix}VenueState` as keyof QuoteState] as string}
+                      onChange={(e) =>
+                        handleInputChange(`${prefix}VenueState` as keyof QuoteState, e.target.value)
+                      }
+                      className={`block w-full rounded-md shadow-sm border pl-3 pr-10 py-2 text-base appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${venueErrors[`${prefix}VenueState`] ? 'border-red-500 text-red-900' : 'border-gray-300 text-gray-900'} text-left`}
+                    >
+                      <option value="">Select state</option>
+                      {US_STATES.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"
+                      size={16}
+                    />
+                  </div>
+                  {venueErrors[`${prefix}VenueState`] && (
+                    <p className="text-sm text-red-500 mt-1">
+                      {venueErrors[`${prefix}VenueState`]}
+                    </p>
+                  )}
+                </div>
+                <div className="mb-4 text-left">
+                  <label
+                    htmlFor={`${prefix}VenueZip`}
+                    className="block mb-1 font-medium text-gray-800"
+                  >
+                    ZIP Code <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    id={`${prefix}VenueZip`}
+                    value={venueState[`${prefix}VenueZip` as keyof QuoteState] as string}
+                    onChange={(e) =>
+                      handleInputChange(`${prefix}VenueZip` as keyof QuoteState, e.target.value)
+                    }
+                    error={!!venueErrors[`${prefix}VenueZip`]}
+                    className="text-left w-full rounded-md shadow-sm border pl-3 pr-10 py-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  {venueErrors[`${prefix}VenueZip`] && (
+                    <p className="text-sm text-red-500 mt-1">{venueErrors[`${prefix}VenueZip`]}</p>
+                  )}
+                </div>
               </div>
             </>
           )}
           <div className="mb-4 text-left">
             <Checkbox
               id={`${prefix}VenueAsInsured`}
-              label={<span className="font-medium text-left">Add this venue as an Additional Insured on my policy</span>}
+              label={
+                <span className="font-medium text-left">
+                  Add this venue as an Additional Insured on my policy
+                </span>
+              }
               checked={venueState[`${prefix}VenueAsInsured` as keyof QuoteState] as boolean}
-              onChange={(checked) => handleInputChange(`${prefix}VenueAsInsured` as keyof QuoteState, checked)}
+              onChange={(checked) =>
+                handleInputChange(`${prefix}VenueAsInsured` as keyof QuoteState, checked)
+              }
             />
           </div>
         </div>
@@ -439,7 +662,7 @@ export default function EventInformation() {
     );
   };
 
-  const isCruiseShip = state.ceremonyLocationType === "cruise_ship";
+  const isCruiseShip = state.ceremonyLocationType === 'cruise_ship';
 
   if (!isMounted) {
     return <EventInformationSkeleton />;
@@ -468,9 +691,7 @@ export default function EventInformation() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
             <div>
-              <h3 className="font-bold text-gray-700 mb-4 text-left text-lg">
-                Honoree #1
-              </h3>
+              <h3 className="font-bold text-gray-700 mb-4 text-left text-lg">Honoree #1</h3>
               <div className="mb-4">
                 <label
                   htmlFor="honoree1FirstName"
@@ -482,9 +703,7 @@ export default function EventInformation() {
                   <Input
                     id="honoree1FirstName"
                     value={state.honoree1FirstName}
-                    onChange={(e) =>
-                      handleInputChange("honoree1FirstName", e.target.value)
-                    }
+                    onChange={(e) => handleInputChange('honoree1FirstName', e.target.value)}
                     error={!!errors.honoree1FirstName}
                     placeholder="John"
                     className="text-left w-full"
@@ -505,9 +724,7 @@ export default function EventInformation() {
                   <Input
                     id="honoree1LastName"
                     value={state.honoree1LastName}
-                    onChange={(e) =>
-                      handleInputChange("honoree1LastName", e.target.value)
-                    }
+                    onChange={(e) => handleInputChange('honoree1LastName', e.target.value)}
                     error={!!errors.honoree1LastName}
                     placeholder="Doe"
                     className="text-left w-full"
@@ -520,10 +737,8 @@ export default function EventInformation() {
             </div>
             <div>
               <h3 className="font-bold text-left text-gray-700 mb-4 text-lg">
-                Honoree #2{" "}
-                <span className="text-semibold text-sm text-gray-400">
-                  (if applicable)
-                </span>
+                Honoree #2{' '}
+                <span className="text-semibold text-sm text-gray-400">(if applicable)</span>
               </h3>
               <div className="mb-4">
                 <label
@@ -536,9 +751,7 @@ export default function EventInformation() {
                   <Input
                     id="honoree2FirstName"
                     value={state.honoree2FirstName}
-                    onChange={(e) =>
-                      handleInputChange("honoree2FirstName", e.target.value)
-                    }
+                    onChange={(e) => handleInputChange('honoree2FirstName', e.target.value)}
                     placeholder="John"
                     className="text-left w-full"
                   />
@@ -555,9 +768,7 @@ export default function EventInformation() {
                   <Input
                     id="honoree2LastName"
                     value={state.honoree2LastName}
-                    onChange={(e) =>
-                      handleInputChange("honoree2LastName", e.target.value)
-                    }
+                    onChange={(e) => handleInputChange('honoree2LastName', e.target.value)}
                     placeholder="Doe"
                     className="text-left w-full"
                   />
@@ -593,13 +804,12 @@ export default function EventInformation() {
                   <select
                     id="ceremonyLocationType"
                     value={state.ceremonyLocationType}
-                    onChange={(e) =>
-                      handleInputChange("ceremonyLocationType", e.target.value)
-                    }
-                    className={`block w-full rounded-md shadow-sm border pl-3 pr-10 py-2 text-base appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.ceremonyLocationType
-                      ? "border-red-500 text-red-900"
-                      : "border-gray-300 text-gray-900"
-                      } text-left`}
+                    onChange={(e) => handleInputChange('ceremonyLocationType', e.target.value)}
+                    className={`block w-full rounded-md shadow-sm border pl-3 pr-10 py-2 text-base appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                      errors.ceremonyLocationType
+                        ? 'border-red-500 text-red-900'
+                        : 'border-gray-300 text-gray-900'
+                    } text-left`}
                   >
                     <option value="">Select venue type</option>
                     {VENUE_TYPES.map((option) => (
@@ -618,23 +828,19 @@ export default function EventInformation() {
                 )}
               </div>
               <div className="mb-4 text-left">
-                <label
-                  htmlFor="indoorOutdoor"
-                  className="block mb-1 font-medium text-gray-800"
-                >
+                <label htmlFor="indoorOutdoor" className="block mb-1 font-medium text-gray-800">
                   Indoor/Outdoor <span className="text-red-500">*</span>
                 </label>
                 <div className="relative w-full">
                   <select
                     id="indoorOutdoor"
                     value={state.indoorOutdoor}
-                    onChange={(e) =>
-                      handleInputChange("indoorOutdoor", e.target.value)
-                    }
-                    className={`block w-full rounded-md shadow-sm border pl-3 pr-10 py-2 text-base appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.indoorOutdoor
-                      ? "border-red-500 text-red-900"
-                      : "border-gray-300 text-gray-900"
-                      } text-left`}
+                    onChange={(e) => handleInputChange('indoorOutdoor', e.target.value)}
+                    className={`block w-full rounded-md shadow-sm border pl-3 pr-10 py-2 text-base appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                      errors.indoorOutdoor
+                        ? 'border-red-500 text-red-900'
+                        : 'border-gray-300 text-gray-900'
+                    } text-left`}
                   >
                     <option value="">Select option</option>
                     {INDOOR_OUTDOOR_OPTIONS.map((option) => (
@@ -654,44 +860,32 @@ export default function EventInformation() {
               </div>
             </div>
             <div className="mb-4 text-left">
-              <label
-                htmlFor="venueName"
-                className="block mb-1 font-medium text-gray-800"
-              >
+              <label htmlFor="venueName" className="block mb-1 font-medium text-gray-800">
                 Venue Name <span className="text-red-500">*</span>
               </label>
               <div className="w-full flex justify-start">
                 <Input
                   id="venueName"
                   value={state.venueName}
-                  onChange={(e) =>
-                    handleInputChange("venueName", e.target.value)
-                  }
+                  onChange={(e) => handleInputChange('venueName', e.target.value)}
                   error={!!errors.venueName}
-                  placeholder={isCruiseShip ? "Cruise Ship Name" : "Venue Name"}
+                  placeholder={isCruiseShip ? 'Cruise Ship Name' : 'Venue Name'}
                   className="text-left w-full"
                 />
               </div>
-              {errors.venueName && (
-                <p className="text-sm text-red-500 mt-1">{errors.venueName}</p>
-              )}
+              {errors.venueName && <p className="text-sm text-red-500 mt-1">{errors.venueName}</p>}
             </div>
             {isCruiseShip ? (
               <>
                 <div className="mb-4 text-left">
-                  <label
-                    htmlFor="venueAddress1"
-                    className="block mb-1 font-medium text-gray-800"
-                  >
+                  <label htmlFor="venueAddress1" className="block mb-1 font-medium text-gray-800">
                     Cruise Line <span className="text-red-500">*</span>
                   </label>
                   <div className="w-full">
                     <Input
                       id="venueAddress1"
                       value={state.venueAddress1}
-                      onChange={(e) =>
-                        handleInputChange("venueAddress1", e.target.value)
-                      }
+                      onChange={(e) => handleInputChange('venueAddress1', e.target.value)}
                       error={!!errors.venueAddress1}
                       placeholder="e.g., Royal Caribbean"
                       className="text-left w-full rounded-md shadow-sm border pl-3 pr-10 py-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -702,19 +896,14 @@ export default function EventInformation() {
                   )}
                 </div>
                 <div className="mb-4 text-left">
-                  <label
-                    htmlFor="venueCity"
-                    className="block mb-1 font-medium text-gray-800"
-                  >
+                  <label htmlFor="venueCity" className="block mb-1 font-medium text-gray-800">
                     Departure Port <span className="text-red-500">*</span>
                   </label>
                   <div className="w-full">
                     <Input
                       id="venueCity"
                       value={state.venueCity}
-                      onChange={(e) =>
-                        handleInputChange("venueCity", e.target.value)
-                      }
+                      onChange={(e) => handleInputChange('venueCity', e.target.value)}
                       error={!!errors.venueCity}
                       placeholder="e.g., Miami, Florida"
                       className="text-left w-full rounded-md shadow-sm border pl-3 pr-10 py-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -728,19 +917,14 @@ export default function EventInformation() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
                 <div className="mb-4 text-left">
-                  <label
-                    htmlFor="venueAddress1"
-                    className="block mb-1 font-medium text-gray-800"
-                  >
+                  <label htmlFor="venueAddress1" className="block mb-1 font-medium text-gray-800">
                     Address Line 1 <span className="text-red-500">*</span>
                   </label>
                   <div className="w-full">
                     <Input
                       id="venueAddress1"
                       value={state.venueAddress1}
-                      onChange={(e) =>
-                        handleInputChange("venueAddress1", e.target.value)
-                      }
+                      onChange={(e) => handleInputChange('venueAddress1', e.target.value)}
                       error={!!errors.venueAddress1}
                       placeholder="Street Address"
                       className="text-left w-full rounded-md shadow-sm border pl-3 pr-10 py-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -751,19 +935,14 @@ export default function EventInformation() {
                   )}
                 </div>
                 <div className="mb-4 text-left">
-                  <label
-                    htmlFor="venueAddress2"
-                    className="block mb-1 font-medium text-gray-800"
-                  >
+                  <label htmlFor="venueAddress2" className="block mb-1 font-medium text-gray-800">
                     Address Line 2
                   </label>
                   <div className="w-full">
                     <Input
                       id="venueAddress2"
                       value={state.venueAddress2}
-                      onChange={(e) =>
-                        handleInputChange("venueAddress2", e.target.value)
-                      }
+                      onChange={(e) => handleInputChange('venueAddress2', e.target.value)}
                       placeholder="Apt, Suite, Building (optional)"
                       className="text-left w-full rounded-md shadow-sm border pl-3 pr-10 py-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
@@ -775,23 +954,19 @@ export default function EventInformation() {
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
                   <div className="mb-4 text-left">
-                    <label
-                      htmlFor="venueCountry"
-                      className="block mb-1 font-medium text-gray-800"
-                    >
+                    <label htmlFor="venueCountry" className="block mb-1 font-medium text-gray-800">
                       Country <span className="text-red-500">*</span>
                     </label>
                     <div className="relative w-full">
                       <select
                         id="venueCountry"
                         value={state.venueCountry}
-                        onChange={(e) =>
-                          handleInputChange("venueCountry", e.target.value)
-                        }
-                        className={`block w-full rounded-md shadow-sm border pl-3 pr-10 py-2 text-base appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.venueCountry
-                          ? "border-red-500 text-red-900"
-                          : "border-gray-300 text-gray-900"
-                          } text-left`}
+                        onChange={(e) => handleInputChange('venueCountry', e.target.value)}
+                        className={`block w-full rounded-md shadow-sm border pl-3 pr-10 py-2 text-base appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                          errors.venueCountry
+                            ? 'border-red-500 text-red-900'
+                            : 'border-gray-300 text-gray-900'
+                        } text-left`}
                       >
                         <option value="">Select country</option>
                         {COUNTRIES.map((option) => (
@@ -810,19 +985,14 @@ export default function EventInformation() {
                     )}
                   </div>
                   <div className="mb-4 text-left">
-                    <label
-                      htmlFor="venueCity"
-                      className="block mb-1 font-medium text-gray-800"
-                    >
+                    <label htmlFor="venueCity" className="block mb-1 font-medium text-gray-800">
                       City <span className="text-red-500">*</span>
                     </label>
                     <div className="w-full">
                       <Input
                         id="venueCity"
                         value={state.venueCity}
-                        onChange={(e) =>
-                          handleInputChange("venueCity", e.target.value)
-                        }
+                        onChange={(e) => handleInputChange('venueCity', e.target.value)}
                         error={!!errors.venueCity}
                         className="text-left w-full rounded-md shadow-sm border pl-3 pr-10 py-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       />
@@ -834,23 +1004,19 @@ export default function EventInformation() {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
                   <div className="mb-4 text-left">
-                    <label
-                      htmlFor="venueState"
-                      className="block mb-1 font-medium text-gray-800"
-                    >
+                    <label htmlFor="venueState" className="block mb-1 font-medium text-gray-800">
                       State <span className="text-red-500">*</span>
                     </label>
                     <div className="relative w-full">
                       <select
                         id="venueState"
                         value={state.venueState}
-                        onChange={(e) =>
-                          handleInputChange("venueState", e.target.value)
-                        }
-                        className={`block w-full rounded-md shadow-sm border pl-3 pr-10 py-2 text-base appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.venueState
-                          ? "border-red-500 text-red-900"
-                          : "border-gray-300 text-gray-900"
-                          } text-left`}
+                        onChange={(e) => handleInputChange('venueState', e.target.value)}
+                        className={`block w-full rounded-md shadow-sm border pl-3 pr-10 py-2 text-base appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                          errors.venueState
+                            ? 'border-red-500 text-red-900'
+                            : 'border-gray-300 text-gray-900'
+                        } text-left`}
                       >
                         <option value="">Select state</option>
                         {US_STATES.map((option) => (
@@ -869,19 +1035,14 @@ export default function EventInformation() {
                     )}
                   </div>
                   <div className="mb-4 text-left">
-                    <label
-                      htmlFor="venueZip"
-                      className="block mb-1 font-medium text-gray-800"
-                    >
+                    <label htmlFor="venueZip" className="block mb-1 font-medium text-gray-800">
                       ZIP Code <span className="text-red-500">*</span>
                     </label>
                     <div className="w-full">
                       <Input
                         id="venueZip"
                         value={state.venueZip}
-                        onChange={(e) =>
-                          handleInputChange("venueZip", e.target.value)
-                        }
+                        onChange={(e) => handleInputChange('venueZip', e.target.value)}
                         error={!!errors.venueZip}
                         className="text-left w-full rounded-md shadow-sm border pl-3 pr-10 py-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       />
@@ -903,9 +1064,7 @@ export default function EventInformation() {
                     </span>
                   }
                   checked={state.venueAsInsured}
-                  onChange={(checked) =>
-                    handleInputChange("venueAsInsured", checked)
-                  }
+                  onChange={(checked) => handleInputChange('venueAsInsured', checked)}
                   className=""
                 />
               </div>

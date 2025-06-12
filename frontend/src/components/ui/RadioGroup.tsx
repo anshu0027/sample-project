@@ -24,24 +24,25 @@ const RadioGroup: React.FC<RadioGroupProps> = ({
   value,
   onChange,
   orientation = 'vertical',
-  showPrices = false
+  showPrices = false,
 }) => {
   return (
-    <div 
+    <div
       className={clsx(
-        "space-y-4",
-        orientation === 'horizontal' && "sm:space-y-0 sm:grid sm:grid-cols-2 sm:gap-4 md:grid-cols-3"
+        'space-y-4',
+        orientation === 'horizontal' &&
+          'sm:space-y-0 sm:grid sm:grid-cols-2 sm:gap-4 md:grid-cols-3',
       )}
     >
       {options.map((option) => (
-        <div 
-          key={option.value} 
+        <div
+          key={option.value}
           className={clsx(
-            "relative bg-white border rounded-lg p-4 cursor-pointer transition-all",
-            value === option.value 
-              ? "border-blue-600 ring-2 ring-blue-100" 
-              : "border-gray-200 hover:border-gray-300",
-            option.disabled && "opacity-50 cursor-not-allowed"
+            'relative bg-white border rounded-lg p-4 cursor-pointer transition-all',
+            value === option.value
+              ? 'border-blue-600 ring-2 ring-blue-100'
+              : 'border-gray-200 hover:border-gray-300',
+            option.disabled && 'opacity-50 cursor-not-allowed',
           )}
           onClick={() => {
             if (!option.disabled) {
@@ -62,11 +63,11 @@ const RadioGroup: React.FC<RadioGroupProps> = ({
               />
             </div>
             <div className="ml-3 flex-grow">
-              <label 
-                htmlFor={`${name}-${option.value}`} 
+              <label
+                htmlFor={`${name}-${option.value}`}
                 className={clsx(
-                  "font-medium",
-                  value === option.value ? "text-blue-600" : "text-gray-700"
+                  'font-medium',
+                  value === option.value ? 'text-blue-600' : 'text-gray-700',
                 )}
               >
                 {option.label}

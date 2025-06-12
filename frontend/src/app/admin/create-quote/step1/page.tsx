@@ -1,12 +1,12 @@
-"use client";
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { AlertCircle, ChevronDown, DollarSign } from "lucide-react";
-import { useQuote } from "@/context/QuoteContext";
-import type { QuoteState } from "@/context/QuoteContext"; // Keep this if it's used elsewhere, or remove if only for Input
-import { Button } from "@/components/ui/Button";
-import Checkbox from "@/components/ui/Checkbox";
-import DatePicker from "@/components/ui/DatePicker";
+'use client';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { AlertCircle, ChevronDown, DollarSign } from 'lucide-react';
+import { useQuote } from '@/context/QuoteContext';
+import type { QuoteState } from '@/context/QuoteContext'; // Keep this if it's used elsewhere, or remove if only for Input
+import { Button } from '@/components/ui/Button';
+import Checkbox from '@/components/ui/Checkbox';
+import DatePicker from '@/components/ui/DatePicker';
 import {
   US_STATES,
   EVENT_TYPES,
@@ -19,18 +19,18 @@ import {
   COVERAGE_DETAILS,
   CORE_COVERAGE_PREMIUMS, // Added for dynamic pricing
   LIABILITY_COVERAGE_PREMIUMS, // Added for dynamic pricing
-} from "@/utils/constants";
+} from '@/utils/constants';
 import {
   isDateInFuture,
   isDateAtLeast48HoursAhead,
   isDateWithinTwoYears,
   formatCurrency,
-} from "@/utils/validators";
-import { toast } from "@/hooks/use-toast";
-import Card from "@/components/ui/Card";
+} from '@/utils/validators';
+import { toast } from '@/hooks/use-toast';
+import Card from '@/components/ui/Card';
 
 // Add type definitions
-type GuestRange = typeof GUEST_RANGES[number]['value'];
+type GuestRange = (typeof GUEST_RANGES)[number]['value'];
 type CoverageLevel = number;
 type LiabilityOption = string;
 
@@ -38,11 +38,11 @@ type LiabilityOption = string;
 const calculateBasePremium = (level: CoverageLevel | null): number => {
   if (!level) return 0;
   const premiumMap: Record<CoverageLevel, number> = {
-    1: 160,  // $7,500 coverage
+    1: 160, // $7,500 coverage
     2: 200,
     3: 250,
     4: 300,
-    5: 355,  // $50,000 coverage
+    5: 355, // $50,000 coverage
     6: 450,
     7: 600,
     8: 750,
@@ -71,7 +71,10 @@ const calculateLiabilityPremium = (option: LiabilityOption): number => {
   }
 };
 
-const calculateLiquorLiabilityPremium = (hasLiquorLiability: boolean, guestRange: GuestRange): number => {
+const calculateLiquorLiabilityPremium = (
+  hasLiquorLiability: boolean,
+  guestRange: GuestRange,
+): number => {
   if (!hasLiquorLiability) return 0;
   const premiumMap: Record<GuestRange, number> = {
     '1-50': 65,
@@ -81,7 +84,7 @@ const calculateLiquorLiabilityPremium = (hasLiquorLiability: boolean, guestRange
     '201-250': 100,
     '251-300': 100,
     '301-350': 150,
-    '351-400': 150
+    '351-400': 150,
   };
   return premiumMap[guestRange] || 0;
 };
@@ -93,16 +96,12 @@ export default function QuoteGenerator() {
   // Form state
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showQuoteResults, setShowQuoteResults] = useState(false);
-  const [showSpecialActivitiesModal, setShowSpecialActivitiesModal] =
-    useState(false);
+  const [showSpecialActivitiesModal, setShowSpecialActivitiesModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   // Handle form field changes
-  const handleInputChange = (
-    field: keyof QuoteState,
-    value: QuoteState[keyof QuoteState]
-  ) => {
-    dispatch({ type: "UPDATE_FIELD", field, value });
+  const handleInputChange = (field: keyof QuoteState, value: QuoteState[keyof QuoteState]) => {
+    dispatch({ type: 'UPDATE_FIELD', field, value });
 
     // Clear error for this field when it's updated
     if (errors[field]) {
@@ -114,14 +113,7 @@ export default function QuoteGenerator() {
     }
 
     // Reset quote results when key fields change
-    if (
-      [
-        "coverageLevel",
-        "liabilityCoverage",
-        "liquorLiability",
-        "maxGuests",
-      ].includes(field)
-    ) {
+    if (['coverageLevel', 'liabilityCoverage', 'liquorLiability', 'maxGuests'].includes(field)) {
       setShowQuoteResults(false);
     }
   };
@@ -132,9 +124,9 @@ export default function QuoteGenerator() {
   // Handle date change
   const handleDateChange = (date: Date | null) => {
     if (date) {
-      handleInputChange("eventDate", date.toISOString().split("T")[0]);
+      handleInputChange('eventDate', date.toISOString().split('T')[0]);
     } else {
-      handleInputChange("eventDate", "");
+      handleInputChange('eventDate', '');
     }
   };
 
@@ -151,43 +143,42 @@ export default function QuoteGenerator() {
     const newErrors: Record<string, string> = {};
 
     if (!state.residentState) {
-      newErrors.residentState = "Please select your state of residence";
+      newErrors.residentState = 'Please select your state of residence';
     }
 
     if (!state.eventType) {
-      newErrors.eventType = "Please select an event type";
+      newErrors.eventType = 'Please select an event type';
     }
 
     if (!state.maxGuests) {
-      newErrors.maxGuests = "Please select the maximum number of guests";
+      newErrors.maxGuests = 'Please select the maximum number of guests';
     }
 
     if (!state.eventDate) {
-      newErrors.eventDate = "Please select the event date";
+      newErrors.eventDate = 'Please select the event date';
     } else {
       const eventDate = new Date(state.eventDate);
       if (!isDateInFuture(eventDate)) {
-        newErrors.eventDate = "Event date must be in the future";
+        newErrors.eventDate = 'Event date must be in the future';
       } else if (!isDateAtLeast48HoursAhead(eventDate)) {
-        newErrors.eventDate =
-          "Event date must be at least 48 hours in the future";
+        newErrors.eventDate = 'Event date must be at least 48 hours in the future';
       } else if (!isDateWithinTwoYears(eventDate)) {
-        newErrors.eventDate = "Event date must be within the next 2 years";
+        newErrors.eventDate = 'Event date must be within the next 2 years';
       }
     }
 
     if (!state.email) {
-      newErrors.email = "Please enter your email address";
+      newErrors.email = 'Please enter your email address';
     } else if (!/^\S+@\S+\.\S+$/.test(state.email)) {
-      newErrors.email = "Please enter a valid email address";
+      newErrors.email = 'Please enter a valid email address';
     }
 
     if (state.coverageLevel === null) {
-      newErrors.coverageLevel = "Please select a coverage level";
+      newErrors.coverageLevel = 'Please select a coverage level';
     }
 
     if (!state.covidDisclosure) {
-      newErrors.covidDisclosure = "You must acknowledge the COVID-19 exclusion";
+      newErrors.covidDisclosure = 'You must acknowledge the COVID-19 exclusion';
     }
 
     setErrors(newErrors);
@@ -203,27 +194,27 @@ export default function QuoteGenerator() {
         const liabilityPremium = calculateLiabilityPremium(state.liabilityCoverage);
         const liquorLiabilityPremium = calculateLiquorLiabilityPremium(
           state.liquorLiability,
-          state.maxGuests as GuestRange
+          state.maxGuests as GuestRange,
         );
         const totalPremium = basePremium + liabilityPremium + liquorLiabilityPremium;
 
         // Update state with calculated values
         dispatch({
-          type: "CALCULATE_QUOTE",
+          type: 'CALCULATE_QUOTE',
           payload: {
             basePremium,
             liabilityPremium,
             liquorLiabilityPremium,
-            totalPremium
-          }
+            totalPremium,
+          },
         });
 
         const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
         // Create initial quote with step 1 data
         const res = await fetch(`${apiUrl}/quotes`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             // Base quote data
             residentState: state.residentState,
@@ -237,8 +228,8 @@ export default function QuoteGenerator() {
             basePremium: basePremium,
             liabilityPremium: liabilityPremium,
             liquorLiabilityPremium: liquorLiabilityPremium,
-            source: "ADMIN",
-            status: "STEP1",
+            source: 'ADMIN',
+            status: 'STEP1',
             // Add event details directly to the quote
             eventType: state.eventType,
             eventDate: state.eventDate,
@@ -249,77 +240,77 @@ export default function QuoteGenerator() {
               eventType: state.eventType,
               eventDate: state.eventDate,
               maxGuests: state.maxGuests,
-              honoree1FirstName: "",
-              honoree1LastName: "",
-              honoree2FirstName: "",
-              honoree2LastName: "",
+              honoree1FirstName: '',
+              honoree1LastName: '',
+              honoree2FirstName: '',
+              honoree2LastName: '',
               venue: {
-                name: "",
-                address1: "",
-                address2: "",
-                city: "",
-                state: "",
-                zip: "",
-                country: "",
-                locationType: "",
-                indoorOutdoor: "",
+                name: '',
+                address1: '',
+                address2: '',
+                city: '',
+                state: '',
+                zip: '',
+                country: '',
+                locationType: '',
+                indoorOutdoor: '',
                 venueAsInsured: false,
                 // Additional venue fields
-                receptionLocationType: "",
-                receptionIndoorOutdoor: "",
-                receptionAddress1: "",
-                receptionAddress2: "",
-                receptionCity: "",
-                receptionState: "",
-                receptionZip: "",
-                receptionCountry: "",
+                receptionLocationType: '',
+                receptionIndoorOutdoor: '',
+                receptionAddress1: '',
+                receptionAddress2: '',
+                receptionCity: '',
+                receptionState: '',
+                receptionZip: '',
+                receptionCountry: '',
                 receptionVenueAsInsured: false,
-                brunchLocationType: "",
-                brunchIndoorOutdoor: "",
-                brunchAddress1: "",
-                brunchAddress2: "",
-                brunchCity: "",
-                brunchState: "",
-                brunchZip: "",
-                brunchCountry: "",
+                brunchLocationType: '',
+                brunchIndoorOutdoor: '',
+                brunchAddress1: '',
+                brunchAddress2: '',
+                brunchCity: '',
+                brunchState: '',
+                brunchZip: '',
+                brunchCountry: '',
                 brunchVenueAsInsured: false,
-                rehearsalLocationType: "",
-                rehearsalIndoorOutdoor: "",
-                rehearsalAddress1: "",
-                rehearsalAddress2: "",
-                rehearsalCity: "",
-                rehearsalState: "",
-                rehearsalZip: "",
-                rehearsalCountry: "",
+                rehearsalLocationType: '',
+                rehearsalIndoorOutdoor: '',
+                rehearsalAddress1: '',
+                rehearsalAddress2: '',
+                rehearsalCity: '',
+                rehearsalState: '',
+                rehearsalZip: '',
+                rehearsalCountry: '',
                 rehearsalVenueAsInsured: false,
-                rehearsalDinnerLocationType: "",
-                rehearsalDinnerIndoorOutdoor: "",
-                rehearsalDinnerAddress1: "",
-                rehearsalDinnerAddress2: "",
-                rehearsalDinnerCity: "",
-                rehearsalDinnerState: "",
-                rehearsalDinnerZip: "",
-                rehearsalDinnerCountry: "",
-                rehearsalDinnerVenueAsInsured: false
-              }
+                rehearsalDinnerLocationType: '',
+                rehearsalDinnerIndoorOutdoor: '',
+                rehearsalDinnerAddress1: '',
+                rehearsalDinnerAddress2: '',
+                rehearsalDinnerCity: '',
+                rehearsalDinnerState: '',
+                rehearsalDinnerZip: '',
+                rehearsalDinnerCountry: '',
+                rehearsalDinnerVenueAsInsured: false,
+              },
             },
 
             // Policy holder data
             policyHolder: {
-              firstName: "",
-              lastName: "",
+              firstName: '',
+              lastName: '',
               email: state.email,
-              phone: "",
-              address: "",
-              city: "",
-              state: "",
-              zip: "",
-              country: "",
-              relationship: "",
-              hearAboutUs: "",
+              phone: '',
+              address: '',
+              city: '',
+              state: '',
+              zip: '',
+              country: '',
+              relationship: '',
+              hearAboutUs: '',
               legalNotices: false,
-              completingFormName: ""
-            }
+              completingFormName: '',
+            },
           }),
         });
 
@@ -329,16 +320,16 @@ export default function QuoteGenerator() {
         }
 
         const data = await res.json();
-        localStorage.setItem("quoteNumber", data.quote.quoteNumber);
+        localStorage.setItem('quoteNumber', data.quote.quoteNumber);
         dispatch({
-          type: "UPDATE_FIELD",
-          field: "quoteNumber",
+          type: 'UPDATE_FIELD',
+          field: 'quoteNumber',
           value: data.quote.quoteNumber,
         });
         setShowQuoteResults(true);
-        dispatch({ type: "COMPLETE_STEP", step: 1 });
+        dispatch({ type: 'COMPLETE_STEP', step: 1 });
       } catch (error) {
-        const message = error instanceof Error ? error.message : "An unknown error occurred.";
+        const message = error instanceof Error ? error.message : 'An unknown error occurred.';
         toast.error(message);
       }
     } else {
@@ -353,18 +344,18 @@ export default function QuoteGenerator() {
         handleCalculateQuote();
         return;
       }
-      dispatch({ type: "COMPLETE_STEP", step: 1 });
-      router.push("/admin/create-quote/step2");
+      dispatch({ type: 'COMPLETE_STEP', step: 1 });
+      router.push('/admin/create-quote/step2');
     }
   };
 
   // Disable liquor liability if no liability coverage selected
-  const isLiquorLiabilityDisabled = state.liabilityCoverage === "none";
+  const isLiquorLiabilityDisabled = state.liabilityCoverage === 'none';
 
   // If liability is none, ensure liquor liability is false
   useEffect(() => {
     if (isLiquorLiabilityDisabled && state.liquorLiability) {
-      handleInputChange("liquorLiability", false);
+      handleInputChange('liquorLiability', false);
     }
   }, [state.liabilityCoverage]);
 
@@ -373,7 +364,7 @@ export default function QuoteGenerator() {
     if (checked) {
       setShowSpecialActivitiesModal(true);
     } else {
-      handleInputChange("specialActivities", false);
+      handleInputChange('specialActivities', false);
     }
   };
 
@@ -381,13 +372,10 @@ export default function QuoteGenerator() {
     // Replace with real admin auth check
     const isAdminAuthenticated = () => {
       // Use the same key as AdminLayout
-      return (
-        typeof window !== "undefined" &&
-        localStorage.getItem("admin_logged_in") === "true"
-      );
+      return typeof window !== 'undefined' && localStorage.getItem('admin_logged_in') === 'true';
     };
     if (!isAdminAuthenticated()) {
-      router.replace("/admin/login");
+      router.replace('/admin/login');
     }
   }, [router]);
 
@@ -418,13 +406,12 @@ export default function QuoteGenerator() {
               <select
                 id="residentState"
                 value={state.residentState}
-                onChange={(e) =>
-                  handleInputChange("residentState", e.target.value)
-                }
-                className={`block w-full rounded-md shadow-sm pl-3 pr-10 py-2 text-base border appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.residentState
-                    ? "border-red-500 text-red-900"
-                    : "border-gray-300 text-gray-900"
-                  } text-left`}
+                onChange={(e) => handleInputChange('residentState', e.target.value)}
+                className={`block w-full rounded-md shadow-sm pl-3 pr-10 py-2 text-base border appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  errors.residentState
+                    ? 'border-red-500 text-red-900'
+                    : 'border-gray-300 text-gray-900'
+                } text-left`}
               >
                 <option value="">Select your state</option>
                 {US_STATES.map((option) => (
@@ -456,11 +443,10 @@ export default function QuoteGenerator() {
               <select
                 id="eventType"
                 value={state.eventType}
-                onChange={(e) => handleInputChange("eventType", e.target.value)}
-                className={`block w-full rounded-md shadow-sm pl-3 pr-10 py-2 text-base border appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.eventType
-                    ? "border-red-500 text-red-900"
-                    : "border-gray-300 text-gray-900"
-                  } text-left`}
+                onChange={(e) => handleInputChange('eventType', e.target.value)}
+                className={`block w-full rounded-md shadow-sm pl-3 pr-10 py-2 text-base border appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  errors.eventType ? 'border-red-500 text-red-900' : 'border-gray-300 text-gray-900'
+                } text-left`}
               >
                 <option value="">Select event type</option>
                 {EVENT_TYPES.map((option) => (
@@ -492,11 +478,10 @@ export default function QuoteGenerator() {
               <select
                 id="maxGuests"
                 value={state.maxGuests}
-                onChange={(e) => handleInputChange("maxGuests", e.target.value)}
-                className={`block w-full rounded-md shadow-sm pl-3 pr-10 py-2 text-base border appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.maxGuests
-                    ? "border-red-500 text-red-900"
-                    : "border-gray-300 text-gray-900"
-                  } text-left`}
+                onChange={(e) => handleInputChange('maxGuests', e.target.value)}
+                className={`block w-full rounded-md shadow-sm pl-3 pr-10 py-2 text-base border appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  errors.maxGuests ? 'border-red-500 text-red-900' : 'border-gray-300 text-gray-900'
+                } text-left`}
               >
                 <option value="">Select guest count range</option>
                 {GUEST_RANGES.map((option) => (
@@ -555,12 +540,13 @@ export default function QuoteGenerator() {
                 <input
                   id="email"
                   type="email"
-                  value={state.email || ""}
-                  onChange={(e) => handleInputChange("email", e.target.value)}
+                  value={state.email || ''}
+                  onChange={(e) => handleInputChange('email', e.target.value)}
                   placeholder="you@email.com"
                   required
-                  className={`w-full text-left p-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.email ? "border-red-500 text-red-900" : "border-gray-300 text-gray-900"
-                    }`}
+                  className={`w-full text-left p-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                    errors.email ? 'border-red-500 text-red-900' : 'border-gray-300 text-gray-900'
+                  }`}
                 />
               </div>
               {errors.email && (
@@ -580,18 +566,17 @@ export default function QuoteGenerator() {
               <div className="relative w-full">
                 <select
                   id="coverageLevel"
-                  value={state.coverageLevel?.toString() || ""}
-                  onChange={(e) =>
-                    handleInputChange("coverageLevel", parseInt(e.target.value))
-                  }
-                  className={`block w-full rounded-md shadow-sm pl-3 pr-10 py-2 text-base border appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.coverageLevel
-                      ? "border-red-500 text-red-900"
-                      : "border-gray-300 text-gray-900"
-                    } text-left`}
+                  value={state.coverageLevel?.toString() || ''}
+                  onChange={(e) => handleInputChange('coverageLevel', parseInt(e.target.value))}
+                  className={`block w-full rounded-md shadow-sm pl-3 pr-10 py-2 text-base border appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                    errors.coverageLevel
+                      ? 'border-red-500 text-red-900'
+                      : 'border-gray-300 text-gray-900'
+                  } text-left`}
                 >
                   <option value="">Select coverage level</option>
                   {COVERAGE_LEVELS.map((level) => {
-                    let premiumText = "";
+                    let premiumText = '';
                     if (
                       level.value &&
                       state.maxGuests &&
@@ -603,7 +588,8 @@ export default function QuoteGenerator() {
                     }
                     return (
                       <option key={level.value} value={level.value}>
-                        {level.label}{premiumText}
+                        {level.label}
+                        {premiumText}
                       </option>
                     );
                   })}
@@ -645,17 +631,16 @@ export default function QuoteGenerator() {
               <select
                 id="liabilityCoverage"
                 value={state.liabilityCoverage}
-                onChange={(e) =>
-                  handleInputChange("liabilityCoverage", e.target.value)
-                }
-                className={`block w-full rounded-md shadow-sm pl-3 pr-10 py-2 text-base border appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.liabilityCoverage
-                    ? "border-red-500 text-red-900"
-                    : "border-gray-300 text-gray-900"
-                  } text-left`}
+                onChange={(e) => handleInputChange('liabilityCoverage', e.target.value)}
+                className={`block w-full rounded-md shadow-sm pl-3 pr-10 py-2 text-base border appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  errors.liabilityCoverage
+                    ? 'border-red-500 text-red-900'
+                    : 'border-gray-300 text-gray-900'
+                } text-left`}
               >
                 <option value="">Select liability coverage</option>
                 {LIABILITY_OPTIONS.map((option) => {
-                  let premiumText = "";
+                  let premiumText = '';
                   if (
                     option.value &&
                     state.maxGuests &&
@@ -663,15 +648,20 @@ export default function QuoteGenerator() {
                     LIABILITY_COVERAGE_PREMIUMS[state.maxGuests][option.value] !== undefined
                   ) {
                     const premium = LIABILITY_COVERAGE_PREMIUMS[state.maxGuests][option.value];
-                    if (option.value === "none" && premium === 0) {
+                    if (option.value === 'none' && premium === 0) {
                       premiumText = ` (+$${premium})`;
-                    } else if (option.value !== "none" && premium >= 0) {
+                    } else if (option.value !== 'none' && premium >= 0) {
                       premiumText = ` (+$${premium})`;
                     }
                   }
                   return (
-                    <option key={option.value} value={option.value} className={option.isNew ? "text-red-400" : ""}>
-                      {option.label}{premiumText}
+                    <option
+                      key={option.value}
+                      value={option.value}
+                      className={option.isNew ? 'text-red-400' : ''}
+                    >
+                      {option.label}
+                      {premiumText}
                     </option>
                   );
                 })}
@@ -698,27 +688,26 @@ export default function QuoteGenerator() {
               id="liquorLiability"
               label={
                 <span className="font-medium text-left">
-                  Yes, add Host Liquor Liability coverage{" "}
+                  Yes, add Host Liquor Liability coverage{' '}
                   {!isLiquorLiabilityDisabled && state.maxGuests
-                    ? `(+$${LIABILITY_OPTIONS.find(
-                      (o) => o.value === state.liabilityCoverage && o.isNew
-                    )
-                      ? LIQUOR_LIABILITY_PREMIUMS_NEW[state.maxGuests]
-                      : LIQUOR_LIABILITY_PREMIUMS[state.maxGuests]
-                    })`
-                    : ""}
+                    ? `(+$${
+                        LIABILITY_OPTIONS.find(
+                          (o) => o.value === state.liabilityCoverage && o.isNew,
+                        )
+                          ? LIQUOR_LIABILITY_PREMIUMS_NEW[state.maxGuests]
+                          : LIQUOR_LIABILITY_PREMIUMS[state.maxGuests]
+                      })`
+                    : ''}
                 </span>
               }
               checked={state.liquorLiability}
-              onChange={(checked) =>
-                handleInputChange("liquorLiability", checked)
-              }
+              onChange={(checked) => handleInputChange('liquorLiability', checked)}
               disabled={isLiquorLiabilityDisabled}
               description={
                 <span className="text-left">
                   {isLiquorLiabilityDisabled
-                    ? "You must select Liability Coverage to add Host Liquor Liability"
-                    : "Provides coverage for alcohol-related incidents if alcohol is served at your event"}
+                    ? 'You must select Liability Coverage to add Host Liquor Liability'
+                    : 'Provides coverage for alcohol-related incidents if alcohol is served at your event'}
                 </span>
               }
               error={!!errors.liquorLiability}
@@ -745,7 +734,11 @@ export default function QuoteGenerator() {
               }
               checked={state.specialActivities}
               onChange={handleSpecialActivitiesChange}
-              description={<span className="text-left">Examples: fireworks, bounce houses, live animals, etc.</span>}
+              description={
+                <span className="text-left">
+                  Examples: fireworks, bounce houses, live animals, etc.
+                </span>
+              }
               error={!!errors.specialActivities}
             />
             {errors.specialActivities && (
@@ -762,7 +755,9 @@ export default function QuoteGenerator() {
               <h3 className="font-semibold text-yellow-800 mb-1 text-sm sm:text-base">
                 Important Disclosures
               </h3>
-              <div className="flex flex-col items-start mt-3 w-full text-left"> {/* Replaced FormField and applied its className */}
+              <div className="flex flex-col items-start mt-3 w-full text-left">
+                {' '}
+                {/* Replaced FormField and applied its className */}
                 <label
                   htmlFor="covidDisclosure"
                   className="block text-sm font-medium text-gray-700 text-left mb-1"
@@ -775,15 +770,12 @@ export default function QuoteGenerator() {
                   id="covidDisclosure"
                   label={
                     <span className="font-medium text-left">
-                      I understand that cancellations or impacts due to
-                      COVID-19, pandemics, or communicable diseases are not
-                      covered by this policy
+                      I understand that cancellations or impacts due to COVID-19, pandemics, or
+                      communicable diseases are not covered by this policy
                     </span>
                   }
                   checked={state.covidDisclosure}
-                  onChange={(checked) =>
-                    handleInputChange("covidDisclosure", checked)
-                  }
+                  onChange={(checked) => handleInputChange('covidDisclosure', checked)}
                   error={!!errors.covidDisclosure}
                   className="w-full"
                 />
@@ -800,7 +792,7 @@ export default function QuoteGenerator() {
               variant="primary"
               size="lg"
               onClick={handleCalculateQuote}
-              // 
+              //
               className="transition-transform duration-150"
             >
               <DollarSign size={18} />
@@ -814,17 +806,9 @@ export default function QuoteGenerator() {
       {/* Quote Results */}
       {(showQuoteResults || isLoading) && (
         <Card
-          title={
-            <span className="text-xl font-bold text-blue-800">
-              Your Insurance Quote
-            </span>
-          }
-          subtitle={
-            <span className="text-base text-gray-600">
-              Quote #{state.quoteNumber}
-            </span>
-          }
-          // 
+          title={<span className="text-xl font-bold text-blue-800">Your Insurance Quote</span>}
+          subtitle={<span className="text-base text-gray-600">Quote #{state.quoteNumber}</span>}
+          //
           className="mb-8 border-0 bg-white shadow-lg"
           footer={
             <div className="flex justify-end">
@@ -855,9 +839,7 @@ export default function QuoteGenerator() {
                 )}
               </div>
               <div className="mt-4 pt-4 border-t border-gray-100">
-                <h4 className="text-sm font-medium text-gray-700 mb-2">
-                  Premium Breakdown:
-                </h4>
+                <h4 className="text-sm font-medium text-gray-700 mb-2">Premium Breakdown:</h4>
                 <div className="space-y-1 text-gray-700">
                   {isLoading ? (
                     <>
@@ -879,11 +861,9 @@ export default function QuoteGenerator() {
                     <>
                       <div className="flex justify-between text-sm">
                         <span>Core Coverage:</span>
-                        <span className="font-medium">
-                          {formatCurrency(state.basePremium)}
-                        </span>
+                        <span className="font-medium">{formatCurrency(state.basePremium)}</span>
                       </div>
-                      {state.liabilityCoverage !== "none" && (
+                      {state.liabilityCoverage !== 'none' && (
                         <div className="flex justify-between text-sm">
                           <span>Liability Coverage:</span>
                           <span className="font-medium">
@@ -906,9 +886,7 @@ export default function QuoteGenerator() {
             </div>
 
             <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-              <h3 className="text-sm font-semibold text-gray-800 mb-2">
-                Coverage Summary
-              </h3>
+              <h3 className="text-sm font-semibold text-gray-800 mb-2">Coverage Summary</h3>
               <ul className="space-y-2 text-sm text-gray-700">
                 {isLoading ? (
                   <>
@@ -916,12 +894,14 @@ export default function QuoteGenerator() {
                     {[...Array(5)].map((_, i) => (
                       <li key={i} className="flex justify-between py-1">
                         <div
-                          className={`h-4 bg-gray-200 rounded animate-pulse ${i % 2 === 0 ? "w-1/3" : "w-2/5"
-                            }`}
+                          className={`h-4 bg-gray-200 rounded animate-pulse ${
+                            i % 2 === 0 ? 'w-1/3' : 'w-2/5'
+                          }`}
                         ></div>
                         <div
-                          className={`h-4 bg-gray-200 rounded animate-pulse ${i % 2 === 0 ? "w-1/4" : "w-1/5"
-                            }`}
+                          className={`h-4 bg-gray-200 rounded animate-pulse ${
+                            i % 2 === 0 ? 'w-1/4' : 'w-1/5'
+                          }`}
                         ></div>
                       </li>
                     ))}
@@ -935,44 +915,34 @@ export default function QuoteGenerator() {
                     <li className="flex justify-between">
                       <span>Event Type:</span>
                       <span className="font-medium">
-                        {
-                          EVENT_TYPES.find((t) => t.value === state.eventType)
-                            ?.label
-                        }
+                        {EVENT_TYPES.find((t) => t.value === state.eventType)?.label}
                       </span>
                     </li>
                     <li className="flex justify-between">
                       <span>Event Date:</span>
                       <span className="font-medium">
-                        {state.eventDate
-                          ? new Date(state.eventDate).toLocaleDateString()
-                          : "N/A"}
+                        {state.eventDate ? new Date(state.eventDate).toLocaleDateString() : 'N/A'}
                       </span>
                     </li>
                     <li className="flex justify-between">
                       <span>Core Coverage:</span>
                       <span className="font-medium">
                         {
-                          COVERAGE_LEVELS.find(
-                            (l) => l.value === state.coverageLevel?.toString()
-                          )?.label
+                          COVERAGE_LEVELS.find((l) => l.value === state.coverageLevel?.toString())
+                            ?.label
                         }
                       </span>
                     </li>
                     <li className="flex justify-between">
                       <span>Liability Coverage:</span>
                       <span className="font-medium">
-                        {
-                          LIABILITY_OPTIONS.find(
-                            (o) => o.value === state.liabilityCoverage
-                          )?.label
-                        }
+                        {LIABILITY_OPTIONS.find((o) => o.value === state.liabilityCoverage)?.label}
                       </span>
                     </li>
                     <li className="flex justify-between">
                       <span>Host Liquor Liability:</span>
                       <span className="font-medium">
-                        {state.liquorLiability ? "Included" : "Not Included"}
+                        {state.liquorLiability ? 'Included' : 'Not Included'}
                       </span>
                     </li>
                   </>
@@ -983,8 +953,8 @@ export default function QuoteGenerator() {
             <div className="flex items-center text-sm bg-gray-100 text-gray-700 p-4 rounded-lg">
               <AlertCircle size={16} className="flex-shrink-0 mr-2" />
               <p>
-                This quote is valid for 30 days. Continue to provide event
-                details and complete your purchase.
+                This quote is valid for 30 days. Continue to provide event details and complete your
+                purchase.
               </p>
             </div>
           </div>
@@ -1000,9 +970,8 @@ export default function QuoteGenerator() {
                 Special Activities Warning
               </h3>
               <p className="text-gray-700 mb-5 text-sm sm:text-base leading-relaxed">
-                The following activities are typically excluded from coverage.
-                If your event includes any of these, please contact our support
-                team for special underwriting.
+                The following activities are typically excluded from coverage. If your event
+                includes any of these, please contact our support team for special underwriting.
               </p>
               <ul className="list-disc pl-5 mb-6 space-y-1 text-sm text-gray-800">
                 {PROHIBITED_ACTIVITIES.map((activity, index) => (
@@ -1014,7 +983,7 @@ export default function QuoteGenerator() {
                   variant="outline"
                   className="w-full sm:w-auto"
                   onClick={() => {
-                    handleInputChange("specialActivities", false);
+                    handleInputChange('specialActivities', false);
                     setShowSpecialActivitiesModal(false);
                   }}
                 >
@@ -1027,7 +996,7 @@ export default function QuoteGenerator() {
                     // Retain existing logic for admin: just close modal, admin will contact separately if needed.
                     setShowSpecialActivitiesModal(false);
                     // Optionally, you could set specialActivities to true here if that's the desired admin flow.
-                    // handleInputChange("specialActivities", true); 
+                    // handleInputChange("specialActivities", true);
                   }}
                 >
                   Contact me for special coverage

@@ -6,12 +6,7 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   icon?: React.ReactNode;
 }
 
-const Input: React.FC<InputProps> = ({
-  className = '',
-  error = false,
-  icon,
-  ...props
-}) => {
+const Input: React.FC<InputProps> = ({ className = '', error = false, icon, ...props }) => {
   return (
     <div className="relative w-full">
       {icon && (
@@ -29,7 +24,7 @@ const Input: React.FC<InputProps> = ({
           icon ? 'pl-12' : 'pl-4',
           'pr-4 py-2',
           props.disabled && 'bg-gray-100 text-gray-500 cursor-not-allowed',
-          className
+          className,
         )}
         {...props}
       />

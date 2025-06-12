@@ -2,7 +2,15 @@
 import React, { createContext, useContext, useReducer, ReactNode } from 'react';
 
 // Types
-export type GuestRange = '1-50' | '51-100' | '101-150' | '151-200' | '201-250' | '251-300' | '301-350' | '351-400';
+export type GuestRange =
+  | '1-50'
+  | '51-100'
+  | '101-150'
+  | '151-200'
+  | '201-250'
+  | '251-300'
+  | '301-350'
+  | '351-400';
 export type CoverageLevel = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
 export type LiabilityOption = 'none' | 'option1' | 'option2' | 'option3';
 export type NewLiabilityOption = 'option4' | 'option5' | 'option6';
@@ -215,7 +223,15 @@ const initialState: QuoteState = {
 
 type QuoteAction =
   | { type: 'UPDATE_FIELD'; field: keyof QuoteState; value: any }
-  | { type: 'CALCULATE_QUOTE'; payload?: { basePremium: number; liabilityPremium: number; liquorLiabilityPremium: number; totalPremium: number } }
+  | {
+      type: 'CALCULATE_QUOTE';
+      payload?: {
+        basePremium: number;
+        liabilityPremium: number;
+        liquorLiabilityPremium: number;
+        totalPremium: number;
+      };
+    }
   | { type: 'COMPLETE_STEP'; step: number }
   | { type: 'RESET_FORM' }
   | { type: 'SET_ENTIRE_QUOTE_STATE'; payload: Partial<QuoteState> };
@@ -225,7 +241,7 @@ const quoteReducer = (state: QuoteState, action: QuoteAction): QuoteState => {
     case 'UPDATE_FIELD':
       return {
         ...state,
-        [action.field]: action.value
+        [action.field]: action.value,
       };
 
     case 'CALCULATE_QUOTE':
@@ -237,7 +253,7 @@ const quoteReducer = (state: QuoteState, action: QuoteAction): QuoteState => {
         basePremium: action.payload?.basePremium || 0,
         liabilityPremium: action.payload?.liabilityPremium || 0,
         liquorLiabilityPremium: action.payload?.liquorLiabilityPremium || 0,
-        totalPremium: action.payload?.totalPremium || 0
+        totalPremium: action.payload?.totalPremium || 0,
       };
 
     case 'COMPLETE_STEP':
@@ -269,11 +285,11 @@ const calculateBasePremium = (level: CoverageLevel | null): number => {
 
   // Coverage level premium mapping
   const premiumMap: Record<CoverageLevel, number> = {
-    1: 160,  // $7,500 coverage
+    1: 160, // $7,500 coverage
     2: 200,
     3: 250,
     4: 300,
-    5: 355,  // $50,000 coverage
+    5: 355, // $50,000 coverage
     6: 450,
     7: 600,
     8: 750,
@@ -303,7 +319,10 @@ const calculateLiabilityPremium = (option: LiabilityOption | NewLiabilityOption)
   }
 };
 
-const calculateLiquorLiabilityPremium = (hasLiquorLiability: boolean, guestRange: GuestRange): number => {
+const calculateLiquorLiabilityPremium = (
+  hasLiquorLiability: boolean,
+  guestRange: GuestRange,
+): number => {
   if (!hasLiquorLiability) return 0;
 
   // Guest count range premium mapping
@@ -315,7 +334,7 @@ const calculateLiquorLiabilityPremium = (hasLiquorLiability: boolean, guestRange
     '201-250': 100,
     '251-300': 100,
     '301-350': 150,
-    '351-400': 150
+    '351-400': 150,
   };
 
   return premiumMap[guestRange] || 0;
@@ -352,11 +371,7 @@ const QuoteContext = createContext<QuoteContextType | undefined>(undefined);
 export const QuoteProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(quoteReducer, initialState);
 
-  return (
-    <QuoteContext.Provider value={{ state, dispatch }}>
-      {children}
-    </QuoteContext.Provider>
-  );
+  return <QuoteContext.Provider value={{ state, dispatch }}>{children}</QuoteContext.Provider>;
 };
 
 export const useQuote = (): QuoteContextType => {

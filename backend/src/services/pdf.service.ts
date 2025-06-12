@@ -2,33 +2,60 @@
 import path from "path";
 import fs from "fs/promises";
 import { PDFDocument } from "pdf-lib";
-import { jsPDF } from 'jspdf';
+import { jsPDF } from "jspdf";
 
+// ------------------------
 // Cache for base PDF
+// Stores the bytes of the base PDF file to avoid reading it from disk multiple times.
+// ------------------------
 let basePdfBytesCache: Uint8Array | null = null;
 const basePdfPath = path.join(process.cwd(), "public", "base.pdf");
+// ------------------------
 // Cache for logo image
+// Stores the base64 encoded logo image to avoid reading and converting it multiple times.
+// ------------------------
 let logoImageDataBase64Cache: string | null = null;
 const logoImagePath = path.join(process.cwd(), "public", "logo.png");
 
+// ------------------------
 // IMPORTANT: Create a 'public' folder in the root of 'my-backend'
 // and place your 'base.pdf' and 'logo.png' files inside it.
+// ------------------------
 
+// ------------------------
+// Asynchronously reads the base PDF file from the specified path.
+// Uses a cache to avoid redundant file reads.
+// Throws an error if the file is not found or not accessible.
+//
+// Returns:
+// - A Promise that resolves to a Uint8Array containing the base PDF bytes.
+// ------------------------
 async function getBasePdfBytes(): Promise<Uint8Array> {
   if (basePdfBytesCache) {
     return basePdfBytesCache;
   }
-  // Check existence and read, or throw if not found
   try {
     await fs.access(basePdfPath);
     basePdfBytesCache = await fs.readFile(basePdfPath);
     return basePdfBytesCache;
   } catch (error) {
-    console.error("Base PDF file not found or not accessible:", basePdfPath, error);
+    console.error(
+      "Base PDF file not found or not accessible:",
+      basePdfPath,
+      error
+    );
     throw new Error("Base PDF not found or not accessible.");
   }
 }
 
+// ------------------------
+// Asynchronously reads the logo image file from the specified path and converts it to a base64 data URL.
+// Uses a cache to avoid redundant file reads and conversions.
+// Throws an error if the file is not found or not accessible.
+//
+// Returns:
+// - A Promise that resolves to a string containing the base64 encoded logo image data URL.
+// ------------------------
 async function getLogoImageData(): Promise<string> {
   if (logoImageDataBase64Cache) {
     return logoImageDataBase64Cache;
@@ -36,16 +63,28 @@ async function getLogoImageData(): Promise<string> {
   try {
     await fs.access(logoImagePath);
     const imageBytes = await fs.readFile(logoImagePath);
-    logoImageDataBase64Cache = `data:image/png;base64,${imageBytes.toString("base64")}`;
+    logoImageDataBase64Cache = `data:image/png;base64,${imageBytes.toString(
+      "base64"
+    )}`;
     return logoImageDataBase64Cache;
   } catch (error) {
-    console.error("Logo image file not found or not accessible:", logoImagePath, error);
+    console.error(
+      "Logo image file not found or not accessible:",
+      logoImagePath,
+      error
+    );
     throw new Error("Logo image not found or not accessible.");
   }
 }
 
+// ------------------------
 // Define coverage details based on levels
-const COVERAGE_LEVEL_DETAILS: { [key: string]: Array<[string, string, string]> } = {
+// A constant object mapping coverage level strings (e.g., "Level 1") to an array of coverage details.
+// Each detail is an array: [Coverage Name, Limit, Premium].
+// ------------------------
+const COVERAGE_LEVEL_DETAILS: {
+  [key: string]: Array<[string, string, string]>;
+} = {
   "Level 1": [
     ["Cancellation/postponement", "$7,500", "$160"],
     ["Additional Expense", "$1,500", "$0"],
@@ -136,7 +175,7 @@ const COVERAGE_LEVEL_DETAILS: { [key: string]: Array<[string, string, string]> }
     ["Special Jewelry", "$10,000", "$0"],
     ["Lost Deposit", "$10,000", "$0"],
   ],
-  "Default": [
+  Default: [
     ["Cancellation/postponement", "$25,000", "$400"],
     ["Additional Expense", "$5,000", "$50"],
     ["Event Photography/Video", "$5,000", "$50"],
@@ -144,11 +183,19 @@ const COVERAGE_LEVEL_DETAILS: { [key: string]: Array<[string, string, string]> }
     ["Special Attire", "$10,000", "$50"],
     ["Special Jewelry", "$25,000", "$150"],
     ["Lost Deposit", "$5,000", "$100"],
-  ]
+  ],
 };
 
+// ------------------------
 // Helper function to get guest range string from maxGuests integer value
-function getGuestRangeStringFromMaxValue(maxGuestsValue: number | null | undefined): string {
+// Converts a numerical maximum guest count into a predefined string range (e.g., "1-50").
+//
+// Parameters:
+// - maxGuestsValue: The maximum number of guests as a number, or null/undefined.
+// ------------------------
+function getGuestRangeStringFromMaxValue(
+  maxGuestsValue: number | null | undefined
+): string {
   if (maxGuestsValue === undefined || maxGuestsValue === null) return "N/A";
 
   if (maxGuestsValue <= 50) return "1-50";
@@ -162,18 +209,34 @@ function getGuestRangeStringFromMaxValue(maxGuestsValue: number | null | undefin
   return String(maxGuestsValue);
 }
 
+// ------------------------
 // --- PDF GENERATION LOGIC ---
+// ------------------------
 
-async function generateInsuranceDeclarationPDFBuffer(quoteData: any): Promise<Uint8Array> {
+// ------------------------
+// Generates the first page of the insurance declaration PDF (Declaration Page).
+// This function uses jsPDF to construct the page layout, add text, shapes, and images.
+//
+// Parameters:
+// - quoteData: An object containing all necessary data for the PDF, including policy holder,
+//              event details, coverage levels, and premiums.
+//
+// Returns:
+// - A Promise that resolves to a Uint8Array containing the bytes of the generated PDF page.
+// ------------------------
+async function generateInsuranceDeclarationPDFBuffer(
+  quoteData: any
+): Promise<Uint8Array> {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
-  const pageHeight = doc.internal.pageSize.getHeight();
   let logoImageData: string;
-  
   try {
     logoImageData = await getLogoImageData();
   } catch (error) {
-    console.warn("Logo image not found, falling back to drawn logo or erroring. Error:", (error as Error).message);
+    console.warn(
+      "Logo image not found, falling back to drawn logo or erroring. Error:",
+      (error as Error).message
+    );
     doc.setDrawColor(0, 0, 0);
     doc.setLineWidth(2);
     doc.circle(30, 25, 12);
@@ -183,6 +246,9 @@ async function generateInsuranceDeclarationPDFBuffer(quoteData: any): Promise<Ui
     doc.text("ROYCE", 30, 28, { align: "center" });
   }
 
+  // ------------------------
+  // Add logo to the PDF if available.
+  // ------------------------
   if (logoImageData!) {
     const logoWidth = 24;
     const logoHeight = 24;
@@ -190,6 +256,9 @@ async function generateInsuranceDeclarationPDFBuffer(quoteData: any): Promise<Ui
   }
 
   // Main Title
+  // ------------------------
+  // Add main title and "Declaration" subtitle.
+  // ------------------------
   doc.setFontSize(18);
   doc.setFont("helvetica", "bold");
   const titleText = "Special Event Insurance";
@@ -198,17 +267,23 @@ async function generateInsuranceDeclarationPDFBuffer(quoteData: any): Promise<Ui
   const titleY = 20;
   doc.text(titleText, titleX, titleY);
 
+  // ------------------------
   // Underline for "Special Event Insurance"
+  // ------------------------
   const underlineY = titleY + 2;
   doc.setLineWidth(0.5);
   doc.line(titleX, underlineY, titleX + titleWidth, underlineY);
 
   doc.text("Declaration", pageWidth / 2, 30, { align: "center" });
 
+  // ------------------------
   // Named Insured & Agent Information boxes
+  // ------------------------
   let yPos = 45;
 
+  // ------------------------
   // Named Insured box
+  // ------------------------
   doc.setDrawColor(0, 0, 0);
   doc.setLineWidth(0.5);
   doc.rect(15, yPos, 85, 25);
@@ -216,23 +291,43 @@ async function generateInsuranceDeclarationPDFBuffer(quoteData: any): Promise<Ui
   doc.setFont("helvetica", "bold");
   doc.text("Named Insured & Address", 17, yPos + 5);
 
+  // ------------------------
   // Yellow highlight for insured info
+  // ------------------------
   doc.setFillColor(255, 255, 255);
   doc.rect(17, yPos + 7, 81, 15, "F");
   doc.setTextColor(0, 0, 0);
   doc.setFont("helvetica", "bold");
-  doc.text((quoteData.policyHolder?.firstName || "") + " " + (quoteData.policyHolder?.lastName || "") || "N/A", 19, yPos + 12);
+  doc.text(
+    (quoteData.policyHolder?.firstName || "") +
+      " " +
+      (quoteData.policyHolder?.lastName || "") || "N/A",
+    19,
+    yPos + 12
+  );
   doc.setFont("helvetica", "normal");
   doc.text(quoteData.policyHolder?.address || "N/A", 19, yPos + 16);
-  doc.text((quoteData.policyHolder?.city || "N/A") + ", " + (quoteData.policyHolder?.state || "N/A") + " " + (quoteData.policyHolder?.zip || "N/A"), 19, yPos + 20);
+  doc.text(
+    (quoteData.policyHolder?.city || "N/A") +
+      ", " +
+      (quoteData.policyHolder?.state || "N/A") +
+      " " +
+      (quoteData.policyHolder?.zip || "N/A"),
+    19,
+    yPos + 20
+  );
 
+  // ------------------------
   // Agent Information box
+  // ------------------------
   doc.setDrawColor(0, 0, 0);
   doc.rect(105, yPos, 85, 25);
   doc.setFont("helvetica", "bold");
   doc.text("Agent Information", 107, yPos + 5);
 
+  // ------------------------
   // Yellow highlight for agent info
+  // ------------------------
   doc.setFillColor(255, 255, 255);
   doc.rect(107, yPos + 7, 81, 15, "F");
   doc.setTextColor(0, 0, 0);
@@ -244,7 +339,9 @@ async function generateInsuranceDeclarationPDFBuffer(quoteData: any): Promise<Ui
 
   yPos += 35;
 
+  // ------------------------
   // Policy Information Header
+  // ------------------------
   doc.setFillColor(255, 255, 255);
   doc.setLineWidth(0.5);
   doc.rect(15, yPos, pageWidth - 30, 8, "F");
@@ -253,7 +350,9 @@ async function generateInsuranceDeclarationPDFBuffer(quoteData: any): Promise<Ui
   const policyInfoHeaderText = "POLICY INFORMATION";
   doc.text(policyInfoHeaderText, 17, yPos + 5);
 
+  // ------------------------
   // Underline for "POLICY INFORMATION" header
+  // ------------------------
   const policyInfoUnderlineY = yPos + 5 + 2;
   doc.setLineWidth(1.0);
   doc.setDrawColor(39, 108, 140);
@@ -261,7 +360,9 @@ async function generateInsuranceDeclarationPDFBuffer(quoteData: any): Promise<Ui
 
   yPos += 8;
 
+  // ------------------------
   // Policy Information Content
+  // ------------------------
   doc.setTextColor(0, 0, 0);
   doc.setFont("helvetica", "bold");
   doc.text("Policy Number:", 17, yPos + 8);
@@ -280,7 +381,8 @@ async function generateInsuranceDeclarationPDFBuffer(quoteData: any): Promise<Ui
     quoteData.createdAt
       ? new Date(quoteData.createdAt).toLocaleDateString()
       : new Date().toLocaleDateString(),
-    147, yPos + 14
+    147,
+    yPos + 14
   );
 
   doc.text("Event Date:", 120, yPos + 20);
@@ -290,9 +392,10 @@ async function generateInsuranceDeclarationPDFBuffer(quoteData: any): Promise<Ui
     quoteData.event?.eventDate
       ? new Date(quoteData.event.eventDate).toLocaleDateString()
       : quoteData.quote?.event?.eventDate
-        ? new Date(quoteData.quote.event.eventDate).toLocaleDateString()
-        : "N/A",
-    147, yPos + 20
+      ? new Date(quoteData.quote.event.eventDate).toLocaleDateString()
+      : "N/A",
+    147,
+    yPos + 20
   );
 
   doc.setTextColor(0, 0, 0);
@@ -304,23 +407,36 @@ async function generateInsuranceDeclarationPDFBuffer(quoteData: any): Promise<Ui
   doc.text("Customer Service: 1-888-888-0888", 120, yPos + 26);
   doc.text("Claims Service: 1-888-888-0889", 120, yPos + 30);
 
+  // ------------------------
   // Total Premium
+  // ------------------------
   doc.setDrawColor(0, 0, 0);
   doc.setFontSize(12);
-  const totalPremiumText = `Total Policy Premium: $${quoteData.totalPremium?.toFixed(2) || "0.00"} (EXCLUDING ANY FEES OR TAXES)`;
+  const totalPremiumText = `Total Policy Premium: $${
+    quoteData.totalPremium?.toFixed(2) || "0.00"
+  } (EXCLUDING ANY FEES OR TAXES)`;
   const totalPremiumTextWidth = doc.getTextWidth(totalPremiumText);
   const totalPremiumTextX = (pageWidth - totalPremiumTextWidth) / 2;
   const totalPremiumTextY = yPos + 40;
   doc.text(totalPremiumText, totalPremiumTextX, totalPremiumTextY);
 
+  // ------------------------
   // Underline for "Total Policy Premium"
+  // ------------------------
   const totalPremiumUnderlineY = totalPremiumTextY + 2;
   doc.setLineWidth(0.5);
-  doc.line(totalPremiumTextX, totalPremiumUnderlineY, totalPremiumTextX + totalPremiumTextWidth, totalPremiumUnderlineY);
+  doc.line(
+    totalPremiumTextX,
+    totalPremiumUnderlineY,
+    totalPremiumTextX + totalPremiumTextWidth,
+    totalPremiumUnderlineY
+  );
 
   yPos += 49;
 
+  // ------------------------
   // Policy Limits of Liability Header
+  // ------------------------
   doc.setFillColor(255, 255, 255);
   doc.rect(15, yPos, pageWidth - 30, 8, "F");
   doc.setTextColor(0, 0, 0);
@@ -336,7 +452,9 @@ async function generateInsuranceDeclarationPDFBuffer(quoteData: any): Promise<Ui
 
   yPos += 10;
 
+  // ------------------------
   // Table headers
+  // ------------------------
   doc.setDrawColor(128, 128, 128);
   doc.rect(15, yPos, pageWidth - 30, 6);
   doc.setTextColor(0, 0, 0);
@@ -346,29 +464,43 @@ async function generateInsuranceDeclarationPDFBuffer(quoteData: any): Promise<Ui
   doc.text("PREMIUM", 170, yPos + 4, { align: "center" });
   yPos += 6;
 
+  // ------------------------
   // Get coverage level and table data
+  // ------------------------
   const coverageLevelInt = quoteData.coverageLevel;
   let coverageLevelStringKey = null;
 
-  if (typeof coverageLevelInt === 'number' && coverageLevelInt > 0) {
+  if (typeof coverageLevelInt === "number" && coverageLevelInt > 0) {
     coverageLevelStringKey = `Level ${coverageLevelInt}`;
   }
 
-  const currentCoverageLevel = coverageLevelStringKey && COVERAGE_LEVEL_DETAILS[coverageLevelStringKey] ? coverageLevelStringKey : "Default";
-  let tableDataForLevel = COVERAGE_LEVEL_DETAILS[currentCoverageLevel] || COVERAGE_LEVEL_DETAILS["Default"];
+  const currentCoverageLevel =
+    coverageLevelStringKey && COVERAGE_LEVEL_DETAILS[coverageLevelStringKey]
+      ? coverageLevelStringKey
+      : "Default";
+  let tableDataForLevel =
+    COVERAGE_LEVEL_DETAILS[currentCoverageLevel] ||
+    COVERAGE_LEVEL_DETAILS["Default"];
 
+  // ------------------------
   // Calculate total premium for this section
+  // ------------------------
   let eventCoveragePremium = 0;
-  tableDataForLevel.forEach(row => {
-    const premiumValue = parseFloat(row[2].replace('$', ''));
+  tableDataForLevel.forEach((row) => {
+    const premiumValue = parseFloat(row[2].replace("$", ""));
     if (!isNaN(premiumValue)) {
       eventCoveragePremium += premiumValue;
     }
   });
 
-  const finalTableData = [...tableDataForLevel, ["Event Coverage Premium", "", `$${eventCoveragePremium.toFixed(2)}`]];
+  const finalTableData = [
+    ...tableDataForLevel,
+    ["Event Coverage Premium", "", `$${eventCoveragePremium.toFixed(2)}`],
+  ];
 
+  // ------------------------
   // Draw table rows
+  // ------------------------
   finalTableData.forEach((row, index) => {
     doc.setDrawColor(128, 128, 128);
     doc.rect(15, yPos, pageWidth - 30, 6);
@@ -384,7 +516,10 @@ async function generateInsuranceDeclarationPDFBuffer(quoteData: any): Promise<Ui
 
     doc.setFillColor(255, 255, 255);
     doc.rect(160, yPos + 1, 30, 4, "F");
-    doc.setFont("helvetica", index === finalTableData.length - 1 ? "bold" : "normal");
+    doc.setFont(
+      "helvetica",
+      index === finalTableData.length - 1 ? "bold" : "normal"
+    );
     doc.text(row[2], 175, yPos + 4, { align: "center" });
 
     yPos += 6;
@@ -392,7 +527,9 @@ async function generateInsuranceDeclarationPDFBuffer(quoteData: any): Promise<Ui
 
   yPos += 7;
 
+  // ------------------------
   // Optional Endorsements Header
+  // ------------------------
   doc.setFillColor(255, 255, 255);
   doc.rect(15, yPos, pageWidth - 30, 8, "F");
   doc.setTextColor(0, 0, 0);
@@ -402,12 +539,19 @@ async function generateInsuranceDeclarationPDFBuffer(quoteData: any): Promise<Ui
   const endorsementsHeaderUnderlineY = yPos + 5 + 2;
   doc.setDrawColor(39, 108, 140);
   doc.setLineWidth(1.0);
-  doc.line(15, endorsementsHeaderUnderlineY, pageWidth - 15, endorsementsHeaderUnderlineY);
+  doc.line(
+    15,
+    endorsementsHeaderUnderlineY,
+    pageWidth - 15,
+    endorsementsHeaderUnderlineY
+  );
   doc.setLineWidth(0.5);
 
   yPos += 10;
 
+  // ------------------------
   // Endorsements table headers
+  // ------------------------
   doc.setDrawColor(128, 128, 128);
   doc.rect(15, yPos, pageWidth - 30, 6);
   doc.setTextColor(0, 0, 0);
@@ -417,7 +561,9 @@ async function generateInsuranceDeclarationPDFBuffer(quoteData: any): Promise<Ui
   doc.text("PREMIUM", 170, yPos + 4, { align: "center" });
   yPos += 6;
 
+  // ------------------------
   // Endorsements content
+  // ------------------------
   doc.setDrawColor(128, 128, 128);
   doc.rect(15, yPos, pageWidth - 30, 27);
   doc.setTextColor(0, 0, 0);
@@ -436,13 +582,19 @@ async function generateInsuranceDeclarationPDFBuffer(quoteData: any): Promise<Ui
     eventEndDate.setDate(eventStartDate.getDate() + 2);
     eventEndDateString = eventEndDate.toLocaleDateString();
   }
-  doc.text(`until 2:00 AM standard time on ${eventEndDateString}`, 17, yPos + 12);
+  doc.text(
+    `until 2:00 AM standard time on ${eventEndDateString}`,
+    17,
+    yPos + 12
+  );
   doc.setFont("helvetica", "bold");
   doc.text("Property Damage Liability Sublimit", 17, yPos + 16);
   doc.text("Liquor Liability Coverage", 17, yPos + 20);
   doc.text("Number of Guest", 17, yPos + 24);
 
+  // ------------------------
   // Liability limits
+  // ------------------------
   const liabilityData = [
     "$1M per Occurrence",
     "$1M General Aggregate",
@@ -459,17 +611,24 @@ async function generateInsuranceDeclarationPDFBuffer(quoteData: any): Promise<Ui
     doc.text(item, 125, yPos + index * 4 + 4, { align: "center" });
   });
 
+  // ------------------------
   // Calculate and display premium for endorsements
-  const endorsementsPremium = (quoteData.liabilityPremium || 0) + (quoteData.liquorLiabilityPremium || 0);
+  // ------------------------
+  const endorsementsPremium =
+    (quoteData.liabilityPremium || 0) + (quoteData.liquorLiabilityPremium || 0);
 
   doc.setFillColor(255, 255, 255);
   doc.rect(160, yPos + 10, 30, 6, "F");
   doc.setFont("helvetica", "bold");
-  doc.text(`$${endorsementsPremium.toFixed(2)}`, 175, yPos + 13, { align: "center" });
+  doc.text(`$${endorsementsPremium.toFixed(2)}`, 175, yPos + 13, {
+    align: "center",
+  });
 
   yPos += 32;
 
+  // ------------------------
   // Coverages Header
+  // ------------------------
   doc.setFillColor(255, 255, 255);
   doc.rect(15, yPos, pageWidth - 30, 8, "F");
   doc.setTextColor(0, 0, 0);
@@ -478,7 +637,9 @@ async function generateInsuranceDeclarationPDFBuffer(quoteData: any): Promise<Ui
 
   yPos += 8;
 
+  // ------------------------
   // Extended Territory row
+  // ------------------------
   doc.setDrawColor(128, 128, 128);
   doc.rect(15, yPos, pageWidth - 30, 6);
   doc.setTextColor(0, 0, 0);
@@ -488,7 +649,10 @@ async function generateInsuranceDeclarationPDFBuffer(quoteData: any): Promise<Ui
   doc.text("Not Applicable", 125, yPos + 4, { align: "center" });
   doc.text("Included", 175, yPos + 4, { align: "center" });
 
+  // ------------------------
   // Footer
+  // ------------------------
+  const pageHeight = doc.internal.pageSize.getHeight(); // Get page height for footer positioning
   doc.setDrawColor(128, 128, 128);
   doc.setLineWidth(0.5);
   doc.line(15, pageHeight - 14, pageWidth - 15, pageHeight - 14);
@@ -501,16 +665,29 @@ async function generateInsuranceDeclarationPDFBuffer(quoteData: any): Promise<Ui
   return new Uint8Array(doc.output("arraybuffer") as ArrayBuffer);
 }
 
-async function generateInsuranceDeclarationPage2PDFBuffer(quoteData: any): Promise<Uint8Array> {
+// ------------------------
+// Generates the second page of the insurance declaration PDF.
+// This page includes policy forms, endorsements, event information, and additional insured details.
+//
+// Parameters:
+// - quoteData: An object containing all necessary data for the PDF.
+//
+// Returns:
+// - A Promise that resolves to a Uint8Array containing the bytes of the generated PDF page.
+// ------------------------
+async function generateInsuranceDeclarationPage2PDFBuffer(
+  quoteData: any
+): Promise<Uint8Array> {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
-  const pageHeight = doc.internal.pageSize.getHeight();
   let logoImageData: string;
-
   try {
     logoImageData = await getLogoImageData();
   } catch (error) {
-    console.warn("Logo image not found for page 2, falling back to drawn logo or erroring. Error:", (error as Error).message);
+    console.warn(
+      "Logo image not found for page 2, falling back to drawn logo or erroring. Error:",
+      (error as Error).message
+    );
     // Fallback for page 2 as well
     doc.setDrawColor(0, 0, 0);
     doc.setLineWidth(2);
@@ -521,6 +698,9 @@ async function generateInsuranceDeclarationPage2PDFBuffer(quoteData: any): Promi
     doc.text("ROYCE", 30, 28, { align: "center" });
   }
 
+  // ------------------------
+  // Add logo to page 2 if available.
+  // ------------------------
   if (logoImageData!) {
     const logoWidth = 24;
     const logoHeight = 24;
@@ -529,7 +709,9 @@ async function generateInsuranceDeclarationPage2PDFBuffer(quoteData: any): Promi
 
   let yPos = 50;
 
+  // ------------------------
   // Policy Forms and Endorsements Header
+  // ------------------------
   doc.setFillColor(255, 255, 255);
   doc.rect(15, yPos, pageWidth - 30, 8, "F");
   doc.setTextColor(0, 0, 0);
@@ -545,7 +727,9 @@ async function generateInsuranceDeclarationPage2PDFBuffer(quoteData: any): Promi
 
   yPos += 9;
 
+  // ------------------------
   // Policy Forms and Endorsements Table
+  // ------------------------
   const policyForms = [
     ["AU - 1 (08-24)", "Special Event Insurance"],
     ["AU - 200 (08-24)", "Special Event Liability"],
@@ -568,7 +752,9 @@ async function generateInsuranceDeclarationPage2PDFBuffer(quoteData: any): Promi
 
   yPos += 10;
 
+  // ------------------------
   // Event Information Header
+  // ------------------------
   doc.setFillColor(255, 255, 255);
   doc.rect(15, yPos, pageWidth - 30, 8, "F");
   doc.setTextColor(0, 0, 0);
@@ -578,12 +764,19 @@ async function generateInsuranceDeclarationPage2PDFBuffer(quoteData: any): Promi
   const eventInfoHeaderUnderlineY1 = yPos + 5 + 2;
   doc.setDrawColor(39, 108, 140); // #276C8C
   doc.setLineWidth(1.0);
-  doc.line(15, eventInfoHeaderUnderlineY1, pageWidth - 15, eventInfoHeaderUnderlineY1);
+  doc.line(
+    15,
+    eventInfoHeaderUnderlineY1,
+    pageWidth - 15,
+    eventInfoHeaderUnderlineY1
+  );
   doc.setLineWidth(0.5);
 
   yPos += 9;
 
+  // ------------------------
   // Event Information Table Headers
+  // ------------------------
   doc.setDrawColor(128, 128, 128);
   doc.rect(15, yPos, (pageWidth - 30) / 2, 6);
   doc.rect(15 + (pageWidth - 30) / 2, yPos, (pageWidth - 30) / 2, 6);
@@ -594,24 +787,48 @@ async function generateInsuranceDeclarationPage2PDFBuffer(quoteData: any): Promi
 
   yPos += 6;
 
+  // ------------------------
   // Event Information Table Content
+  // ------------------------
   doc.setDrawColor(128, 128, 128);
   doc.rect(15, yPos, (pageWidth - 30) / 2, 6);
   doc.rect(15 + (pageWidth - 30) / 2, yPos, (pageWidth - 30) / 2, 6);
 
+  // ------------------------
   // Yellow highlight for event and honorees
+  // ------------------------
   doc.setFillColor(255, 255, 255);
   doc.rect(15 + 1, yPos + 1, (pageWidth - 30) / 2 - 2, 4, "F");
-  doc.rect(15 + (pageWidth - 30) / 2 + 1, yPos + 1, (pageWidth - 30) / 2 - 2, 4, "F");
+  doc.rect(
+    15 + (pageWidth - 30) / 2 + 1,
+    yPos + 1,
+    (pageWidth - 30) / 2 - 2,
+    4,
+    "F"
+  );
 
   doc.setTextColor(0, 0, 0);
   doc.setFont("helvetica", "bold");
   doc.text(quoteData.event?.eventType || "N/A", 17, yPos + 4);
-  doc.text((quoteData.event?.honoree1FirstName || "") + " " + (quoteData.event?.honoree1LastName || "") + (quoteData.event?.honoree2FirstName ? " & " + quoteData.event?.honoree2FirstName + " " + quoteData.event?.honoree2LastName : ""), 17 + (pageWidth - 30) / 2 + 2, yPos + 4);
+  doc.text(
+    (quoteData.event?.honoree1FirstName || "") +
+      " " +
+      (quoteData.event?.honoree1LastName || "") +
+      (quoteData.event?.honoree2FirstName
+        ? " & " +
+          quoteData.event?.honoree2FirstName +
+          " " +
+          quoteData.event?.honoree2LastName
+        : ""),
+    17 + (pageWidth - 30) / 2 + 2,
+    yPos + 4
+  );
 
   yPos += 15;
 
+  // ------------------------
   // Event Location(s) Header
+  // ------------------------
   doc.setTextColor(0, 0, 0);
   doc.setFont("helvetica", "bold");
   doc.text("EVENT LOCATION(S)", 15, yPos);
@@ -620,10 +837,14 @@ async function generateInsuranceDeclarationPage2PDFBuffer(quoteData: any): Promi
 
   yPos += 5;
 
+  // ------------------------
   // Event Location Table
+  // ------------------------
   let venueCount = 1;
-  
+
+  // ------------------------
   // Main Ceremony Venue
+  // ------------------------
   doc.setDrawColor(128, 128, 128);
   doc.rect(15, yPos, 10, 6);
   doc.rect(25, yPos, pageWidth - 40, 6);
@@ -631,16 +852,30 @@ async function generateInsuranceDeclarationPage2PDFBuffer(quoteData: any): Promi
   doc.setFont("helvetica", "bold");
   doc.text(`${venueCount}.`, 17, yPos + 4);
 
+  // ------------------------
   // Yellow highlight for venue
+  // ------------------------
   doc.setFillColor(255, 255, 255);
   doc.rect(26, yPos + 1, pageWidth - 42, 4, "F");
   doc.setFont("helvetica", "normal");
-  doc.text((quoteData.event?.venue?.address1 || "N/A") + ", " + (quoteData.event?.venue?.city || "N/A") + ", " + (quoteData.event?.venue?.state || "N/A") + " " + (quoteData.event?.venue?.zip || "N/A"), 27, yPos + 4);
+  doc.text(
+    (quoteData.event?.venue?.address1 || "N/A") +
+      ", " +
+      (quoteData.event?.venue?.city || "N/A") +
+      ", " +
+      (quoteData.event?.venue?.state || "N/A") +
+      " " +
+      (quoteData.event?.venue?.zip || "N/A"),
+    27,
+    yPos + 4
+  );
   yPos += 6;
 
   yPos += 10;
 
+  // ------------------------
   // Additional Insured(s) Header
+  // ------------------------
   doc.setTextColor(0, 0, 0);
   doc.setFont("helvetica", "bold");
   doc.text("ADDITIONAL INSURED(S)", 15, yPos);
@@ -649,16 +884,27 @@ async function generateInsuranceDeclarationPage2PDFBuffer(quoteData: any): Promi
 
   yPos += 5;
 
+  // ------------------------
   // Additional Venues for Wedding Events
-  const eventType = quoteData.event?.eventType || quoteData.quote?.event?.eventType || quoteData.policy?.event?.eventType;
-  const venueData = quoteData.event?.venue || quoteData.quote?.event?.venue || quoteData.policy?.event?.venue;
+  // ------------------------
+  const eventType =
+    quoteData.event?.eventType ||
+    quoteData.quote?.event?.eventType ||
+    quoteData.policy?.event?.eventType;
+  const venueData =
+    quoteData.event?.venue ||
+    quoteData.quote?.event?.venue ||
+    quoteData.policy?.event?.venue;
 
   if (eventType && eventType.toLowerCase() === "wedding") {
     const additionalVenues = [
       { name: "Reception Venue", value: venueData?.receptionVenueName },
       { name: "Rehearsal Venue", value: venueData?.rehearsalVenueName },
-      { name: "Rehearsal Dinner Venue", value: venueData?.rehearsalDinnerVenueName },
-      { name: "Brunch Venue", value: venueData?.brunchVenueName }
+      {
+        name: "Rehearsal Dinner Venue",
+        value: venueData?.rehearsalDinnerVenueName,
+      },
+      { name: "Brunch Venue", value: venueData?.brunchVenueName },
     ];
 
     for (const venue of additionalVenues) {
@@ -680,7 +926,9 @@ async function generateInsuranceDeclarationPage2PDFBuffer(quoteData: any): Promi
     }
   }
 
+  // ------------------------
   // Fill remaining additional insured slots
+  // ------------------------
   while (venueCount <= 4) {
     doc.setDrawColor(128, 128, 128);
     doc.rect(15, yPos, 10, 6);
@@ -694,7 +942,9 @@ async function generateInsuranceDeclarationPage2PDFBuffer(quoteData: any): Promi
 
   yPos += 10;
 
+  // ------------------------
   // Event Information Header (second occurrence)
+  // ------------------------
   doc.setFillColor(255, 255, 255);
   doc.rect(15, yPos, pageWidth - 30, 8, "F");
   doc.setTextColor(0, 0, 0);
@@ -704,12 +954,19 @@ async function generateInsuranceDeclarationPage2PDFBuffer(quoteData: any): Promi
   const eventInfoHeaderUnderlineY2 = yPos + 5 + 2;
   doc.setDrawColor(39, 108, 140); // #276C8C
   doc.setLineWidth(1.0);
-  doc.line(15, eventInfoHeaderUnderlineY2, pageWidth - 15, eventInfoHeaderUnderlineY2);
+  doc.line(
+    15,
+    eventInfoHeaderUnderlineY2,
+    pageWidth - 15,
+    eventInfoHeaderUnderlineY2
+  );
   doc.setLineWidth(0.5);
 
   yPos += 9;
 
+  // ------------------------
   // Event Information Fees Table
+  // ------------------------
   const feeData = [
     ["Policy Fee", "$50.00"],
     ["Surplus Lines Taxes", "$48.00"],
@@ -725,15 +982,31 @@ async function generateInsuranceDeclarationPage2PDFBuffer(quoteData: any): Promi
     doc.setFont("helvetica", "bold");
     doc.text(row[0], 17, yPos + 4);
 
+    // ------------------------
     // Yellow highlight for fee amounts
+    // ------------------------
     doc.setFillColor(255, 255, 255);
-    doc.rect(15 + (pageWidth - 30) * 0.7 + 1, yPos + 1, (pageWidth - 30) * 0.3 - 2, 4, "F");
-    doc.text(row[1], 15 + (pageWidth - 30) * 0.7 + (pageWidth - 30) * 0.3 - 5, yPos + 4, { align: "right" });
+    doc.rect(
+      15 + (pageWidth - 30) * 0.7 + 1,
+      yPos + 1,
+      (pageWidth - 30) * 0.3 - 2,
+      4,
+      "F"
+    );
+    doc.text(
+      row[1],
+      15 + (pageWidth - 30) * 0.7 + (pageWidth - 30) * 0.3 - 5,
+      yPos + 4,
+      { align: "right" }
+    );
 
     yPos += 6;
   });
 
+  // ------------------------
   // Footer
+  // ------------------------
+  const pageHeight = doc.internal.pageSize.getHeight(); // Get page height for footer positioning
   // Line above footer text
   doc.setDrawColor(128, 128, 128);
   doc.setLineWidth(0.5);
@@ -747,32 +1020,72 @@ async function generateInsuranceDeclarationPage2PDFBuffer(quoteData: any): Promi
   return new Uint8Array(doc.output("arraybuffer") as ArrayBuffer);
 }
 
+// ------------------------
 // --- MAIN EXPORTED FUNCTION ---
+// ------------------------
 
+// ------------------------
+// Generates a complete policy PDF by merging a base PDF with newly generated declaration pages.
+//
+// Parameters:
+// - quoteData: An object containing all necessary data for the PDF generation,
+//              passed to `generateInsuranceDeclarationPDFBuffer` and `generateInsuranceDeclarationPage2PDFBuffer`.
+//
+// Returns:
+// - A Promise that resolves to a Buffer containing the bytes of the final merged PDF.
+// ------------------------
 export async function generatePolicyPdf(quoteData: any): Promise<Buffer> {
   const basePdfBytes = await getBasePdfBytes();
-  const declarationPdfBytes = await generateInsuranceDeclarationPDFBuffer(quoteData);
-  const page2PdfBytes = await generateInsuranceDeclarationPage2PDFBuffer(quoteData);
+  const declarationPdfBytes = await generateInsuranceDeclarationPDFBuffer(
+    quoteData
+  );
+  const page2PdfBytes = await generateInsuranceDeclarationPage2PDFBuffer(
+    quoteData
+  );
 
   const mergedPdf = await PDFDocument.create();
 
+  // ------------------------
+  // Load all PDF documents (declaration page 1, declaration page 2, and base PDF).
+  // ------------------------
   const [declarationDoc, page2Doc, baseDoc] = await Promise.all([
     PDFDocument.load(declarationPdfBytes),
     PDFDocument.load(page2PdfBytes),
     PDFDocument.load(basePdfBytes),
   ]);
 
-  const declarationPages = await mergedPdf.copyPages(declarationDoc, declarationDoc.getPageIndices());
+  const declarationPages = await mergedPdf.copyPages(
+    declarationDoc,
+    declarationDoc.getPageIndices()
+  );
+  // ------------------------
+  // Add the first declaration page to the merged PDF.
+  // ------------------------
   mergedPdf.addPage(declarationPages[0]);
 
-  const page2Pages = await mergedPdf.copyPages(page2Doc, page2Doc.getPageIndices());
+  const page2Pages = await mergedPdf.copyPages(
+    page2Doc,
+    page2Doc.getPageIndices()
+  );
+  // ------------------------
+  // Add the second declaration page to the merged PDF.
+  // ------------------------
   mergedPdf.addPage(page2Pages[0]);
 
-  const basePages = await mergedPdf.copyPages(baseDoc, baseDoc.getPageIndices());
+  const basePages = await mergedPdf.copyPages(
+    baseDoc,
+    baseDoc.getPageIndices()
+  );
+  // ------------------------
+  // Add all pages from the base PDF to the merged PDF.
+  // ------------------------
   for (const page of basePages) {
     mergedPdf.addPage(page);
   }
 
   const mergedPdfBytes = await mergedPdf.save();
+  // ------------------------
+  // Convert the final PDF bytes to a Buffer and return.
+  // ------------------------
   return Buffer.from(mergedPdfBytes);
 }

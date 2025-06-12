@@ -1,31 +1,27 @@
-"use client";
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { Shield, Mail, Lock } from "lucide-react";
-import Card from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
-import Input from "@/components/ui/Input";
-import FormField from "@/components/ui/FormField";
+'use client';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { Shield, Mail, Lock } from 'lucide-react';
+import Card from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
+import FormField from '@/components/ui/FormField';
 
 // const ADMIN_EMAIL = "admin@weddingguard.com";
 // const ADMIN_PASS = "admin123";
 
 export default function AdminLogin() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const [pageLoading, setPageLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const API_BASE_URL =
-    process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api/v1";
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000/api/v1';
 
   useEffect(() => {
-    if (
-      typeof window !== "undefined" &&
-      localStorage.getItem("admin_logged_in") === "true"
-    ) {
-      router.replace("/admin");
+    if (typeof window !== 'undefined' && localStorage.getItem('admin_logged_in') === 'true') {
+      router.replace('/admin');
     } else {
       // Simulate a brief loading period or wait for other initializations if any
       const timer = setTimeout(() => setPageLoading(false), 200); // Adjust delay as needed
@@ -36,18 +32,18 @@ export default function AdminLogin() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+    setError('');
     setIsSubmitting(true);
     if (!email || !password) {
-      setError("Please enter both email and password");
+      setError('Please enter both email and password');
       setIsSubmitting(false);
       return;
     }
     try {
       const response = await fetch(`${API_BASE_URL}/login`, {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({ id: email, password: password }),
       });
@@ -60,14 +56,14 @@ export default function AdminLogin() {
       const data = await response.json();
 
       if (data.success) {
-        localStorage.setItem("admin_logged_in", "true");
-        router.replace(data.route || "/admin");
+        localStorage.setItem('admin_logged_in', 'true');
+        router.replace(data.route || '/admin');
       } else {
-        setError(data.message || "Invalid email or password");
+        setError(data.message || 'Invalid email or password');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed. Please try again.");
-      console.error("Login error:", err);
+      setError(err instanceof Error ? err.message : 'Login failed. Please try again.');
+      console.error('Login error:', err);
     }
     setIsSubmitting(false);
   };
@@ -146,7 +142,7 @@ export default function AdminLogin() {
             </FormField>
             <div>
               <Button type="submit" variant="primary" size="lg">
-                {isSubmitting ? "Signing In..." : "Sign In"}
+                {isSubmitting ? 'Signing In...' : 'Sign In'}
               </Button>
             </div>
           </form>

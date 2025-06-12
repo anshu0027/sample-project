@@ -69,12 +69,20 @@ const Footer: React.FC = () => {
           </div>
         </div> */}
 
-        <div className=" border-blue-300 mt-6 pt-6 text-sm text-blue-300 flex flex-col md:flex-row justify-between"> {/* border-t-2*/}
+        <div className=" border-blue-300 mt-6 pt-6 text-sm text-blue-300 flex flex-col md:flex-row justify-between">
+          {' '}
+          {/* border-t-2*/}
           <p>&copy; {currentYear} Wedevent Focalat Insurance. All rights reserved.</p>
           <div className="space-x-4 mt-2 md:mt-0">
-            <Link href="/" className="hover:text-white transition-colors duration-200">Privacy Policy</Link>
-            <Link href="/" className="hover:text-white transition-colors duration-200">Terms of Service</Link>
-            <Link href="/" className="hover:text-white transition-colors duration-200">Licenses</Link>
+            <Link href="/" className="hover:text-white transition-colors duration-200">
+              Privacy Policy
+            </Link>
+            <Link href="/" className="hover:text-white transition-colors duration-200">
+              Terms of Service
+            </Link>
+            <Link href="/" className="hover:text-white transition-colors duration-200">
+              Licenses
+            </Link>
           </div>
         </div>
       </div>

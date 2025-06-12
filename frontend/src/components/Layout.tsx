@@ -1,6 +1,6 @@
-import Header from "./Header";
-import Footer from "./Footer";
-import ProgressTracker from "./ProgressTracker";
+import Header from './Header';
+import Footer from './Footer';
+import ProgressTracker from './ProgressTracker';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   // If you want to conditionally show ProgressTracker, you can use usePathname from next/navigation

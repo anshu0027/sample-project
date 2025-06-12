@@ -1,7 +1,7 @@
-import React from "react";
-import { Button } from "@/components/ui/Button";
-import { formatCurrency } from "@/utils/validators";
-import { Mail } from "lucide-react";
+import React from 'react';
+import { Button } from '@/components/ui/Button';
+import { formatCurrency } from '@/utils/validators';
+import { Mail } from 'lucide-react';
 
 type Step4FormProps = {
   state: {
@@ -24,9 +24,9 @@ type Step4FormProps = {
 export default function Step4Form(props: Step4FormProps) {
   const { state, onSave, onBack, emailSent, onEmail, isRetrievedQuote, isAdmin } = props;
   const handlePayment = () => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("retrievedQuote", "true");
-      window.location.href = "/customer/payment";
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('retrievedQuote', 'true');
+      window.location.href = '/customer/payment';
     }
   };
   return (
@@ -47,25 +47,19 @@ export default function Step4Form(props: Step4FormProps) {
           <div className="space-y-4 px-2 sm:px-4 md:px-8">
             <div className="bg-white rounded-lg p-4 borde">
               <div className="text-center">
-                <h3 className="text-xl font-semibold text-gray-800 mb-1">
-                  Total Premium
-                </h3>
+                <h3 className="text-xl font-semibold text-gray-800 mb-1">Total Premium</h3>
                 <p className="text-3xl font-bold text-blue-600">
                   {formatCurrency(state.totalPremium)}
                 </p>
               </div>
               <div className="mt-4 pt-4 border-t border-gray-100">
-                <h4 className="text-sm font-medium text-gray-700 mb-2">
-                  Premium Breakdown:
-                </h4>
+                <h4 className="text-sm font-medium text-gray-700 mb-2">Premium Breakdown:</h4>
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span>Core Coverage:</span>
-                    <span className="font-medium">
-                      {formatCurrency(state.basePremium)}
-                    </span>
+                    <span className="font-medium">{formatCurrency(state.basePremium)}</span>
                   </div>
-                  {state.liabilityCoverage !== "none" && (
+                  {state.liabilityCoverage !== 'none' && (
                     <div className="flex justify-between text-sm">
                       <span>Liability Coverage:</span>
                       <span className="font-medium">
@@ -89,25 +83,15 @@ export default function Step4Form(props: Step4FormProps) {
         {/* Manually recreated footer structure */}
         <div className="mt-8">
           <div className="flex flex-col md:flex-row justify-end gap-4 w-full">
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={onEmail}
-              className="w-full md:w-auto"
-            >
+            <Button variant="outline" size="lg" onClick={onEmail} className="w-full md:w-auto">
               <Mail size={18} className="mr-2" />
-              {emailSent ? "Email Sent!" : "Email Quote"}
+              {emailSent ? 'Email Sent!' : 'Email Quote'}
             </Button>
             {isAdmin ? (
-              <Button
-                variant="primary"
-                size="lg"
-                onClick={onSave}
-                className="w-full md:w-auto"
-              >
+              <Button variant="primary" size="lg" onClick={onSave} className="w-full md:w-auto">
                 Save Quote
               </Button>
-            ) : (isRetrievedQuote || state.quoteNumber) ? (
+            ) : isRetrievedQuote || state.quoteNumber ? (
               <Button
                 variant="primary"
                 size="lg"
@@ -121,12 +105,7 @@ export default function Step4Form(props: Step4FormProps) {
         </div>
       </div>
       <div className="flex flex-col md:flex-row justify-between gap-4 ml-10 w-full mt-4 px-5">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onBack}
-          className="w-48 py-5"
-        >
+        <Button type="button" variant="outline" onClick={onBack} className="w-48 py-5">
           Back
         </Button>
       </div>

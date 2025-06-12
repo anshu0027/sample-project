@@ -1,26 +1,17 @@
-"use client";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { User, Phone, MapPin, ChevronDown } from "lucide-react"; // Added ChevronDown
-import { useQuote } from "@/context/QuoteContext";
-import { Button } from "@/components/ui/Button";
-import Checkbox from "@/components/ui/Checkbox";
-import {
-  US_STATES,
-  RELATIONSHIP_OPTIONS,
-  REFERRAL_OPTIONS,
-} from "@/utils/constants";
-import {
-  isEmpty,
-  isValidPhone,
-  isValidZip,
-  formatPhoneNumber,
-} from "@/utils/validators";
-import dynamic from "next/dynamic";
+'use client';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { User, Phone, MapPin, ChevronDown } from 'lucide-react'; // Added ChevronDown
+import { useQuote } from '@/context/QuoteContext';
+import { Button } from '@/components/ui/Button';
+import Checkbox from '@/components/ui/Checkbox';
+import { US_STATES, RELATIONSHIP_OPTIONS, REFERRAL_OPTIONS } from '@/utils/constants';
+import { isEmpty, isValidPhone, isValidZip, formatPhoneNumber } from '@/utils/validators';
+import dynamic from 'next/dynamic';
 // import { Toaster } from "@/components/ui/toaster";
-import { toast } from "@/hooks/use-toast";
+import { toast } from '@/hooks/use-toast';
 
-const QuotePreview = dynamic(() => import("@/components/ui/QuotePreview"), {
+const QuotePreview = dynamic(() => import('@/components/ui/QuotePreview'), {
   ssr: false,
 });
 
@@ -33,22 +24,17 @@ export default function PolicyHolder() {
 
   useEffect(() => {
     const isAdminAuthenticated = () => {
-      return (
-        typeof window !== "undefined" &&
-        localStorage.getItem("admin_logged_in") === "true"
-      );
+      return typeof window !== 'undefined' && localStorage.getItem('admin_logged_in') === 'true';
     };
 
     const timer = setTimeout(() => {
       if (!isAdminAuthenticated()) {
-        router.replace("/admin/login");
+        router.replace('/admin/login');
         return;
       }
       if (!state.step2Complete) {
-        toast.error(
-          "Please complete Step 2: Event & Venue Details first."
-        );
-        router.replace("/admin/create-quote/step2");
+        toast.error('Please complete Step 2: Event & Venue Details first.');
+        router.replace('/admin/create-quote/step2');
         return;
       }
       setPageReady(true);
@@ -64,7 +50,7 @@ export default function PolicyHolder() {
   }, [state.phone]);
 
   const handleInputChange = (field: keyof typeof state, value: any) => {
-    dispatch({ type: "UPDATE_FIELD", field, value });
+    dispatch({ type: 'UPDATE_FIELD', field, value });
     if (errors[field]) {
       setErrors((prev) => {
         const newErrors = { ...prev };
@@ -75,56 +61,50 @@ export default function PolicyHolder() {
   };
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const input = e.target.value.replace(/\D/g, "");
-    handleInputChange("phone", input);
+    const input = e.target.value.replace(/\D/g, '');
+    handleInputChange('phone', input);
   };
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-    if (isEmpty(state.firstName))
-      newErrors.firstName = "Please enter your first name";
-    if (isEmpty(state.lastName))
-      newErrors.lastName = "Please enter your last name";
-    if (isEmpty(state.phone))
-      newErrors.phone = "Please enter your phone number";
-    else if (!isValidPhone(state.phone))
-      newErrors.phone = "Please enter a valid phone number";
+    if (isEmpty(state.firstName)) newErrors.firstName = 'Please enter your first name';
+    if (isEmpty(state.lastName)) newErrors.lastName = 'Please enter your last name';
+    if (isEmpty(state.phone)) newErrors.phone = 'Please enter your phone number';
+    else if (!isValidPhone(state.phone)) newErrors.phone = 'Please enter a valid phone number';
     if (isEmpty(state.relationship))
-      newErrors.relationship = "Please select your relationship to the couple";
-    if (isEmpty(state.address)) newErrors.address = "Please enter your address";
-    if (isEmpty(state.city)) newErrors.city = "Please enter your city";
-    if (isEmpty(state.state)) newErrors.state = "Please select your state";
-    if (isEmpty(state.zip)) newErrors.zip = "Please enter your ZIP code";
-    else if (!isValidZip(state.zip))
-      newErrors.zip = "Please enter a valid ZIP code";
+      newErrors.relationship = 'Please select your relationship to the couple';
+    if (isEmpty(state.address)) newErrors.address = 'Please enter your address';
+    if (isEmpty(state.city)) newErrors.city = 'Please enter your city';
+    if (isEmpty(state.state)) newErrors.state = 'Please select your state';
+    if (isEmpty(state.zip)) newErrors.zip = 'Please enter your ZIP code';
+    else if (!isValidZip(state.zip)) newErrors.zip = 'Please enter a valid ZIP code';
     if (!state.legalNotices)
-      newErrors.legalNotices = "You must accept the legal notices to proceed";
-    if (isEmpty(state.completingFormName))
-      newErrors.completingFormName = "Please enter your name";
+      newErrors.legalNotices = 'You must accept the legal notices to proceed';
+    if (isEmpty(state.completingFormName)) newErrors.completingFormName = 'Please enter your name';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleBack = () => {
-    router.push("/admin/create-quote/step2");
+    router.push('/admin/create-quote/step2');
   };
 
   const handleContinue = async () => {
     if (validateForm()) {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-      const quoteNumber = localStorage.getItem("quoteNumber");
-      
+      const quoteNumber = localStorage.getItem('quoteNumber');
+
       if (!quoteNumber) {
-        toast.error("Quote number not found. Please start over.");
-        router.push("/admin/create-quote/step1");
+        toast.error('Quote number not found. Please start over.');
+        router.push('/admin/create-quote/step1');
         return;
       }
 
       try {
         // Update quote with policy holder information
         const res = await fetch(`${apiUrl}/quotes/${quoteNumber}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             // Policy holder fields at root level
             firstName: state.firstName,
@@ -140,7 +120,7 @@ export default function PolicyHolder() {
             hearAboutUs: state.hearAboutUs,
             legalNotices: state.legalNotices,
             completingFormName: state.completingFormName,
-            status: "STEP3"
+            status: 'STEP3',
           }),
         });
 
@@ -152,10 +132,10 @@ export default function PolicyHolder() {
         const updatedQuote = await res.json();
         console.log('Updated quote:', updatedQuote); // Add this for debugging
 
-        dispatch({ type: "COMPLETE_STEP", step: 3 });
-        router.push("/admin/create-quote/step4");
+        dispatch({ type: 'COMPLETE_STEP', step: 3 });
+        router.push('/admin/create-quote/step4');
       } catch (error) {
-        const message = error instanceof Error ? error.message : "An unknown error occurred.";
+        const message = error instanceof Error ? error.message : 'An unknown error occurred.';
         toast.error(message);
       }
     } else {
@@ -215,12 +195,17 @@ export default function PolicyHolder() {
         <div className="space-y-8 w-full px-2 sm:px-4 md:px-8">
           <div className="h-10 bg-gray-200 rounded-md"></div> {/* Address */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
-            {[...Array(4)].map((_, i) => ( // Country, City, State, Zip
-              <div key={i} className="mb-4">
-                <div className="h-5 bg-gray-300 rounded w-1/3 mx-auto mb-2"></div>
-                <div className="h-10 bg-gray-200 rounded-md"></div>
-              </div>
-            ))}
+            {[...Array(4)].map(
+              (
+                _,
+                i, // Country, City, State, Zip
+              ) => (
+                <div key={i} className="mb-4">
+                  <div className="h-5 bg-gray-300 rounded w-1/3 mx-auto mb-2"></div>
+                  <div className="h-10 bg-gray-200 rounded-md"></div>
+                </div>
+              ),
+            )}
           </div>
         </div>
       </div>
@@ -248,7 +233,7 @@ export default function PolicyHolder() {
   return (
     <>
       <div className="w-full mx-auto pb-12 lg:mr-[28.25rem]">
-        {" "}
+        {' '}
         {/* Retain bottom padding, or manage spacing within sections */}
         {/* Policyholder Information Section */}
         <div className="mb-10 shadow-2xl border-0 bg-white/90 p-8 sm:p-10 md:p-12 rounded-2xl w-full">
@@ -267,10 +252,10 @@ export default function PolicyHolder() {
           </div>
 
           <div className="space-y-10">
-            {" "}
+            {' '}
             {/* Retained space-y-10 from original admin for consistency within this card */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
-              {" "}
+              {' '}
               {/* Matched gap from Step3Form */}
               {/* First Name */}
               <div className="mb-4">
@@ -283,17 +268,13 @@ export default function PolicyHolder() {
                 <input
                   id="firstName"
                   value={state.firstName}
-                  onChange={(e) =>
-                    handleInputChange("firstName", e.target.value)
-                  }
+                  onChange={(e) => handleInputChange('firstName', e.target.value)}
                   className={`w-full border text-left rounded-md py-2 px-4 ${
-                    errors.firstName ? "border-red-500" : "border-gray-300"
+                    errors.firstName ? 'border-red-500' : 'border-gray-300'
                   } focus:outline-none focus:ring-2 focus:ring-indigo-500`}
                 />
                 {errors.firstName && (
-                  <p className="text-sm text-red-500 mt-1 text-left">
-                    {errors.firstName}
-                  </p>
+                  <p className="text-sm text-red-500 mt-1 text-left">{errors.firstName}</p>
                 )}
               </div>
               {/* Last Name */}
@@ -307,17 +288,13 @@ export default function PolicyHolder() {
                 <input
                   id="lastName"
                   value={state.lastName}
-                  onChange={(e) =>
-                    handleInputChange("lastName", e.target.value)
-                  }
+                  onChange={(e) => handleInputChange('lastName', e.target.value)}
                   className={`w-full border text-left rounded-md py-2 px-4 ${
-                    errors.lastName ? "border-red-500" : "border-gray-300"
+                    errors.lastName ? 'border-red-500' : 'border-gray-300'
                   } focus:outline-none focus:ring-2 focus:ring-indigo-500`}
                 />
                 {errors.lastName && (
-                  <p className="text-sm text-red-500 mt-1 text-left">
-                    {errors.lastName}
-                  </p>
+                  <p className="text-sm text-red-500 mt-1 text-left">{errors.lastName}</p>
                 )}
               </div>
             </div>
@@ -342,10 +319,7 @@ export default function PolicyHolder() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 w-full px-2 sm:px-4 md:px-2">
             {/* Phone Number */}
             <div className="mb-4">
-              <label
-                htmlFor="phone"
-                className="block font-medium text-gray-800 mb-1 text-left"
-              >
+              <label htmlFor="phone" className="block font-medium text-gray-800 mb-1 text-left">
                 Phone Number <span className="text-red-500">*</span>
               </label>
               <div className="relative">
@@ -356,14 +330,12 @@ export default function PolicyHolder() {
                   onChange={handlePhoneChange}
                   placeholder="(123) 456-7890"
                   className={`text-left w-full border rounded-md py-2 px-3 ${
-                    errors.phone ? "border-red-500" : "border-gray-300"
+                    errors.phone ? 'border-red-500' : 'border-gray-300'
                   } focus:outline-none focus:ring-2 focus:ring-blue-500`}
                 />
               </div>
               {errors.phone && (
-                <p className="text-sm text-red-500 mt-1 text-left">
-                  {errors.phone}
-                </p>
+                <p className="text-sm text-red-500 mt-1 text-left">{errors.phone}</p>
               )}
             </div>
 
@@ -379,11 +351,9 @@ export default function PolicyHolder() {
                 <select
                   id="relationship"
                   value={state.relationship}
-                  onChange={(e) =>
-                    handleInputChange("relationship", e.target.value)
-                  }
+                  onChange={(e) => handleInputChange('relationship', e.target.value)}
                   className={`appearance-none w-full text-left border rounded-md py-2 pl-3 pr-10 ${
-                    errors.relationship ? "border-red-500" : "border-gray-300"
+                    errors.relationship ? 'border-red-500' : 'border-gray-300'
                   } focus:outline-none focus:ring-2 focus:ring-blue-500`}
                 >
                   <option value="" disabled>
@@ -401,9 +371,7 @@ export default function PolicyHolder() {
                 />
               </div>
               {errors.relationship && (
-                <p className="text-sm text-red-500 mt-1 text-left">
-                  {errors.relationship}
-                </p>
+                <p className="text-sm text-red-500 mt-1 text-left">{errors.relationship}</p>
               )}
             </div>
 
@@ -419,9 +387,7 @@ export default function PolicyHolder() {
                 <select
                   id="hearAboutUs"
                   value={state.hearAboutUs}
-                  onChange={(e) =>
-                    handleInputChange("hearAboutUs", e.target.value)
-                  }
+                  onChange={(e) => handleInputChange('hearAboutUs', e.target.value)}
                   className="appearance-none w-full text-left border border-gray-300 rounded-md py-2 pl-3 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">Select option (optional)</option>
@@ -458,35 +424,27 @@ export default function PolicyHolder() {
           <div className="space-y-8 w-full px-2 sm:px-4 md:px-8">
             {/* Address */}
             <div className="mb-4">
-              <label
-                htmlFor="address"
-                className="block font-medium text-gray-800 mb-1 text-left"
-              >
+              <label htmlFor="address" className="block font-medium text-gray-800 mb-1 text-left">
                 Address <span className="text-red-500">*</span>
               </label>
               <input
                 id="address"
                 value={state.address}
-                onChange={(e) => handleInputChange("address", e.target.value)}
+                onChange={(e) => handleInputChange('address', e.target.value)}
                 placeholder="Street Address"
                 className={`w-full border rounded-md py-2 px-3 ${
-                  errors.address ? "border-red-500" : "border-gray-300"
+                  errors.address ? 'border-red-500' : 'border-gray-300'
                 } focus:outline-none focus:ring-2 focus:ring-blue-500 text-left`}
               />
               {errors.address && (
-                <p className="text-sm text-red-500 mt-1 text-left">
-                  {errors.address}
-                </p>
+                <p className="text-sm text-red-500 mt-1 text-left">{errors.address}</p>
               )}
             </div>
 
             {/* Country + City */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
               <div className="mb-4">
-                <label
-                  htmlFor="country"
-                  className="block font-medium text-gray-800 mb-1 text-left"
-                >
+                <label htmlFor="country" className="block font-medium text-gray-800 mb-1 text-left">
                   Country <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -497,24 +455,19 @@ export default function PolicyHolder() {
                 />
               </div>
               <div className="mb-4">
-                <label
-                  htmlFor="city"
-                  className="block font-medium text-gray-800 mb-1 text-left"
-                >
+                <label htmlFor="city" className="block font-medium text-gray-800 mb-1 text-left">
                   City <span className="text-red-500">*</span>
                 </label>
                 <input
                   id="city"
                   value={state.city}
-                  onChange={(e) => handleInputChange("city", e.target.value)}
+                  onChange={(e) => handleInputChange('city', e.target.value)}
                   className={`w-full border rounded-md py-2 px-3 ${
-                    errors.city ? "border-red-500" : "border-gray-300"
+                    errors.city ? 'border-red-500' : 'border-gray-300'
                   } focus:outline-none focus:ring-2 focus:ring-blue-500 text-left`}
                 />
                 {errors.city && (
-                  <p className="text-sm text-red-500 mt-1 text-left">
-                    {errors.city}
-                  </p>
+                  <p className="text-sm text-red-500 mt-1 text-left">{errors.city}</p>
                 )}
               </div>
             </div>
@@ -522,19 +475,16 @@ export default function PolicyHolder() {
             {/* State + Zip */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
               <div className="mb-4">
-                <label
-                  htmlFor="state"
-                  className="block font-medium text-gray-800 mb-1 text-left"
-                >
+                <label htmlFor="state" className="block font-medium text-gray-800 mb-1 text-left">
                   State <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <select
                     id="state"
                     value={state.state}
-                    onChange={(e) => handleInputChange("state", e.target.value)}
+                    onChange={(e) => handleInputChange('state', e.target.value)}
                     className={`appearance-none w-full text-left border rounded-md py-2 pl-3 pr-10 ${
-                      errors.state ? "border-red-500" : "border-gray-300"
+                      errors.state ? 'border-red-500' : 'border-gray-300'
                     } focus:outline-none focus:ring-2 focus:ring-blue-500`}
                   >
                     <option value="" disabled>
@@ -552,32 +502,23 @@ export default function PolicyHolder() {
                   />
                 </div>
                 {errors.state && (
-                  <p className="text-sm text-red-500 mt-1 text-left">
-                    {errors.state}
-                  </p>
+                  <p className="text-sm text-red-500 mt-1 text-left">{errors.state}</p>
                 )}
               </div>
               <div className="mb-4">
-                <label
-                  htmlFor="zip"
-                  className="block font-medium text-gray-800 mb-1 text-left"
-                >
+                <label htmlFor="zip" className="block font-medium text-gray-800 mb-1 text-left">
                   ZIP Code <span className="text-red-500">*</span>
                 </label>
                 <input
                   id="zip"
                   value={state.zip}
-                  onChange={(e) => handleInputChange("zip", e.target.value)}
+                  onChange={(e) => handleInputChange('zip', e.target.value)}
                   placeholder="12345"
                   className={`w-full border rounded-md py-2 px-3 ${
-                    errors.zip ? "border-red-500" : "border-gray-300"
+                    errors.zip ? 'border-red-500' : 'border-gray-300'
                   } focus:outline-none focus:ring-2 focus:ring-blue-500 text-left`}
                 />
-                {errors.zip && (
-                  <p className="text-sm text-red-500 mt-1 text-left">
-                    {errors.zip}
-                  </p>
-                )}
+                {errors.zip && <p className="text-sm text-red-500 mt-1 text-left">{errors.zip}</p>}
               </div>
             </div>
           </div>
@@ -586,35 +527,28 @@ export default function PolicyHolder() {
         <div className="mb-8 shadow-lg border-0 bg-white p-8 sm:p-10 md:p-12 rounded-2xl w-full">
           <div className="space-y-8 w-full px-2 sm:px-4 md:px-8">
             <div className="bg-yellow-50 border-l-4 border-yellow-400 rounded-lg p-4 mb-4">
-              <h3 className="font-semibold text-yellow-800 mb-2">
-                Legal Notices
-              </h3>
+              <h3 className="font-semibold text-yellow-800 mb-2">Legal Notices</h3>
               <p className="text-sm text-gray-700 mb-4">
-                By proceeding with this insurance application, I understand and
-                agree to the following:
+                By proceeding with this insurance application, I understand and agree to the
+                following:
               </p>
               <ul className="list-disc pl-5 space-y-2 text-sm text-gray-700">
                 <li>
-                  All information I have provided is accurate and complete to
-                  the best of my knowledge.
+                  All information I have provided is accurate and complete to the best of my
+                  knowledge.
+                </li>
+                <li>Coverage is subject to the terms, conditions, and exclusions of the policy.</li>
+                <li>
+                  This insurance does not cover cancellations or impacts due to COVID-19, pandemics,
+                  or communicable diseases.
                 </li>
                 <li>
-                  Coverage is subject to the terms, conditions, and exclusions
-                  of the policy.
+                  The company reserves the right to verify any information provided and may adjust
+                  or deny claims based on investigation findings.
                 </li>
                 <li>
-                  This insurance does not cover cancellations or impacts due to
-                  COVID-19, pandemics, or communicable diseases.
-                </li>
-                <li>
-                  The company reserves the right to verify any information
-                  provided and may adjust or deny claims based on investigation
-                  findings.
-                </li>
-                <li>
-                  If payment is authorized, I understand the coverage begins on
-                  the specified date and ends after the event date according to
-                  policy terms.
+                  If payment is authorized, I understand the coverage begins on the specified date
+                  and ends after the event date according to policy terms.
                 </li>
               </ul>
             </div>
@@ -629,21 +563,16 @@ export default function PolicyHolder() {
                 id="legalNotices"
                 label={
                   <span className="font-medium">
-                    I have read, understand, and agree to the terms and
-                    conditions above
+                    I have read, understand, and agree to the terms and conditions above
                   </span>
                 }
                 checked={state.legalNotices}
-                onChange={(checked) =>
-                  handleInputChange("legalNotices", checked)
-                }
+                onChange={(checked) => handleInputChange('legalNotices', checked)}
                 error={!!errors.legalNotices}
                 className="justify-start" // Matched customer page
               />
               {errors.legalNotices && (
-                <p className="text-sm text-red-500 mt-1 text-left">
-                  {errors.legalNotices}
-                </p>
+                <p className="text-sm text-red-500 mt-1 text-left">{errors.legalNotices}</p>
               )}
             </div>
 
@@ -652,8 +581,7 @@ export default function PolicyHolder() {
                 htmlFor="completingFormName"
                 className="block text-center font-medium text-gray-800 mb-1"
               >
-                Name of person completing this form{" "}
-                <span className="text-red-500">*</span>
+                Name of person completing this form <span className="text-red-500">*</span>
                 <span
                   className="ml-2 text-gray-400"
                   title="Please enter your full name to verify your acceptance"
@@ -665,18 +593,19 @@ export default function PolicyHolder() {
                 id="completingFormName"
                 type="text"
                 value={state.completingFormName}
-                onChange={(e) =>
-                  handleInputChange("completingFormName", e.target.value)
-                }
+                onChange={(e) => handleInputChange('completingFormName', e.target.value)}
                 placeholder="Full Name"
-                className={`block w-[60%] text-left mx-auto rounded-md shadow-sm text-base font-medium transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 border pl-4 pr-4 py-2 ${ // Matched customer page
+                className={`block w-[60%] text-left mx-auto rounded-md shadow-sm text-base font-medium transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 border pl-4 pr-4 py-2 ${
+                  // Matched customer page
                   errors.completingFormName
-                    ? "border-red-400 text-red-900 placeholder-red-300 bg-red-50"
-                    : "border-gray-200 text-gray-900 placeholder-gray-400 text-left" // Added text-left
+                    ? 'border-red-400 text-red-900 placeholder-red-300 bg-red-50'
+                    : 'border-gray-200 text-gray-900 placeholder-gray-400 text-left' // Added text-left
                 }`}
               />
               {errors.completingFormName && (
-                <p className="text-sm text-red-500 mt-1 text-center"> {/* Customer page has this centered */}
+                <p className="text-sm text-red-500 mt-1 text-center">
+                  {' '}
+                  {/* Customer page has this centered */}
                   {errors.completingFormName}
                 </p>
               )}
@@ -702,7 +631,7 @@ export default function PolicyHolder() {
         </div>
       </div>
       <div className="hidden lg:block fixed w-80 right-11 mr-2 top-[260px] z-10">
-        {" "}
+        {' '}
         <QuotePreview />
       </div>
     </>

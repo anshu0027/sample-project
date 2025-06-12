@@ -17,7 +17,7 @@ export interface PolicyVersionData {
   liquorLiability: boolean;
   covidDisclosure: boolean;
   specialActivities: boolean;
-  
+
   // Step 2
   honoree1FirstName: string;
   honoree1LastName: string;
@@ -33,7 +33,7 @@ export interface PolicyVersionData {
   venueState: string;
   venueZip: string;
   venueAsInsured: boolean;
-  
+
   // Additional Venue Information for Weddings (Step 2)
   receptionLocationType: string;
   receptionIndoorOutdoor: string;
@@ -79,7 +79,6 @@ export interface PolicyVersionData {
   rehearsalDinnerVenueZip: string;
   rehearsalDinnerVenueAsInsured: boolean;
 
-
   // Step 3
   firstName: string;
   lastName: string;
@@ -93,7 +92,7 @@ export interface PolicyVersionData {
   zip: string;
   legalNotices: boolean;
   completingFormName: string;
-  
+
   // Other fields
   id?: number; // Policy ID from database
   quoteNumber: string;
@@ -105,5 +104,4 @@ export interface PolicyVersionData {
   policyId: number;
   policyNumber: string;
   pdfUrl: string;
-
-} 
+}

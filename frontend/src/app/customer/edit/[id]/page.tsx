@@ -1,15 +1,24 @@
-"use client";
-import { useState, useEffect } from "react";
-import { useRouter, useParams } from "next/navigation";
-import { Button } from "@/components/ui/Button";
-import { toast } from "@/hooks/use-toast";
-import { useQuote, QuoteState } from "@/context/QuoteContext";
+'use client';
+import { useState, useEffect } from 'react';
+import { useRouter, useParams } from 'next/navigation';
+import { Button } from '@/components/ui/Button';
+import { toast } from '@/hooks/use-toast';
+import { useQuote, QuoteState } from '@/context/QuoteContext';
 import dynamic from 'next/dynamic';
 
 const StepFormLoading = () => <div className="p-8 text-center text-gray-500">Loading form...</div>;
-const Step1Form = dynamic(() => import('@/components/quote/Step1Form'), { ssr: false, loading: StepFormLoading });
-const Step2Form = dynamic(() => import('@/components/quote/Step2Form'), { ssr: false, loading: StepFormLoading });
-const Step3Form = dynamic(() => import('@/components/quote/Step3Form'), { ssr: false, loading: StepFormLoading });
+const Step1Form = dynamic(() => import('@/components/quote/Step1Form'), {
+  ssr: false,
+  loading: StepFormLoading,
+});
+const Step2Form = dynamic(() => import('@/components/quote/Step2Form'), {
+  ssr: false,
+  loading: StepFormLoading,
+});
+const Step3Form = dynamic(() => import('@/components/quote/Step3Form'), {
+  ssr: false,
+  loading: StepFormLoading,
+});
 
 interface QuoteFormState {
   residentState: string;
@@ -102,87 +111,87 @@ interface QuoteFormState {
 
 function flattenQuote(quote: any): QuoteFormState {
   return {
-    residentState: quote.residentState || quote.policyHolder?.state || "",
-    eventType: quote.event?.eventType || "",
-    eventDate: quote.event?.eventDate || "",
-    maxGuests: quote.event?.maxGuests || "",
-    email: quote?.email || "",
-    coverageLevel: quote.coverageLevel ?? "",
-    liabilityCoverage: quote.liabilityCoverage ?? "",
+    residentState: quote.residentState || quote.policyHolder?.state || '',
+    eventType: quote.event?.eventType || '',
+    eventDate: quote.event?.eventDate || '',
+    maxGuests: quote.event?.maxGuests || '',
+    email: quote?.email || '',
+    coverageLevel: quote.coverageLevel ?? '',
+    liabilityCoverage: quote.liabilityCoverage ?? '',
     liquorLiability: quote.liquorLiability ?? false,
     covidDisclosure: quote.covidDisclosure ?? false,
     specialActivities: quote.specialActivities ?? false,
-    honoree1FirstName: quote.event?.honoree1FirstName || "",
-    honoree1LastName: quote.event?.honoree1LastName || "",
-    honoree2FirstName: quote.event?.honoree2FirstName || "",
-    honoree2LastName: quote.event?.honoree2LastName || "",
+    honoree1FirstName: quote.event?.honoree1FirstName || '',
+    honoree1LastName: quote.event?.honoree1LastName || '',
+    honoree2FirstName: quote.event?.honoree2FirstName || '',
+    honoree2LastName: quote.event?.honoree2LastName || '',
     // Main venue fields
-    ceremonyLocationType: quote.event?.venue?.ceremonyLocationType || "",
-    indoorOutdoor: quote.event?.venue?.indoorOutdoor || "",
-    venueName: quote.event?.venue?.name || "",
-    venueAddress1: quote.event?.venue?.address1 || "",
-    venueAddress2: quote.event?.venue?.address2 || "",
-    venueCountry: quote.event?.venue?.country || "",
-    venueCity: quote.event?.venue?.city || "",
-    venueState: quote.event?.venue?.state || "",
-    venueZip: quote.event?.venue?.zip || "",
+    ceremonyLocationType: quote.event?.venue?.ceremonyLocationType || '',
+    indoorOutdoor: quote.event?.venue?.indoorOutdoor || '',
+    venueName: quote.event?.venue?.name || '',
+    venueAddress1: quote.event?.venue?.address1 || '',
+    venueAddress2: quote.event?.venue?.address2 || '',
+    venueCountry: quote.event?.venue?.country || '',
+    venueCity: quote.event?.venue?.city || '',
+    venueState: quote.event?.venue?.state || '',
+    venueZip: quote.event?.venue?.zip || '',
     venueAsInsured: quote.event?.venue?.venueAsInsured || false,
     // Reception venue fields
-    receptionLocationType: quote.event?.venue?.receptionLocationType || "",
-    receptionIndoorOutdoor: quote.event?.venue?.receptionIndoorOutdoor || "",
-    receptionVenueName: quote.event?.venue?.receptionVenueName || "",
-    receptionVenueAddress1: quote.event?.venue?.receptionVenueAddress1 || "",
-    receptionVenueAddress2: quote.event?.venue?.receptionVenueAddress2 || "",
-    receptionVenueCountry: quote.event?.venue?.receptionVenueCountry || "",
-    receptionVenueCity: quote.event?.venue?.receptionVenueCity || "",
-    receptionVenueState: quote.event?.venue?.receptionVenueState || "",
-    receptionVenueZip: quote.event?.venue?.receptionVenueZip || "",
+    receptionLocationType: quote.event?.venue?.receptionLocationType || '',
+    receptionIndoorOutdoor: quote.event?.venue?.receptionIndoorOutdoor || '',
+    receptionVenueName: quote.event?.venue?.receptionVenueName || '',
+    receptionVenueAddress1: quote.event?.venue?.receptionVenueAddress1 || '',
+    receptionVenueAddress2: quote.event?.venue?.receptionVenueAddress2 || '',
+    receptionVenueCountry: quote.event?.venue?.receptionVenueCountry || '',
+    receptionVenueCity: quote.event?.venue?.receptionVenueCity || '',
+    receptionVenueState: quote.event?.venue?.receptionVenueState || '',
+    receptionVenueZip: quote.event?.venue?.receptionVenueZip || '',
     receptionVenueAsInsured: quote.event?.venue?.receptionVenueAsInsured || false,
     // Brunch venue fields
-    brunchLocationType: quote.event?.venue?.brunchLocationType || "",
-    brunchIndoorOutdoor: quote.event?.venue?.brunchIndoorOutdoor || "",
-    brunchVenueName: quote.event?.venue?.brunchVenueName || "",
-    brunchVenueAddress1: quote.event?.venue?.brunchVenueAddress1 || "",
-    brunchVenueAddress2: quote.event?.venue?.brunchVenueAddress2 || "",
-    brunchVenueCountry: quote.event?.venue?.brunchVenueCountry || "",
-    brunchVenueCity: quote.event?.venue?.brunchVenueCity || "",
-    brunchVenueState: quote.event?.venue?.brunchVenueState || "",
-    brunchVenueZip: quote.event?.venue?.brunchVenueZip || "",
+    brunchLocationType: quote.event?.venue?.brunchLocationType || '',
+    brunchIndoorOutdoor: quote.event?.venue?.brunchIndoorOutdoor || '',
+    brunchVenueName: quote.event?.venue?.brunchVenueName || '',
+    brunchVenueAddress1: quote.event?.venue?.brunchVenueAddress1 || '',
+    brunchVenueAddress2: quote.event?.venue?.brunchVenueAddress2 || '',
+    brunchVenueCountry: quote.event?.venue?.brunchVenueCountry || '',
+    brunchVenueCity: quote.event?.venue?.brunchVenueCity || '',
+    brunchVenueState: quote.event?.venue?.brunchVenueState || '',
+    brunchVenueZip: quote.event?.venue?.brunchVenueZip || '',
     brunchVenueAsInsured: quote.event?.venue?.brunchVenueAsInsured || false,
     // Rehearsal venue fields
-    rehearsalLocationType: quote.event?.venue?.rehearsalLocationType || "",
-    rehearsalIndoorOutdoor: quote.event?.venue?.rehearsalIndoorOutdoor || "",
-    rehearsalVenueName: quote.event?.venue?.rehearsalVenueName || "",
-    rehearsalVenueAddress1: quote.event?.venue?.rehearsalVenueAddress1 || "",
-    rehearsalVenueAddress2: quote.event?.venue?.rehearsalVenueAddress2 || "",
-    rehearsalVenueCountry: quote.event?.venue?.rehearsalVenueCountry || "",
-    rehearsalVenueCity: quote.event?.venue?.rehearsalVenueCity || "",
-    rehearsalVenueState: quote.event?.venue?.rehearsalVenueState || "",
-    rehearsalVenueZip: quote.event?.venue?.rehearsalVenueZip || "",
+    rehearsalLocationType: quote.event?.venue?.rehearsalLocationType || '',
+    rehearsalIndoorOutdoor: quote.event?.venue?.rehearsalIndoorOutdoor || '',
+    rehearsalVenueName: quote.event?.venue?.rehearsalVenueName || '',
+    rehearsalVenueAddress1: quote.event?.venue?.rehearsalVenueAddress1 || '',
+    rehearsalVenueAddress2: quote.event?.venue?.rehearsalVenueAddress2 || '',
+    rehearsalVenueCountry: quote.event?.venue?.rehearsalVenueCountry || '',
+    rehearsalVenueCity: quote.event?.venue?.rehearsalVenueCity || '',
+    rehearsalVenueState: quote.event?.venue?.rehearsalVenueState || '',
+    rehearsalVenueZip: quote.event?.venue?.rehearsalVenueZip || '',
     rehearsalVenueAsInsured: quote.event?.venue?.rehearsalVenueAsInsured || false,
     // Rehearsal dinner venue fields
-    rehearsalDinnerLocationType: quote.event?.venue?.rehearsalDinnerLocationType || "",
-    rehearsalDinnerIndoorOutdoor: quote.event?.venue?.rehearsalDinnerIndoorOutdoor || "",
-    rehearsalDinnerVenueName: quote.event?.venue?.rehearsalDinnerVenueName || "",
-    rehearsalDinnerVenueAddress1: quote.event?.venue?.rehearsalDinnerVenueAddress1 || "",
-    rehearsalDinnerVenueAddress2: quote.event?.venue?.rehearsalDinnerVenueAddress2 || "",
-    rehearsalDinnerVenueCountry: quote.event?.venue?.rehearsalDinnerVenueCountry || "",
-    rehearsalDinnerVenueCity: quote.event?.venue?.rehearsalDinnerVenueCity || "",
-    rehearsalDinnerVenueState: quote.event?.venue?.rehearsalDinnerVenueState || "",
-    rehearsalDinnerVenueZip: quote.event?.venue?.rehearsalDinnerVenueZip || "",
+    rehearsalDinnerLocationType: quote.event?.venue?.rehearsalDinnerLocationType || '',
+    rehearsalDinnerIndoorOutdoor: quote.event?.venue?.rehearsalDinnerIndoorOutdoor || '',
+    rehearsalDinnerVenueName: quote.event?.venue?.rehearsalDinnerVenueName || '',
+    rehearsalDinnerVenueAddress1: quote.event?.venue?.rehearsalDinnerVenueAddress1 || '',
+    rehearsalDinnerVenueAddress2: quote.event?.venue?.rehearsalDinnerVenueAddress2 || '',
+    rehearsalDinnerVenueCountry: quote.event?.venue?.rehearsalDinnerVenueCountry || '',
+    rehearsalDinnerVenueCity: quote.event?.venue?.rehearsalDinnerVenueCity || '',
+    rehearsalDinnerVenueState: quote.event?.venue?.rehearsalDinnerVenueState || '',
+    rehearsalDinnerVenueZip: quote.event?.venue?.rehearsalDinnerVenueZip || '',
     rehearsalDinnerVenueAsInsured: quote.event?.venue?.rehearsalDinnerVenueAsInsured || false,
-    firstName: quote.policyHolder?.firstName || "",
-    lastName: quote.policyHolder?.lastName || "",
-    phone: quote.policyHolder?.phone || "",
-    relationship: quote.policyHolder?.relationship || "",
-    hearAboutUs: quote.policyHolder?.hearAboutUs || "",
-    address: quote.policyHolder?.address || "",
-    country: quote.policyHolder?.country || "",
-    city: quote.policyHolder?.city || "",
-    state: quote.policyHolder?.state || "",
-    zip: quote.policyHolder?.zip || "",
+    firstName: quote.policyHolder?.firstName || '',
+    lastName: quote.policyHolder?.lastName || '',
+    phone: quote.policyHolder?.phone || '',
+    relationship: quote.policyHolder?.relationship || '',
+    hearAboutUs: quote.policyHolder?.hearAboutUs || '',
+    address: quote.policyHolder?.address || '',
+    country: quote.policyHolder?.country || '',
+    city: quote.policyHolder?.city || '',
+    state: quote.policyHolder?.state || '',
+    zip: quote.policyHolder?.zip || '',
     legalNotices: quote.policyHolder?.legalNotices || false,
-    completingFormName: quote.policyHolder?.completingFormName || "",
+    completingFormName: quote.policyHolder?.completingFormName || '',
     quoteNumber: quote.quoteNumber,
     totalPremium: quote.totalPremium,
     basePremium: quote.basePremium,
@@ -218,39 +227,37 @@ export default function EditUserQuote() {
           const flatQuote = flattenQuote(data.quote);
           setFormState(flatQuote);
           dispatch({
-            type: "SET_ENTIRE_QUOTE_STATE",
+            type: 'SET_ENTIRE_QUOTE_STATE',
             payload: flatQuote as Partial<QuoteState>,
           });
-          if (typeof window !== "undefined") {
-            localStorage.setItem("retrievedQuote", "true");
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('retrievedQuote', 'true');
           }
         } else {
           toast({
-            title: "Failed to load quote.",
-            description: "Please try again later.",
-            variant: "destructive",
+            title: 'Failed to load quote.',
+            description: 'Please try again later.',
+            variant: 'destructive',
           });
-          router.push("/");
+          router.push('/');
         }
       } catch (error) {
         toast({
-          title: "An error occurred.",
-          description: "Could not connect to the server.",
-          variant: "destructive",
+          title: 'An error occurred.',
+          description: 'Could not connect to the server.',
+          variant: 'destructive',
         });
       } finally {
         setIsLoading(false);
       }
     }
     if (id) {
-        fetchQuote();
+      fetchQuote();
     }
   }, [id, dispatch, router]);
 
   const EditUserQuoteSkeleton = () => (
-    <div className="p-6 m-auto animate-pulse">
-      {/* ... Skeleton UI remains identical ... */}
-    </div>
+    <div className="p-6 m-auto animate-pulse">{/* ... Skeleton UI remains identical ... */}</div>
   );
 
   if (isLoading || !formState) return <EditUserQuoteSkeleton />;
@@ -266,9 +273,15 @@ export default function EditUserQuote() {
     }
   };
 
-  const validateStep1 = () => { /* ... Validation logic remains identical ... */ return true; };
-  const validateStep2 = () => { /* ... Validation logic remains identical ... */ return true; };
-  const validateStep3 = () => { /* ... Validation logic remains identical ... */ return true; };
+  const validateStep1 = () => {
+    /* ... Validation logic remains identical ... */ return true;
+  };
+  const validateStep2 = () => {
+    /* ... Validation logic remains identical ... */ return true;
+  };
+  const validateStep3 = () => {
+    /* ... Validation logic remains identical ... */ return true;
+  };
 
   // ==================================================================
   // ===== API CHANGE #2: Saving data for the current step ==========
@@ -280,22 +293,23 @@ export default function EditUserQuote() {
     else if (currentStepNumForValidation === 3) valid = validateStep3();
 
     if (!valid) {
-      toast({ title: "Please fix errors before saving.", variant: "destructive" });
+      toast({ title: 'Please fix errors before saving.', variant: 'destructive' });
       return false;
     }
 
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
     // The payload is the entire form state, as the backend can handle partial updates.
     const payload = { ...formState };
-    
+
     console.log('Saving quote with payload:', payload);
     console.log('API URL:', apiUrl);
     console.log('Quote ID:', id);
 
     try {
-      const res = await fetch(`${apiUrl}/quotes/${id}`, { // UPDATED PATH
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch(`${apiUrl}/quotes/${id}`, {
+        // UPDATED PATH
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
 
@@ -304,21 +318,21 @@ export default function EditUserQuote() {
       console.log('Response data:', responseData);
 
       if (res.ok) {
-        toast({ title: "Quote progress saved!", variant: "default" });
+        toast({ title: 'Quote progress saved!', variant: 'default' });
         const updatedStateFromSave = flattenQuote(responseData.quote);
         setFormState(updatedStateFromSave);
         dispatch({
-          type: "SET_ENTIRE_QUOTE_STATE",
+          type: 'SET_ENTIRE_QUOTE_STATE',
           payload: updatedStateFromSave as Partial<QuoteState>,
         });
         return true;
       } else {
-        throw new Error(responseData.error || "Failed to update quote.");
+        throw new Error(responseData.error || 'Failed to update quote.');
       }
     } catch (error) {
       console.error('Save error:', error);
-      const message = error instanceof Error ? error.message : "An unknown error occurred.";
-      toast({ title: message, variant: "destructive" });
+      const message = error instanceof Error ? error.message : 'An unknown error occurred.';
+      toast({ title: message, variant: 'destructive' });
       return false;
     }
   };
@@ -327,18 +341,31 @@ export default function EditUserQuote() {
   // ===== API CHANGE #3: Finalizing the quote for review ===========
   // ==================================================================
   const handleProceedToReview = async () => {
-    if (!validateStep1()) { setStep(1); toast({ title: "Please complete Step 1 correctly.", variant: "destructive" }); return; }
-    if (!validateStep2()) { setStep(2); toast({ title: "Please complete Step 2 correctly.", variant: "destructive" }); return; }
-    if (!validateStep3()) { setStep(3); toast({ title: "Please complete Step 3 correctly.", variant: "destructive" }); return; }
+    if (!validateStep1()) {
+      setStep(1);
+      toast({ title: 'Please complete Step 1 correctly.', variant: 'destructive' });
+      return;
+    }
+    if (!validateStep2()) {
+      setStep(2);
+      toast({ title: 'Please complete Step 2 correctly.', variant: 'destructive' });
+      return;
+    }
+    if (!validateStep3()) {
+      setStep(3);
+      toast({ title: 'Please complete Step 3 correctly.', variant: 'destructive' });
+      return;
+    }
 
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
     // The payload now just needs to mark the status as complete.
-    const payload = { ...formState, status: "COMPLETE" };
+    const payload = { ...formState, status: 'COMPLETE' };
 
     try {
-      const res = await fetch(`${apiUrl}/quotes/${id}`, { // UPDATED PATH
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch(`${apiUrl}/quotes/${id}`, {
+        // UPDATED PATH
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
 
@@ -347,25 +374,28 @@ export default function EditUserQuote() {
         const finalQuoteState = flattenQuote(data.quote);
         setFormState(finalQuoteState);
         dispatch({
-          type: "SET_ENTIRE_QUOTE_STATE",
+          type: 'SET_ENTIRE_QUOTE_STATE',
           payload: finalQuoteState as Partial<QuoteState>,
         });
-        localStorage.setItem("quoteNumber", id);
-        router.push("/customer/review");
+        localStorage.setItem('quoteNumber', id);
+        router.push('/customer/review');
       } else {
         const data = await res.json();
-        throw new Error(data.error || "Failed to finalize quote for review.");
+        throw new Error(data.error || 'Failed to finalize quote for review.');
       }
     } catch (error) {
-      const message = error instanceof Error ? error.message : "An unknown error occurred.";
-      toast({ title: message, variant: "destructive" });
+      const message = error instanceof Error ? error.message : 'An unknown error occurred.';
+      toast({ title: message, variant: 'destructive' });
     }
   };
 
   const handleStep1Continue = async () => {
     if (validateStep1()) {
       if (!showQuoteResults && formState.eventType) {
-        toast({ title: "Please calculate the quote first (button in Step 1).", variant: "default" });
+        toast({
+          title: 'Please calculate the quote first (button in Step 1).',
+          variant: 'default',
+        });
         return;
       }
       const saved = await saveCurrentStepData(1);
@@ -395,22 +425,22 @@ export default function EditUserQuote() {
           className="w-full sm:w-auto order-2 sm:order-none"
           variant="outline"
           size="sm"
-          onClick={() => router.push("/")}
+          onClick={() => router.push('/')}
         >
           Back to Home
         </Button>
       </div>
       <div className="mb-8 flex flex-row justify-center max-w-4xl mx-auto items-center gap-2 sm:gap-3 md:gap-10">
         {[
-          { label: "Step 1", stepNum: 1 },
-          { label: "Step 2", stepNum: 2 },
-          { label: "Step 3", stepNum: 3 },
-          { label: "Review & Pay", stepNum: 4 },
+          { label: 'Step 1', stepNum: 1 },
+          { label: 'Step 2', stepNum: 2 },
+          { label: 'Step 3', stepNum: 3 },
+          { label: 'Review & Pay', stepNum: 4 },
         ].map((s_item) => (
           <Button
             key={s_item.stepNum}
             className="flex-1 min-w-0 text-center rounded-full md:flex-initial md:w-48"
-            variant={step === s_item.stepNum && s_item.stepNum !== 4 ? "default" : "outline"}
+            variant={step === s_item.stepNum && s_item.stepNum !== 4 ? 'default' : 'outline'}
             onClick={() => {
               if (s_item.stepNum === 4) {
                 handleProceedToReview();

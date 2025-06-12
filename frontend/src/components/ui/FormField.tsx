@@ -12,7 +12,6 @@ interface FormFieldProps {
   children: React.ReactNode;
 }
 
-
 const FormField: React.FC<FormFieldProps> = ({
   label,
   htmlFor,
@@ -31,7 +30,7 @@ const FormField: React.FC<FormFieldProps> = ({
           htmlFor={htmlFor}
           className={clsx(
             'block text-base font-semibold',
-            error ? 'text-red-600' : 'text-gray-800'
+            error ? 'text-red-600' : 'text-gray-800',
           )}
         >
           {label}
@@ -56,7 +55,9 @@ const FormField: React.FC<FormFieldProps> = ({
       </div>
       <div className="flex justify-center">{children}</div>
       {error && (
-        <p className="mt-2 text-sm font-semibold text-red-600 bg-red-50 rounded px-2 py-1 w-fit mx-auto">{error}</p>
+        <p className="mt-2 text-sm font-semibold text-red-600 bg-red-50 rounded px-2 py-1 w-fit mx-auto">
+          {error}
+        </p>
       )}
     </div>
   );
