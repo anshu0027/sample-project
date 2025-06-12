@@ -1,5 +1,8 @@
+// import cookieParser from 'cookie-parser';
+// import csrf from 'csurf';
 import express from 'express';
 import cors from 'cors';
+import rateLimit from 'express-rate-limit';
 import path from 'path'; // Import the 'path' module
 import { AppDataSource } from './data-source';
 // Import your future routes here
@@ -21,6 +24,14 @@ app.use(cors({
   credentials: true
 }));
 
+// Global Rate Limiter
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+});
+
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -28,8 +39,11 @@ app.use(express.urlencoded({ extended: true }));
 // Serve static files from the 'public' directory
 app.use(express.static(path.join(process.cwd(), 'public')));
 
+// Apply the global rate limiter to all requests
+app.use(globalLimiter);
+
 // Health check route
-app.get('/api/health', (req, res) => {
+app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok' });
 });
 
@@ -60,9 +74,11 @@ AppDataSource.initialize()
     
     // Start server
     const PORT = process.env.PORT || 8000;
+    // const LINK = "http://localhost:" + PORT;
+    // const HOST = LINK || process.env.NEXT_PUBLIC_FRONTEND_URL;
     
     app.listen(PORT, () => {
-      console.log(`Backend server running on http://localhost:${PORT}`);
+      console.log(`Backend running on http://localhost:${PORT}`);
     });
   })
   .catch((error) => {

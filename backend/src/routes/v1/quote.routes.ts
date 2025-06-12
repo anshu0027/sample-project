@@ -19,7 +19,12 @@ import {
   CoverageLevel,
   LiabilityOption,
 } from '../../utils/quote.utils';
-import { In } from 'typeorm';
+import { rateLimit } from 'express-rate-limit';
+const quoteLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 10 // limit each IP to 10 quote creations per hour
+});
+// import { In } from 'typeorm';
 
 const router = Router();
 
@@ -96,7 +101,7 @@ router.get('/', async (req: Request, res: Response) => {
 
 // --- POST /api/v1/quotes ---
 // Replace the existing POST handler in my-backend/src/routes/v1/quote.routes.ts
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', quoteLimiter, async (req: Request, res: Response) => {
 
   console.log("Request Body:", req.body);
   try {
@@ -303,7 +308,6 @@ router.post('/', async (req: Request, res: Response) => {
     }
   }
 });
-
 
 
 // --- PUT /api/v1/quotes/:quoteNumber ---

@@ -1,12 +1,18 @@
 import express from 'express';
 import type { Request, Response } from 'express';
+import rateLimit from 'express-rate-limit';
+
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5 // limit each IP to 5 requests per windowMs
+});
 
 const router = express.Router();
 
 const LoginID = "admin@weddingguard.com";
 const LoginPassword = "admin123";
 
-router.post('/', (req: Request, res: Response): void => {
+router.post('/',loginLimiter, (req: Request, res: Response): void => {
     const { id, password } = req.body;
 
     // Verify admin credentials

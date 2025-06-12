@@ -7,9 +7,24 @@ import { FindOptionsWhere } from 'typeorm';
 import { Quote } from '../../entities/quote.entity';
 import { Policy } from '../../entities/policy.entity';
 import { StepStatus } from '../../entities/enums';
-import { APIContracts, APIControllers, Constants } from 'authorizenet';
+import { APIContracts, APIControllers } from 'authorizenet'; // Removed "Constants" as it was not used.
+import rateLimit from 'express-rate-limit';
 
 const router = Router();
+
+// Rate limiter for manual payment creation
+const manualPaymentLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000, // 1 hour
+    max: 10, // Limit each IP to 10 manual payment creations per hour
+    message: 'Too many payment creation attempts, please try again later.',
+});
+
+// Stricter rate limiter for Authorize.Net endpoint
+const authorizeNetLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 5, // Limit each IP to 5 Authorize.Net attempts per 15 minutes
+    message: 'Too many payment attempts with gateway, please try again later.',
+});
 
 // Authorize.Net configuration
 const apiLoginId = process.env.AUTHORIZE_NET_API_LOGIN_ID_SANDBOX;
@@ -85,7 +100,7 @@ router.get('/', async (req: Request, res: Response) => {
 });
 
 // --- POST /api/v1/payment ---
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', manualPaymentLimiter, async (req: Request, res: Response) => {
     const queryRunner = AppDataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -190,7 +205,7 @@ router.post('/', async (req: Request, res: Response) => {
 });
 
 // --- POST /api/v1/payment/authorize-net ---
-router.post('/authorize-net', async (req: Request, res: Response) => {
+router.post('/authorize-net', authorizeNetLimiter, async (req: Request, res: Response) => {
     const queryRunner = AppDataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();

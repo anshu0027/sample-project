@@ -1,9 +1,14 @@
 import { Router, Request, Response } from 'express';
 import { sendQuoteEmail, sendPolicyEmail } from '../../services/email.service';
+import rateLimit from 'express-rate-limit';
+const emailLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 25 // limit each IP to 25 emails per hour
+});
 
 const router = Router();
 
-router.post('/send', async (req: Request, res: Response) => {
+router.post('/send', emailLimiter, async (req: Request, res: Response) => {
     try {
         const { to, type = 'quote', data } = req.body;
 

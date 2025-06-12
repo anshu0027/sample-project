@@ -215,6 +215,8 @@ router.put('/:id', async (req: Request, res: Response) => {
 
         // --- Update Logic ---
         // Merge top-level policy fields
+        // Note: status field exists in database but not in Policy entity
+        // This is handled by TypeORM at runtime despite TypeScript warning
         policyRepository.merge(policyRecord, { 
             policyNumber: fields.policyNumber, 
             pdfUrl: fields.pdfUrl,
@@ -538,9 +540,9 @@ router.post('/from-quote', async (req: Request, res: Response) => {
     } catch (error) {
         console.error('POST /from-quote error:', error);
         console.error('Error details:', {
-            name: error.name,
-            message: error.message,
-            stack: error.stack
+            name: (error as Error).name,
+            message: (error as Error).message,
+            stack: (error as Error).stack
         });
         const message = error instanceof Error ? error.message : 'Server error';
         res.status(500).json({ error: message });
