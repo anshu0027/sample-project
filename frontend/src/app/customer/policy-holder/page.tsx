@@ -10,7 +10,6 @@ import { isEmpty, isValidPhone, isValidZip, formatPhoneNumber } from '@/utils/va
 import dynamic from 'next/dynamic';
 import { toast } from '@/hooks/use-toast';
 import type { QuoteState } from '@/context/QuoteContext';
-import Input from '@/components/ui/Input';
 
 const QuotePreview = dynamic(() => import('@/components/ui/QuotePreview'), {
   ssr: false,
@@ -24,15 +23,12 @@ export default function PolicyHolder() {
   const [pageReady, setPageReady] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (!state.step2Complete) {
-        toast.error('Please complete Step 2: Event & Venue Details first.');
-        router.replace('/customer/event-information');
-        return;
-      }
-      setPageReady(true);
-    }, 200);
-    return () => clearTimeout(timer);
+    if (!state.step2Complete) {
+      toast.error('Please complete Step 2: Event & Venue Details first.');
+      router.replace('/customer/event-information');
+    } else {
+      setPageReady(true); // Set page ready if step 2 is complete
+    }
   }, [state.step2Complete, router]);
 
   useEffect(() => {
@@ -230,7 +226,7 @@ export default function PolicyHolder() {
                 Policyholder Information
               </div>
               <div className="text-base text-gray-500 font-medium leading-tight">
-                Enter the policyholder's details
+                Enter the policyholder&apos;s details
               </div>
             </div>
           </div>

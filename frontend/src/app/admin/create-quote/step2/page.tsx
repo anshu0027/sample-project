@@ -350,8 +350,8 @@ export default function EventInformation() {
           throw new Error(errorData.error || 'Failed to update quote');
         }
 
-        const updatedQuote = await res.json();
-        console.log('Updated quote:', updatedQuote); // Add this for debugging
+        // const updatedQuote = await res.json();
+        // console.log('Updated quote:', updatedQuote); // Add this for debugging
 
         dispatch({ type: 'COMPLETE_STEP', step: 2 });
         router.push('/admin/create-quote/step3');

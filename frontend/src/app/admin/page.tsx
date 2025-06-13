@@ -3,17 +3,36 @@ import { useRouter } from 'next/navigation';
 import { DollarSign, Shield, PlusCircle, Clock } from 'lucide-react';
 import Card from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import Link from 'next/link';
+// import Link from 'next/link';
 import { useState, useEffect } from 'react';
+
+interface Policy {
+  createdAt: string;
+  // Add other relevant policy fields if needed elsewhere
+}
+
+interface Quote {
+  id: string | number; // Assuming id is present for key prop
+  createdAt: string;
+  totalPremium?: number;
+  quoteNumber?: string;
+  event?: { // Added for potentially nested eventType
+    eventType?: string;
+  };
+  policyHolder?: {
+    firstName?: string | null;
+    lastName?: string | null;
+  } | null;
+  // Add other relevant quote fields if needed elsewhere
+}
 
 export default function AdminDashboard() {
   const router = useRouter();
   const [policyStats, setPolicyStats] = useState({ current: 0, prev: 0, change: 0 });
   const [quoteStats, setQuoteStats] = useState({ current: 0, prev: 0, change: 0 });
   const [revenueStats, setRevenueStats] = useState({ current: 0, prev: 0, change: 0 });
-  const [recentQuotes, setRecentQuotes] = useState<any[]>([]); // Will be used for "Recent Transactions" card
+  const [recentQuotes, setRecentQuotes] = useState<Quote[]>([]); // Will be used for "Recent Transactions" card
   const [loading, setLoading] = useState(true);
-  // recentPayments state is no longer needed as "Recent Transactions" will use recentQuotes
   useEffect(() => {
     async function fetchStats() {
       setLoading(true);
@@ -40,20 +59,20 @@ export default function AdminDashboard() {
 
         const policiesData = await policiesRes.json();
         const quotesData = await quotesRes.json();
-        const policies = policiesData.policies || [];
-        const quotes = quotesData.quotes || [];
+        const policies: Policy[] = policiesData.policies || [];
+        const quotes: Quote[] = quotesData.quotes || [];
 
         // --- Calculate Policy Stats ---
         const currentPolicies = policies.filter(
-          (p: any) => new Date(p.createdAt) >= currentPeriodStart,
+          (p: Policy) => new Date(p.createdAt) >= currentPeriodStart,
         );
         const prevPolicies = policies.filter(
-          (p: any) =>
+          (p: Policy) =>
             new Date(p.createdAt) >= previousPeriodStart &&
             new Date(p.createdAt) <= previousPeriodEnd,
         );
         const policyChange =
-          prevPolicies.length === 0
+          (prevPolicies.length || 0) === 0
             ? currentPolicies.length > 0
               ? 100
               : 0
@@ -71,15 +90,15 @@ export default function AdminDashboard() {
 
         // --- Calculate Quote Stats ---
         const currentQuotes = quotes.filter(
-          (q: any) => new Date(q.createdAt) >= currentPeriodStart,
+          (q: Quote) => new Date(q.createdAt) >= currentPeriodStart,
         );
         const prevQuotes = quotes.filter(
-          (q: any) =>
+          (q: Quote) =>
             new Date(q.createdAt) >= previousPeriodStart &&
             new Date(q.createdAt) <= previousPeriodEnd,
         );
         const quoteChange =
-          prevQuotes.length === 0
+          (prevQuotes.length || 0) === 0
             ? currentQuotes.length > 0
               ? 100
               : 0
@@ -92,23 +111,43 @@ export default function AdminDashboard() {
           change: quoteChange,
         });
 
-        // --- Set Recent Quotes ---
-        const sortedQuotes = quotes.sort(
-          (a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-        );
-        setRecentQuotes(sortedQuotes.slice(0, 5));
+        // --- Set Recent Quotes (Optimized for large datasets) ---
+        const mostRecentQuotes: Quote[] = [];
+        const K = 5; // Number of recent quotes to display
+
+        for (const quote of quotes) {
+          const quoteDate = new Date(quote.createdAt).getTime();
+          if (mostRecentQuotes.length < K) {
+            mostRecentQuotes.push(quote);
+            // Sort the small array after adding, to keep the oldest at the end if we reach K items
+            if (mostRecentQuotes.length === K) {
+              mostRecentQuotes.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+            }
+          } else {
+            // Compare with the oldest in the current top K (at index K-1 due to descending sort)
+            if (quoteDate > new Date(mostRecentQuotes[K - 1].createdAt).getTime()) {
+              mostRecentQuotes[K - 1] = quote; // Replace the oldest
+              mostRecentQuotes.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()); // Re-sort
+            }
+          }
+        }
+        // If there were fewer than K quotes in total, ensure the array is sorted.
+        if (mostRecentQuotes.length > 0 && mostRecentQuotes.length < K) {
+          mostRecentQuotes.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        }
+        setRecentQuotes(mostRecentQuotes);
 
         // --- Calculate Revenue Stats ---
         const currentRevenue = currentQuotes.reduce(
-          (sum: number, q: any) => sum + (q.totalPremium || 0),
+          (sum: number, q: Quote) => sum + (q.totalPremium || 0),
           0,
         );
         const prevRevenue = prevQuotes.reduce(
-          (sum: number, q: any) => sum + (q.totalPremium || 0),
+          (sum: number, q: Quote) => sum + (q.totalPremium || 0),
           0,
         );
         const revenueChange =
-          prevRevenue === 0
+          (prevRevenue || 0) === 0
             ? currentRevenue > 0
               ? 100
               : 0
@@ -187,7 +226,8 @@ export default function AdminDashboard() {
 
   function generateTransactionId(quoteNum: string | null | undefined): string {
     if (quoteNum && quoteNum.startsWith('Q')) {
-      return 'T' + quoteNum.substring(1);
+      const lastSegment = quoteNum.split('-').pop() || '';
+      return 'T-' + lastSegment;
     }
     return quoteNum || 'N/A';
   }
@@ -227,10 +267,10 @@ export default function AdminDashboard() {
           <p className="text-gray-600">Overview of insurance policies and events</p>
         </div>
         <div className="mt-4 sm:mt-0 flex gap-3">
-          <Button variant="primary" onClick={() => router.push('/admin/create-quote/step1')}>
+          {/* <Button variant="primary" onClick={() => router.push('/admin/create-quote/step1')}>
             <PlusCircle size={18} />
             Generate Policy
-          </Button>
+          </Button> */}
           <Button variant="outline" onClick={() => router.push('/admin/create-quote/step1')}>
             <PlusCircle size={18} />
             Create Quote
@@ -282,7 +322,7 @@ export default function AdminDashboard() {
                   <div>
                     <p className="font-medium text-gray-900">{quote.quoteNumber}</p>
                     <p className="text-sm text-gray-500">
-                      {quote.eventType || 'Wedding Event'} • Premium: ${quote.totalPremium || 0}
+                      {quote.event?.eventType || 'Wedding Event'} • Premium: ${quote.totalPremium || 0}
                     </p>
                   </div>
                   <span className="text-sm text-gray-500">

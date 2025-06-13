@@ -9,6 +9,33 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { toast } from '@/hooks/use-toast';
 
+// Helper function for generating transaction IDs, moved outside the component
+function generateTransactionIdFromQuoteNumber(quoteNum: string | null | undefined): string {
+  if (typeof quoteNum === 'string' && quoteNum.startsWith('Q')) {
+    const lastSegment = quoteNum.split('-').pop() || ''; // Ensure lastSegment is a string
+    return 'T-' + lastSegment;
+  }
+  return String(quoteNum || 'N/A');
+}
+
+interface TransactionPolicyHolder {
+  firstName: string | null;
+  lastName: string | null;
+}
+
+interface Transaction {
+  id?: string;
+  transactionId: string;
+  quoteNumber: string;
+  policyHolder?: TransactionPolicyHolder | null;
+  createdAt: string;
+  totalPremium: number | null;
+  status: string;
+  source?: string | null;
+  paymentMethod?: string | null;
+}
+
+
 const Transactions = () => {
   const router = useRouter();
   const [startDate, setStartDate] = useState<Date | null>(null);
@@ -17,22 +44,7 @@ const Transactions = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [showExportDropdown, setShowExportDropdown] = useState(false);
   const exportDropdownRef = useRef<HTMLDivElement>(null);
-  const [transactions, setTransactions] = useState<
-    Array<{
-      id?: string;
-      transactionId: string;
-      quoteNumber: string;
-      policyHolder?: {
-        firstName: string | null;
-        lastName: string | null;
-      } | null;
-      createdAt: string;
-      totalPremium: number | null;
-      status: string;
-      source?: string | null;
-      paymentMethod?: string | null;
-    }>
-  >([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
 
   const ENTRIES_PER_PAGE = 20;
@@ -45,33 +57,29 @@ const Transactions = () => {
       setLoading(true);
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
-      function generateTransactionId(quoteNum: string): string {
-        if (quoteNum && quoteNum.startsWith('Q')) {
-          // Extract the last 4 digits after removing the date part
-          const lastDigits = quoteNum.split('-').pop();
-          return 'T-' + lastDigits;
-        }
-        return quoteNum || 'N/A';
-      }
-
       try {
         const res = await fetch(`${apiUrl}/quotes?allQuotes=true`, { method: 'GET' });
         if (res.ok) {
           const data = await res.json();
+
+          // changed q:any to new one
           setTransactions(
-            (data.quotes || []).map((q: any) => ({
-              transactionId: generateTransactionId(q.quoteNumber),
-              quoteNumber: q.quoteNumber,
-              policyHolder: q.policyHolder,
-              createdAt: q.createdAt,
-              totalPremium: q.totalPremium,
-              status: q.status,
-              source: q.source || null,
+            (data.quotes || []).map((q: Record<string, unknown>) => ({
+              transactionId: generateTransactionIdFromQuoteNumber(q.quoteNumber as string),
+              quoteNumber: String(q.quoteNumber || 'N/A'),
+              policyHolder: q.policyHolder as TransactionPolicyHolder,
+              createdAt: String(q.createdAt || ''),
+              totalPremium:
+                q.totalPremium !== undefined && q.totalPremium !== null
+                  ? Number(q.totalPremium)
+                  : null,
+              status: String(q.status || 'N/A'),
+              source: q.source ? String(q.source) : null,
               paymentMethod:
                 q.source === 'ADMIN'
                   ? 'CASH'
-                  : q.payments && q.payments.length > 0
-                    ? q.payments[0].method || '-'
+                  : Array.isArray(q.payments) && q.payments.length > 0
+                    ? String((q.payments[0] as { method?: string }).method || '-')
                     : '-',
             })),
           );
@@ -194,22 +202,6 @@ const Transactions = () => {
     return (((current - prev) / Math.abs(prev)) * 100).toFixed(1);
   }
 
-  interface TransactionPolicyHolder {
-    firstName: string | null;
-    lastName: string | null;
-  }
-
-  interface Transaction {
-    id?: string;
-    transactionId: string;
-    quoteNumber: string;
-    policyHolder?: TransactionPolicyHolder | null;
-    createdAt: string;
-    totalPremium: number | null;
-    status: string;
-    source?: string | null;
-    paymentMethod?: string | null;
-  }
   const totalSalesChange = percentChange(totalSales, prevTotalSales);
   const successfulChange = percentChange(successfulTransactions, prevSuccessful);
   // const conversionChange = percentChange(
@@ -308,7 +300,7 @@ const Transactions = () => {
         head: [tableHeaders],
         body: chunk,
         startY: 25,
-        didDrawPage: (data) => {
+        didDrawPage: () => { // removed "data" variable
           doc.setFontSize(18);
           doc.setTextColor(40);
           doc.text('Transaction Report', doc.internal.pageSize.getWidth() / 2, 15, {

@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   FileCog,
@@ -144,10 +145,10 @@ export default function Review() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const paymentSuccessParam = searchParams.get('payment') === 'success';
-  const paymentMethodParam = searchParams.get('method') || 'Unknown'; // Get payment method
+  // const paymentMethodParam = searchParams.get('method') || 'Unknown'; // Get payment method
   const { state } = useQuote();
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
-  const [paymentSuccess, setPaymentSuccess] = useState(paymentSuccessParam);
+  const [paymentSuccess] = useState(paymentSuccessParam); // removed setPaymentSuccess
   const [showPolicyNumber, setShowPolicyNumber] = useState(paymentSuccessParam);
   const [savingPolicy, setSavingPolicy] = useState(false);
   const [pageReady, setPageReady] = useState(false);
@@ -283,7 +284,7 @@ export default function Review() {
 
   // Define savePolicyAndPayment function at component level
   const savePolicyAndPayment = useCallback(async () => {
-    console.log('savePolicyAndPayment CALLED'); // CRUCIAL: First log in the function
+    // console.log('savePolicyAndPayment CALLED'); // CRUCIAL: First log in the function
 
     const quoteNumberFromParams = searchParams.get('qn');
 
@@ -327,7 +328,7 @@ export default function Review() {
         });
 
         const convertData = await convertRes.json();
-        console.log('Policy conversion response:', convertData);
+        // console.log('Policy conversion response:', convertData);
 
         if (!convertRes.ok) {
           throw new Error(convertData.error || 'Failed to convert quote to policy.');
@@ -337,27 +338,27 @@ export default function Review() {
         // Adjust the access path based on the actual structure logged by "Policy conversion response:"
         let actualPolicyNumber;
 
-        console.log('Attempting direct access: convertData.policyNumber', convertData.policyNumber);
+        // console.log('Attempting direct access: convertData.policyNumber', convertData.policyNumber);
         if (convertData.policyNumber) {
           actualPolicyNumber = convertData.policyNumber;
         }
 
-        console.log(
-          'Attempting nested access: convertData.policy.policyNumber',
-          convertData.policy
-            ? convertData.policy.policyNumber
-            : 'convertData.policy is undefined/null',
-        );
+        // console.log(
+        //   'Attempting nested access: convertData.policy.policyNumber',
+        //   convertData.policy
+        //     ? convertData.policy.policyNumber
+        //     : 'convertData.policy is undefined/null',
+        // );
         if (!actualPolicyNumber && convertData.policy && convertData.policy.policyNumber) {
           actualPolicyNumber = convertData.policy.policyNumber;
         }
 
-        console.log(
-          'Attempting nested access: convertData.payment.policy.policyNumber',
-          convertData.payment && convertData.payment.policy
-            ? convertData.payment.policy.policyNumber
-            : 'convertData.payment or convertData.payment.policy is undefined/null',
-        );
+        // console.log(
+        //   'Attempting nested access: convertData.payment.policy.policyNumber',
+        //   convertData.payment && convertData.payment.policy
+        //     ? convertData.payment.policy.policyNumber
+        //     : 'convertData.payment or convertData.payment.policy is undefined/null',
+        // );
         if (
           !actualPolicyNumber &&
           convertData.payment &&
@@ -366,12 +367,12 @@ export default function Review() {
         ) {
           actualPolicyNumber = convertData.payment.policy.policyNumber;
         }
-        console.log(
-          'Attempting nested access: convertData.data.policyDetails.policyNumber',
-          convertData.data && convertData.data.policyDetails
-            ? convertData.data.policyDetails.policyNumber
-            : 'convertData.data or convertData.data.policyDetails is undefined/null',
-        );
+        // console.log(
+        //   'Attempting nested access: convertData.data.policyDetails.policyNumber',
+        //   convertData.data && convertData.data.policyDetails
+        //     ? convertData.data.policyDetails.policyNumber
+        //     : 'convertData.data or convertData.data.policyDetails is undefined/null',
+        // );
         if (
           !actualPolicyNumber &&
           convertData.data &&
@@ -382,7 +383,7 @@ export default function Review() {
         }
 
         if (actualPolicyNumber) {
-          console.log('Setting policy number:', actualPolicyNumber);
+          // console.log('Setting policy number:', actualPolicyNumber);
           setPolicyNumber(actualPolicyNumber);
           setPolicySaved(true);
           // Force a re-render to show the policy number
@@ -415,7 +416,7 @@ export default function Review() {
         }
       } catch (error) {
         const message = error instanceof Error ? error.message : 'An unknown error occurred.';
-        console.log(message);
+        // console.log(message);
         toast.error(message);
       } finally {
         setSavingPolicy(false);
@@ -425,12 +426,12 @@ export default function Review() {
 
   // Effect to save policy after payment success
   useEffect(() => {
-    console.log('Review Page Effect for savePolicyAndPayment triggered. Current conditions:');
-    console.log('paymentSuccess:', paymentSuccess);
-    console.log('showPolicyNumber:', showPolicyNumber);
-    console.log('!policySaved:', !policySaved, '(policySaved:', policySaved, ')');
-    console.log('!savingPolicy:', !savingPolicy, '(savingPolicy:', savingPolicy, ')');
-    console.log("searchParams.get('retrieved'):", searchParams.get('retrieved'));
+    // console.log('Review Page Effect for savePolicyAndPayment triggered. Current conditions:');
+    // console.log('paymentSuccess:', paymentSuccess);
+    // console.log('showPolicyNumber:', showPolicyNumber);
+    // console.log('!policySaved:', !policySaved, '(policySaved:', policySaved, ')');
+    // console.log('!savingPolicy:', !savingPolicy, '(savingPolicy:', savingPolicy, ')');
+    // console.log("searchParams.get('retrieved'):", searchParams.get('retrieved'));
 
     async function handleRetrievedValidationAndSave() {
       if (
@@ -450,24 +451,24 @@ export default function Review() {
           return;
         }
         const valid = await validateRetrievedQuoteFields(qnForValidation);
-        console.log('Valid:', valid);
+        // console.log('Valid:', valid);
         if (!valid) {
           alert(
             'Some required fields are missing in your saved quote. Please edit and save all steps before payment.',
           );
           return;
         }
-        console.log('Conditions MET for calling savePolicyAndPayment (retrieved).');
+        // console.log('Conditions MET for calling savePolicyAndPayment (retrieved).');
         savePolicyAndPayment();
       } else {
-        console.log('Conditions NOT MET for calling savePolicyAndPayment (retrieved).');
+        // console.log('Conditions NOT MET for calling savePolicyAndPayment (retrieved).');
       }
     }
     if (searchParams.get('retrieved') === 'true') {
       handleRetrievedValidationAndSave();
     } else {
       if (paymentSuccess && showPolicyNumber && !policySaved && !savingPolicy) {
-        console.log('Conditions MET for calling savePolicyAndPayment (non-retrieved).');
+        // console.log('Conditions MET for calling savePolicyAndPayment (non-retrieved).');
         savePolicyAndPayment();
       }
     }

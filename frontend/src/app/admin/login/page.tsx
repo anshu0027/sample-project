@@ -32,17 +32,21 @@ export default function AdminLogin() {
   // ===== useEffect for Authentication Check and Page Loading =====
   // =============================
   useEffect(() => {
-    // Check if admin is already logged in
-    if (typeof window !== 'undefined' && localStorage.getItem('admin_logged_in') === 'true') {
-      router.replace('/admin');
+    let isMounted = true;
+    // Check if admin is already logged in. This runs client-side.
+    if (localStorage.getItem('admin_logged_in') === 'true') {
+      router.replace('/admin'); // This will unmount the component
+      // No need to setPageLoading(false) if redirecting
     } else {
-      // Simulate a brief loading period
-      // Simulate a brief loading period or wait for other initializations if any
-      const timer = setTimeout(() => setPageLoading(false), 200); // Adjust delay as needed
-      return () => clearTimeout(timer);
+      // Simulate a brief loading period for UX if not redirecting
+      const timer = setTimeout(() => {
+        if (isMounted) {
+          setPageLoading(false);
+        }
+      }, 200); // Adjust delay as needed
+      return () => { isMounted = false; clearTimeout(timer); };
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // router dependency removed to prevent re-triggering on navigation
+  }, [router]); // Include router as it's used. replace() will unmount.
 
   // =============================
   // ===== Login Handler =====

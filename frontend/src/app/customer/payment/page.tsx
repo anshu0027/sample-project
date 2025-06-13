@@ -2,7 +2,11 @@
 'use client';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { CreditCard, Banknote, QrCode } from 'lucide-react';
+import { 
+  CreditCard, 
+  // Banknote, 
+  // QrCode 
+} from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { toast } from '@/hooks/use-toast';
 import Input from '@/components/ui/Input';
@@ -16,8 +20,8 @@ declare global {
 
 const paymentOptions = [
   { label: 'Credit Card', value: 'card', icon: <CreditCard size={20} /> },
-  { label: 'Net Banking', value: 'netbanking', icon: <Banknote size={20} /> },
-  { label: 'UPI', value: 'upi', icon: <QrCode size={20} /> },
+  // { label: 'Net Banking', value: 'netbanking', icon: <Banknote size={20} /> },
+  // { label: 'UPI', value: 'upi', icon: <QrCode size={20} /> },
 ];
 
 export default function Payment() {
@@ -146,7 +150,7 @@ export default function Payment() {
             cardCode: cardData.cvv,
           },
         };
-        console.log('Dispatching data to Authorize.Net:', JSON.stringify(secureData, null, 2)); // For debugging
+        // console.log('Dispatching data to Authorize.Net:', JSON.stringify(secureData, null, 2)); // For debugging
 
         // Get the secure payment data using Promise
         const opaqueData = await new Promise((resolve, reject) => {
@@ -185,11 +189,11 @@ export default function Payment() {
 
   const processPayment = async (opaqueData: any) => {
     try {
-      console.log('Sending payment request with data:', {
-        quoteId: quoteDetails.id,
-        amount: quoteDetails.totalPremium,
-        opaqueData,
-      });
+      // console.log('Sending payment request with data:', {
+      //   quoteId: quoteDetails.id,
+      //   amount: quoteDetails.totalPremium,
+      //   opaqueData,
+      // });
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payment/authorize-net`, {
         method: 'POST',
@@ -204,7 +208,7 @@ export default function Payment() {
       });
 
       const data = await response.json();
-      console.log('Payment response:', data);
+      // console.log('Payment response:', data);
 
       if (response.ok) {
         // Store policy information in localStorage

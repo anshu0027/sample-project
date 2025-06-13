@@ -1,4 +1,3 @@
-// my-backend/src/services/pdf.service.ts
 import path from "path";
 import fs from "fs/promises";
 import { PDFDocument } from "pdf-lib";
@@ -35,7 +34,6 @@ async function getBasePdfBytes(): Promise<Uint8Array> {
     return basePdfBytesCache;
   }
   try {
-    await fs.access(basePdfPath);
     basePdfBytesCache = await fs.readFile(basePdfPath);
     return basePdfBytesCache;
   } catch (error) {
@@ -61,7 +59,6 @@ async function getLogoImageData(): Promise<string> {
     return logoImageDataBase64Cache;
   }
   try {
-    await fs.access(logoImagePath);
     const imageBytes = await fs.readFile(logoImagePath);
     logoImageDataBase64Cache = `data:image/png;base64,${imageBytes.toString(
       "base64"

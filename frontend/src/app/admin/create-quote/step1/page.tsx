@@ -145,10 +145,19 @@ export default function QuoteGenerator() {
   // =============================
   // Format date for the date picker
   const selectedDate = state.eventDate ? new Date(state.eventDate) : null;
+
+  const formatDateStringLocal = (date: Date | null): string => {
+    if (!date) return '';
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   // Handle date change
   const handleDateChange = (date: Date | null) => {
     if (date) {
-      handleInputChange('eventDate', date.toISOString().split('T')[0]);
+      handleInputChange('eventDate', formatDateStringLocal(date));
     } else {
       handleInputChange('eventDate', '');
     }

@@ -5,13 +5,13 @@ import {
   Search,
   Download,
   Clock,
-  Mail,
+  // Mail,
   Eye,
-  Edit,
+  // Edit,
   PlusCircle,
   Trash2,
   FileCheck,
-  Filter,
+  // Filter,
 } from 'lucide-react';
 import Card from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -40,6 +40,19 @@ interface QuoteList {
   convertedToPolicy?: boolean;
 }
 
+// Helper hook for debouncing
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+  return debouncedValue;
+}
 export default function Quotes() {
   const [searchTerm, setSearchTerm] = useState('');
   const [startDate, setStartDate] = useState<Date | null>(null);
@@ -54,15 +67,34 @@ export default function Quotes() {
   const exportDropdownRef = useRef<HTMLDivElement>(null);
   const itemsPerPage = 15;
   const router = useRouter();
+  const debouncedSearchTerm = useDebounce(searchTerm, 300); // Debounce search term
 
-  const processQuotesData = (rawData: any[]): QuoteList[] => {
-    console.log('Raw data from backend:', rawData);
-    return (rawData || []).map((q: any) => {
-      console.log('Processing quote:', q);
+  interface RawQuote {
+    id: number;
+    quoteNumber: string;
+    firstName?: string | null;
+    lastName?: string | null;
+    email?: string | null;
+    event?: {
+      eventType?: string | null;
+      eventDate?: string | null;
+    };
+    totalPremium?: number | null;
+    status?: string | null;
+    coverageLevel?: number | null;
+    policyHolder?: {
+      firstName?: string | null;
+      lastName?: string | null;
+    };
+    customer?: string;
+    source?: string;
+    convertedToPolicy?: boolean;
+    [key: string]: unknown;
+  }
+
+  const processQuotesData = (rawData: RawQuote[]): QuoteList[] => {
+    return (rawData || []).map((q: RawQuote) => {
       const { event, policyHolder, ...baseQuote } = q;
-      console.log('Extracted event:', event);
-      console.log('Extracted policyHolder:', policyHolder);
-      console.log('Base quote:', baseQuote);
 
       return {
         ...baseQuote,
@@ -86,7 +118,6 @@ export default function Quotes() {
       const res = await fetch(`${apiUrl}/quotes?allQuotes=true`, { method: 'GET' });
       if (res.ok) {
         const data = await res.json();
-        console.log('API Response:', data);
         setQuotes(processQuotesData(data.quotes));
       } else {
         throw new Error('Failed to fetch quotes.');
@@ -101,6 +132,7 @@ export default function Quotes() {
 
   useEffect(() => {
     fetchQuotes();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -118,27 +150,32 @@ export default function Quotes() {
   }, [showExportDropdown]);
 
   const filteredQuotes = useMemo(() => {
+    const lowerSearchTerm = debouncedSearchTerm.toLowerCase();
     return quotes.filter((quote) => {
-      const quoteId = quote.quoteNumber || String(quote.id) || '';
-      const customerName = quote.customer || `${quote.firstName || ''} ${quote.lastName || ''}`;
-      const email = quote.email || '';
+      const quoteId = (quote.quoteNumber || String(quote.id) || '').toLowerCase();
+      const customerName = (
+        quote.customer || `${quote.firstName || ''} ${quote.lastName || ''}`
+      ).toLowerCase();
+      const email = (quote.email || '').toLowerCase();
+
       const matchesSearch =
-        quoteId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        email.toLowerCase().includes(searchTerm.toLowerCase());
+        quoteId.includes(lowerSearchTerm) ||
+        customerName.includes(lowerSearchTerm) ||
+        email.includes(lowerSearchTerm);
+
       const matchesStatus = statusFilter ? quote.status === statusFilter : true;
+
       const matchesDateRange = (() => {
         if (!startDate && !endDate) return true;
         if (!quote.eventDate) return false;
         const eventDate = new Date(quote.eventDate);
         if (startDate && endDate) return eventDate >= startDate && eventDate <= endDate;
         if (startDate) return eventDate >= startDate;
-        if (endDate) return eventDate <= endDate;
-        return true;
+        return endDate ? eventDate <= endDate : true;
       })();
       return matchesSearch && matchesStatus && matchesDateRange;
     });
-  }, [quotes, searchTerm, statusFilter, startDate, endDate]);
+  }, [quotes, debouncedSearchTerm, statusFilter, startDate, endDate]);
 
   const totalPages = Math.ceil(filteredQuotes.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -147,7 +184,17 @@ export default function Quotes() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, statusFilter, startDate, endDate]);
+  }, [debouncedSearchTerm, statusFilter, startDate, endDate]);
+
+  useEffect(() => {
+    const newTotalPages = Math.ceil(filteredQuotes.length / itemsPerPage);
+    if (currentPage > newTotalPages && newTotalPages > 0) {
+      setCurrentPage(newTotalPages);
+    } else if (newTotalPages === 0 && filteredQuotes.length === 0 && currentPage !== 1) {
+      // If all items are filtered out or deleted, reset to page 1
+      setCurrentPage(1);
+    }
+  }, [filteredQuotes.length, itemsPerPage, currentPage]);
 
   const now = useMemo(() => new Date(), []);
 
@@ -183,7 +230,7 @@ export default function Quotes() {
 
   // Handle quote actions
   const handleViewQuote = (quoteNumber: string) => router.push(`/admin/quotes/${quoteNumber}`);
-  const handleEditQuote = (quoteNumber: string) => router.push(`/admin/quotes/${quoteNumber}/edit`);
+  // const handleEditQuote = (quoteNumber: string) => router.push(`/admin/quotes/${quoteNumber}/edit`);
   const handleCreateNewQuote = () => router.push('/admin/create-quote/step1');
   // const handleEmailQuote = async (quoteNumber: string) => {
   //     try {
@@ -241,12 +288,12 @@ export default function Quotes() {
     if (!window.confirm('Are you sure you want to convert this quote to a policy?')) return;
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
     try {
-      console.log('Converting quote to policy:', quoteNumber);
+      // console.log('Converting quote to policy:', quoteNumber);
       const requestBody = {
         quoteNumber,
         forceConvert: true,
       };
-      console.log('Request body:', requestBody);
+      // console.log('Request body:', requestBody);
 
       const res = await fetch(`${apiUrl}/policies/from-quote`, {
         method: 'POST',
@@ -258,8 +305,8 @@ export default function Quotes() {
       });
 
       const responseData = await res.json();
-      console.log('Response status:', res.status);
-      console.log('Response data:', responseData);
+      // console.log('Response status:', res.status);
+      // console.log('Response data:', responseData);
 
       if (res.ok) {
         toast({
@@ -329,36 +376,9 @@ export default function Quotes() {
       const res = await fetch(`${apiUrl}/quotes/${quoteNumber}`, { method: 'DELETE' });
       if (res.ok) {
         toast({ title: 'Quote deleted successfully!', variant: 'default' });
-        setQuotes((prev) => {
-          const updated = prev.filter((q) => q.quoteNumber !== quoteNumber);
-          // Check if the current page is now empty and not the first page
-          const filtered = updated.filter((quote) => {
-            const quoteId = quote.quoteNumber || String(quote.id) || '';
-            const customerName =
-              quote.customer || `${quote.firstName || ''} ${quote.lastName || ''}`;
-            const email = quote.email || '';
-            const matchesSearch =
-              quoteId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-              customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-              email.toLowerCase().includes(searchTerm.toLowerCase());
-            const matchesStatus = statusFilter ? quote.status === statusFilter : true;
-            const matchesDateRange = (() => {
-              if (!startDate && !endDate) return true;
-              if (!quote.eventDate) return false;
-              const eventDate = new Date(quote.eventDate);
-              if (startDate && endDate) return eventDate >= startDate && eventDate <= endDate;
-              if (startDate) return eventDate >= startDate;
-              if (endDate) return eventDate <= endDate;
-              return true;
-            })();
-            return matchesSearch && matchesStatus && matchesDateRange;
-          });
-          const totalPages = Math.ceil(filtered.length / itemsPerPage);
-          if (filtered.length <= (currentPage - 1) * itemsPerPage && currentPage > 1) {
-            setCurrentPage(currentPage - 1);
-          }
-          return updated;
-        });
+        setQuotes((prevQuotes) => prevQuotes.filter((q) => q.quoteNumber !== quoteNumber));
+        // The useEffect for [filteredQuotes.length, itemsPerPage, currentPage]
+        // will handle adjusting currentPage if necessary.
       } else {
         const error = await res.json();
         throw new Error(error.error || 'Failed to delete quote.');
@@ -428,7 +448,8 @@ export default function Quotes() {
         head: [tableHeaders], // Ensure headers are repeated on each page
         body: chunk,
         startY: 25, // Start table after the title
-        didDrawPage: (data) => {
+        didDrawPage: () => {
+          // removed variable "data"
           // Page Header
           doc.setFontSize(18);
           doc.setTextColor(40);
@@ -786,9 +807,11 @@ export default function Quotes() {
             >
               Previous
             </Button>
-            <span className="flex items-center px-3 py-1 text-sm text-gray-700">
-              Page {currentPage} of {totalPages}
-            </span>
+            {totalPages > 0 && (
+              <span className="flex items-center px-3 py-1 text-sm text-gray-700">
+                Page {currentPage} of {totalPages}
+              </span>
+            )}
             <Button
               variant="outline"
               size="sm"

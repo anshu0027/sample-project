@@ -176,14 +176,14 @@ router.post("/", manualPaymentLimiter, async (req: Request, res: Response) => {
 
   try {
     const { amount, quoteId, policyId, method, status, reference } = req.body;
-    console.log("Received payment request:", {
-      amount,
-      quoteId,
-      policyId,
-      method,
-      status,
-      reference,
-    });
+    // console.log("Received payment request:", {
+    //   amount,
+    //   quoteId,
+    //   policyId,
+    //   method,
+    //   status,
+    //   reference,
+    // });
 
     // ------------------------
     // Validate required fields for payment creation.
@@ -229,9 +229,9 @@ router.post("/", manualPaymentLimiter, async (req: Request, res: Response) => {
       reference: reference || `PAY-${Date.now()}`,
     });
 
-    console.log("Creating payment:", newPayment);
+    // console.log("Creating payment:", newPayment);
     const savedPayment = await paymentRepository.save(newPayment);
-    console.log("Saved payment:", savedPayment);
+    // console.log("Saved payment:", savedPayment);
 
     // ------------------------
     // If the payment status is SUCCESS and a quoteId is provided,
@@ -271,7 +271,7 @@ router.post("/", manualPaymentLimiter, async (req: Request, res: Response) => {
         });
 
         const savedPolicy = await policyRepository.save(newPolicy);
-        console.log("Created policy from quote:", savedPolicy);
+        // console.log("Created policy from quote:", savedPolicy);
 
         // ------------------------
         // Update the payment record with the ID of the newly created policy.
@@ -378,7 +378,7 @@ router.post(
       // Format the amount to two decimal places, as required by Authorize.Net.
       // ------------------------
       const formattedAmount = parseFloat(amount).toFixed(2);
-      console.log("Formatted amount:", formattedAmount);
+      // console.log("Formatted amount:", formattedAmount);
 
       // ------------------------
       // Create an OpaqueDataType object using the dataDescriptor and dataValue from opaqueData.
@@ -413,7 +413,7 @@ router.post(
       createRequest.setMerchantAuthentication(merchantAuthenticationType);
       createRequest.setTransactionRequest(transactionRequestType);
 
-      console.log("Sending request to Authorize.Net...");
+      // console.log("Sending request to Authorize.Net...");
       // ------------------------
       // Create the controller for executing the Authorize.Net API call.
       // ------------------------
@@ -444,11 +444,11 @@ router.post(
       // ------------------------
       // Log the response from Authorize.Net for debugging.
       // ------------------------
-      console.log("Authorize.Net response:", {
-        resultCode: response.getMessages().getResultCode(),
-        responseCode: response.getTransactionResponse()?.getResponseCode(),
-        message: response.getMessages().getMessage()[0]?.getText(),
-      });
+      // console.log("Authorize.Net response:", {
+      //   resultCode: response.getMessages().getResultCode(),
+      //   responseCode: response.getTransactionResponse()?.getResponseCode(),
+      //   message: response.getMessages().getMessage()[0]?.getText(),
+      // });
 
       // Handle the response
       // ------------------------

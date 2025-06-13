@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/Button';
@@ -7,13 +7,7 @@ import { Button } from '@/components/ui/Button';
 const RetrieveQuote = () => {
   const [input, setInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [pageLoading, setPageLoading] = useState(true);
   const router = useRouter();
-
-  useEffect(() => {
-    const timer = setTimeout(() => setPageLoading(false), 200);
-    return () => clearTimeout(timer);
-  }, []);
 
   const RetrieveQuoteSkeleton = () => (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4 animate-pulse">
@@ -27,7 +21,7 @@ const RetrieveQuote = () => {
     </div>
   );
 
-  if (pageLoading || isSubmitting) {
+  if (isSubmitting) {
     return <RetrieveQuoteSkeleton />;
   }
 
@@ -48,9 +42,19 @@ const RetrieveQuote = () => {
             // ===== THE ONLY CHANGE IS HERE ====================================
             // ==================================================================
             const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+            const controller = new AbortController();
+            const timeoutDuration = 60000; // 60 seconds
+
+            const timeoutId = setTimeout(() => {
+              controller.abort();
+            }, timeoutDuration);
+
             try {
               // Use the new backend endpoint to fetch the quote
-              const res = await fetch(`${apiUrl}/quotes?quoteNumber=${input.trim()}`); // UPDATED PATH
+              const res = await fetch(`${apiUrl}/quotes?quoteNumber=${input.trim()}`, { // UPDATED PATH
+                signal: controller.signal,
+              });
+              clearTimeout(timeoutId); // Clear the timeout if the request completes in time
 
               if (!res.ok) {
                 toast.error('No quote or policy found with that ID');
@@ -71,13 +75,19 @@ const RetrieveQuote = () => {
               }
 
               // The original logic for navigation is fine
-              if (input.startsWith('WI') || input.startsWith('POC') || input.startsWith('QI-')) {
+              // removed "input.startsWith('WI') || input.startsWith('POC') || " from if condition and kept only the one with 'QI-
+              if (input.startsWith('QI-')) {
                 router.push(`/customer/edit/${input}`);
               } else {
                 toast.error('Invalid ID format or quote cannot be edited.');
               }
             } catch (error) {
-              toast.error('Error retrieving quote or policy');
+              clearTimeout(timeoutId); // Ensure timeout is cleared on other errors too
+              if (error) {
+                toast.error('The request timed out. Please check your connection or try again.');
+              } else {
+                toast.error('Error retrieving quote or policy. Please try again.');
+              }
             } finally {
               setIsSubmitting(false);
             }

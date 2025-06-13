@@ -34,12 +34,8 @@ export default function CreateQuoteLayout({ children }: { children: React.ReactN
   // This improves perceived performance by showing a placeholder while the layout initializes.
   // ------------------------
   useEffect(() => {
-    // Simulate layout readiness or wait for any async setup if needed
-    const timer = setTimeout(() => {
-      setLayoutReady(true);
-    }, 150); // Short delay to ensure skeleton is visible briefly
-    return () => clearTimeout(timer);
-  }, []);
+    setLayoutReady(true); // Set layout ready immediately
+  }, []); // Empty dependency array ensures this runs once on mount
 
   // ------------------------
   // Skeleton loader component displayed while `layoutReady` is false.

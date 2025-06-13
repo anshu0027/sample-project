@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
@@ -241,7 +242,8 @@ export default function EditUserQuote() {
           });
           router.push('/');
         }
-      } catch (error) {
+      } catch {
+        //removed (error)
         toast({
           title: 'An error occurred.',
           description: 'Could not connect to the server.',
@@ -274,13 +276,47 @@ export default function EditUserQuote() {
   };
 
   const validateStep1 = () => {
-    /* ... Validation logic remains identical ... */ return true;
+    const newErrors: Record<string, string> = {};
+    if (!formState?.residentState) newErrors.residentState = 'Required';
+    if (!formState?.eventType) newErrors.eventType = 'Required';
+    if (!formState?.maxGuests) newErrors.maxGuests = 'Required';
+    if (!formState?.email) newErrors.email = 'Required';
+    if (!formState?.eventDate) newErrors.eventDate = 'Required';
+    if (!formState?.coverageLevel) newErrors.coverageLevel = 'Required';
+    if (formState?.covidDisclosure === undefined || formState?.covidDisclosure === null)
+      newErrors.covidDisclosure = 'Required';
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
   const validateStep2 = () => {
-    /* ... Validation logic remains identical ... */ return true;
+    const newErrors: Record<string, string> = {};
+    if (!formState.honoree1FirstName) newErrors.honoree1FirstName = 'Required';
+    if (!formState.honoree1LastName) newErrors.honoree1LastName = 'Required';
+    if (!formState.ceremonyLocationType) newErrors.ceremonyLocationType = 'Required';
+    if (!formState.indoorOutdoor) newErrors.indoorOutdoor = 'Required';
+    if (!formState.venueName) newErrors.venueName = 'Required';
+    if (!formState.venueAddress1) newErrors.venueAddress1 = 'Required';
+    if (!formState.venueCountry) newErrors.venueCountry = 'Required';
+    if (!formState.venueCity) newErrors.venueCity = 'Required';
+    if (!formState.venueState) newErrors.venueState = 'Required';
+    if (!formState.venueZip) newErrors.venueZip = 'Required';
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
   const validateStep3 = () => {
-    /* ... Validation logic remains identical ... */ return true;
+    const newErrors: Record<string, string> = {};
+    if (!formState.firstName) newErrors.firstName = 'Required';
+    if (!formState.lastName) newErrors.lastName = 'Required';
+    if (!formState.phone) newErrors.phone = 'Required';
+    if (!formState.relationship) newErrors.relationship = 'Required';
+    if (!formState.address) newErrors.address = 'Required';
+    if (!formState.city) newErrors.city = 'Required';
+    if (!formState.state) newErrors.state = 'Required';
+    if (!formState.zip) newErrors.zip = 'Required';
+    if (!formState.legalNotices) newErrors.legalNotices = 'Required';
+    if (!formState.completingFormName) newErrors.completingFormName = 'Required';
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   // ==================================================================
@@ -301,9 +337,9 @@ export default function EditUserQuote() {
     // The payload is the entire form state, as the backend can handle partial updates.
     const payload = { ...formState };
 
-    console.log('Saving quote with payload:', payload);
-    console.log('API URL:', apiUrl);
-    console.log('Quote ID:', id);
+    // console.log('Saving quote with payload:', payload);
+    // console.log('API URL:', apiUrl);
+    // console.log('Quote ID:', id);
 
     try {
       const res = await fetch(`${apiUrl}/quotes/${id}`, {
@@ -313,9 +349,9 @@ export default function EditUserQuote() {
         body: JSON.stringify(payload),
       });
 
-      console.log('Response status:', res.status);
+      // console.log('Response status:', res.status);
       const responseData = await res.json();
-      console.log('Response data:', responseData);
+      // console.log('Response data:', responseData);
 
       if (res.ok) {
         toast({ title: 'Quote progress saved!', variant: 'default' });

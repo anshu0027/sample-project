@@ -105,11 +105,8 @@ export default function QuoteGenerator() {
   // Clear quoteNumber on mount to always start a new quote
   useEffect(() => {
     localStorage.removeItem('quoteNumber');
-  }, []);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setPageLoading(false), 200);
-    return () => clearTimeout(timer);
+    // Set pageLoading to false after initial setup like clearing localStorage
+    setPageLoading(false);
   }, []);
 
   // Handle form field changes
@@ -148,13 +145,13 @@ export default function QuoteGenerator() {
 
   const selectedDate = parseDateStringLocal(state.eventDate);
 
-  const handleDateChange = (date: Date | null) => {
-    if (date) {
-      handleInputChange('eventDate', date.toISOString().split('T')[0]);
-    } else {
-      handleInputChange('eventDate', '');
-    }
-  };
+  // const handleDateChange = (date: Date | null) => {
+  //   if (date) {
+  //     handleInputChange('eventDate', date.toISOString().split('T')[0]);
+  //   } else {
+  //     handleInputChange('eventDate', '');
+  //   }
+  // };
 
   const minDate = new Date();
   minDate.setHours(minDate.getHours() + 48);
@@ -277,13 +274,14 @@ export default function QuoteGenerator() {
               const emailData = await emailRes.json();
               toast.error(`Failed to send email: ${emailData.error || 'Unknown error'}`);
             }
-          } catch (err) {
+          } catch { // removed (err)
             toast.error('Failed to send email.');
           }
         } else {
           toast.error(`Failed to create quote: ${data.error || 'Unknown error'}`);
         }
-      } catch (err) {
+      } catch {
+        // removed (err)
         toast.error('Failed to create quote.');
       }
     } else {
@@ -405,7 +403,7 @@ export default function QuoteGenerator() {
           {/* Policy Holder's Resident State */}
           <div className="flex flex-col">
             <label htmlFor="residentState" className="font-semibold text-gray-800 text-left mb-1">
-              Policy Holder's Resident State
+              Policy Holder&apos;s Resident State
             </label>
             <div className="relative w-full">
               <select
@@ -891,7 +889,7 @@ export default function QuoteGenerator() {
                     setShowSpecialActivitiesModal(false);
                   }}
                 >
-                  My event doesn't include these
+                  My event doesn&apos;t include these
                 </Button>
                 <Button
                   variant="primary"

@@ -4,7 +4,6 @@ import { useRouter } from 'next/navigation';
 import { MapPin, CalendarCheck, ChevronDown } from 'lucide-react';
 import { useQuote } from '@/context/QuoteContext';
 import { Button } from '@/components/ui/Button';
-import FormField from '@/components/ui/FormField';
 import Input from '@/components/ui/Input';
 import Checkbox from '@/components/ui/Checkbox';
 import { VENUE_TYPES, INDOOR_OUTDOOR_OPTIONS, COUNTRIES, US_STATES } from '@/utils/constants';
@@ -326,8 +325,11 @@ export default function EventInformation() {
     venueState: QuoteState,
     venueErrors: Record<string, string>,
   ) => {
+    // const isCruiseShipVenue = venueState[`${prefix}LocationType` as keyof QuoteState] === 'cruise_ship';
+
     const isCruiseShipVenue =
-      venueState[`${prefix}CeremonyLocationType` as keyof QuoteState] === 'cruise_ship';
+      venueState[`${prefix}LocationType` as keyof QuoteState] === 'cruise_ship';
+
 
     return (
       <div className="mb-8 shadow-lg border-0 bg-white p-8 sm:p-10 md:p-12 rounded-2xl w-full">

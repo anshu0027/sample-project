@@ -44,7 +44,7 @@ router.get("/", async (req: Request, res: Response) => {
     // ------------------------
     // Log raw policies data for debugging.
     // ------------------------
-    console.log("Raw policies data:", JSON.stringify(policies, null, 2));
+    // console.log("Raw policies data:", JSON.stringify(policies, null, 2));
 
     // ------------------------
     // 3. Map and format the fetched policies to match the structure expected by the frontend.
@@ -53,11 +53,11 @@ router.get("/", async (req: Request, res: Response) => {
     // ------------------------
     const formattedPolicies = policies.map((policy) => {
       // Log individual policy data for debugging during mapping.
-      console.log("Processing policy:", policy.id);
-      console.log("Policy quote:", policy.quote);
-      console.log("Policy event:", policy.event);
-      console.log("Policy holder:", policy.policyHolder);
-      console.log("Policy payments:", policy.payments);
+      // console.log("Processing policy:", policy.id);
+      // console.log("Policy quote:", policy.quote);
+      // console.log("Policy event:", policy.event);
+      // console.log("Policy holder:", policy.policyHolder);
+      // console.log("Policy payments:", policy.payments);
 
       // Get the relevant data from either quote or direct policy
       // A policy might be directly created or created from a quote.
@@ -70,12 +70,12 @@ router.get("/", async (req: Request, res: Response) => {
       // ------------------------
       // Log extracted data for debugging.
       // ------------------------
-      console.log("Extracted data:", {
-        source,
-        event,
-        policyHolder,
-        payment,
-      });
+      // console.log("Extracted data:", {
+      //   source,
+      //   event,
+      //   policyHolder,
+      //   payment,
+      // });
 
       // ------------------------
       // Determine the payment status.
@@ -136,7 +136,7 @@ router.get("/", async (req: Request, res: Response) => {
       // ------------------------
       // Log the formatted policy for debugging.
       // ------------------------
-      console.log("Formatted policy:", formattedPolicy);
+      // console.log("Formatted policy:", formattedPolicy);
       return formattedPolicy;
     });
 
@@ -155,7 +155,7 @@ router.get("/", async (req: Request, res: Response) => {
     // ------------------------
     // Log the final response for debugging.
     // ------------------------
-    console.log("Final response:", JSON.stringify(response, null, 2));
+    // console.log("Final response:", JSON.stringify(response, null, 2));
     res.json(response);
   } catch (error) {
     // ------------------------

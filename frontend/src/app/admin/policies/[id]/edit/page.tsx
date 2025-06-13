@@ -275,7 +275,7 @@ export default function EditPolicy() {
         fetch(`${apiUrl}/policies/${id}/versions`)
           .then((vRes) => vRes.json())
           .then((vData) => {
-            console.log('Fetched versions:', vData);
+            // console.log('Fetched versions:', vData); // Removed for production
             setPolicyVersions(vData.versions || []);
           })
           .catch((err) => {
@@ -546,7 +546,7 @@ export default function EditPolicy() {
         throw new Error('Failed to fetch version data');
       }
       const data = await res.json();
-      console.log('Fetched version data:', data);
+      // console.log('Fetched version data:', data); // Removed for production
       const versionData = data.version;
       // Update form state with the version data
       setFormState((prev) => ({ ...prev, ...versionData }));

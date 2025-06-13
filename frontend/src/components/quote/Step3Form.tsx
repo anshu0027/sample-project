@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import { User, Phone, MapPin, ChevronDown, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
@@ -17,6 +18,7 @@ type Step3FormProps = {
   onChange: (field: string, value: any) => void;
   onSave?: () => void;
   isRestored?: boolean;
+  onValidate?: () => void;
 };
 // ------------------------
 // Step3Form component: Handles the third step of the quote generation process.

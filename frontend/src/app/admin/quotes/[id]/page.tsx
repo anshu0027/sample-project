@@ -1,10 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import {
   ArrowLeft,
-  Mail,
-  Edit,
+  // Mail,
+  // Edit,
   DollarSign,
   Calendar,
   Users,
@@ -98,7 +99,7 @@ interface Quote {
 
 function flattenQuote(quote: any): Quote | null {
   if (!quote) return null;
-  console.log('Raw quote data:', JSON.stringify(quote, null, 2));
+  // console.log('Raw quote data:', JSON.stringify(quote, null, 2));
 
   const flattened = {
     id: quote.id,
@@ -179,7 +180,7 @@ function flattenQuote(quote: any): Quote | null {
     brunchVenueAsInsured: quote.event?.venue?.brunchVenueAsInsured || false,
   };
 
-  console.log('Flattened quote data:', JSON.stringify(flattened, null, 2));
+  // console.log('Flattened quote data:', JSON.stringify(flattened, null, 2));
   return flattened;
 }
 
@@ -202,7 +203,7 @@ export default function QuoteDetail() {
       setError('');
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
       try {
-        console.log('Fetching quote with ID:', id);
+        // console.log('Fetching quote with ID:', id);
         const res = await fetch(`${apiUrl}/quotes?quoteNumber=${id}`);
         if (!res.ok) {
           const errData = await res.json();
@@ -210,7 +211,7 @@ export default function QuoteDetail() {
           throw new Error(errData.error || 'Failed to fetch quote');
         }
         const data = await res.json();
-        console.log('API response:', data);
+        // console.log('API response:', data);
         setQuote(flattenQuote(data.quote || null));
       } catch (err: unknown) {
         console.error('Fetch error:', err);

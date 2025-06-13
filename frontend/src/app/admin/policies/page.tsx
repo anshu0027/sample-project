@@ -42,6 +42,20 @@ interface PolicyList {
   payments?: { amount: number; status: string }[];
 }
 
+// Helper hook for debouncing
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+  return debouncedValue;
+}
+
 export default function Policies() {
   const [searchTerm, setSearchTerm] = useState('');
   const [policies, setPolicies] = useState<PolicyList[]>([]);
@@ -55,6 +69,7 @@ export default function Policies() {
   const [exportType, setExportType] = useState('all');
   const [showExportDropdown, setShowExportDropdown] = useState(false);
   const exportDropdownRef = useRef<HTMLDivElement>(null);
+  const debouncedSearchTerm = useDebounce(searchTerm, 300); // Debounce search term
 
   // ==================================================================
   // ===== API CHANGE #1: Fetching paginated policies ==============
@@ -69,7 +84,7 @@ export default function Policies() {
       if (!res.ok) throw new Error('Failed to fetch policies');
 
       const data = await res.json();
-      console.log('Received policies data:', data);
+      // console.log('Received policies data:', data); // Removed for performance
 
       // The backend now sends pre-formatted data, so mapping is simpler
       setPolicies(data.policies || []);
@@ -88,23 +103,23 @@ export default function Policies() {
 
   // Client-side filtering will now operate on the current page's data
   const filteredPolicies = useMemo(() => {
-    const term = searchTerm.toLowerCase().trim();
+    const term = debouncedSearchTerm.toLowerCase().trim(); // Use debounced search term
     if (!term) return policies;
     return policies.filter((policy) => {
       const fullName =
         policy.customer ||
         `${policy.policyHolder?.firstName ?? ''} ${policy.policyHolder?.lastName ?? ''}`;
-      const email = policy.email?.toLowerCase() ?? '';
-      const eventType = policy.eventType?.toLowerCase() ?? '';
-      const quoteNumber = policy.quoteNumber?.toLowerCase() ?? '';
+      // const email = (policy.email ?? '').toLowerCase();
+      const eventType = (policy.eventType ?? '').toLowerCase();
+      const quoteNumber = (policy.quoteNumber ?? '').toLowerCase();
       return (
         fullName.toLowerCase().includes(term) ||
-        email.includes(term) ||
+        // email.includes(term) ||
         eventType.includes(term) ||
         quoteNumber.includes(term)
       );
     });
-  }, [searchTerm, policies]);
+  }, [debouncedSearchTerm, policies]); // Depend on debounced search term
 
   const totalPages = Math.ceil(totalPolicies / itemsPerPage);
 
@@ -367,7 +382,7 @@ export default function Policies() {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredPolicies.map((policy) => {
-                console.log('Rendering policy:', policy);
+                // console.log('Rendering policy:', policy); // Removed for performance
                 return (
                   <tr key={policy.id} className="border-b border-gray-200 hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">

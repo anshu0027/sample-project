@@ -70,7 +70,7 @@ router.get("/:id", async (req: Request, res: Response) => {
     // ------------------------
     // Log the policy data being sent for debugging purposes.
     // ------------------------
-    console.log("Policy data being sent:", JSON.stringify(policy, null, 2));
+    // console.log("Policy data being sent:", JSON.stringify(policy, null, 2));
 
     res.json({ policy });
   } catch (error) {
@@ -389,16 +389,16 @@ router.put("/:id", async (req: Request, res: Response) => {
       fields.rehearsalDinnerVenueZip ||
       fields.rehearsalDinnerVenueAsInsured
     ) {
-      console.log("=== Venue Update Debug ===");
-      console.log("Fields received:", fields);
-      console.log("Policy record before update:", policyRecord);
-      console.log("Event before update:", policyRecord.event);
-      console.log("Venue before update:", policyRecord.event?.venue);
+      // console.log("=== Venue Update Debug ===");
+      // console.log("Fields received:", fields);
+      // console.log("Policy record before update:", policyRecord);
+      // console.log("Event before update:", policyRecord.event);
+      // console.log("Venue before update:", policyRecord.event?.venue);
 
       const venueRepository = AppDataSource.getRepository(Venue);
       const venue = policyRecord.event?.venue || new Venue();
 
-      console.log("Venue entity before merge:", venue);
+      // console.log("Venue entity before merge:", venue);
 
       venueRepository.merge(venue, {
         name: fields.venueName,
@@ -454,14 +454,14 @@ router.put("/:id", async (req: Request, res: Response) => {
         rehearsalDinnerVenueAsInsured: fields.rehearsalDinnerVenueAsInsured,
       });
 
-      console.log("Venue entity after merge:", venue);
+      // console.log("Venue entity after merge:", venue);
 
       await venueRepository.save(venue);
-      console.log("Venue saved successfully:", venue);
+      // console.log("Venue saved successfully:", venue);
 
       if (policyRecord.event) {
         policyRecord.event.venue = venue;
-        console.log("Venue attached to event:", policyRecord.event.venue);
+        // console.log("Venue attached to event:", policyRecord.event.venue);
       }
     }
 
@@ -662,7 +662,7 @@ router.delete("/:id", async (req: Request, res: Response) => {
 // ------------------------
 router.post("/from-quote", async (req: Request, res: Response) => {
   try {
-    console.log("Received request body:", req.body);
+    // console.log("Received request body:", req.body);
     const { quoteNumber, forceConvert } = req.body;
     // ------------------------
     // Validate that quoteNumber is provided.
@@ -679,7 +679,7 @@ router.post("/from-quote", async (req: Request, res: Response) => {
     // ------------------------
     // Fetch the quote by quoteNumber, including its relations.
     // ------------------------
-    console.log("Looking up quote:", quoteNumber);
+    // console.log("Looking up quote:", quoteNumber);
     const quote = await quoteRepository.findOne({
       where: { quoteNumber },
       relations: ["policy", "event", "event.venue", "policyHolder"],
@@ -694,14 +694,14 @@ router.post("/from-quote", async (req: Request, res: Response) => {
       return;
     }
 
-    console.log("Found quote:", {
-      id: quote.id,
-      quoteNumber: quote.quoteNumber,
-      source: quote.source,
-      convertedToPolicy: quote.convertedToPolicy,
-      hasEvent: !!quote.event,
-      hasPolicyHolder: !!quote.policyHolder,
-    });
+    // console.log("Found quote:", {
+    //   id: quote.id,
+    //   quoteNumber: quote.quoteNumber,
+    //   source: quote.source,
+    //   convertedToPolicy: quote.convertedToPolicy,
+    //   hasEvent: !!quote.event,
+    //   hasPolicyHolder: !!quote.policyHolder,
+    // });
 
     // ------------------------
     // Check if the quote has already been converted to a policy.
@@ -718,14 +718,14 @@ router.post("/from-quote", async (req: Request, res: Response) => {
     // Update the quote status to COMPLETE
     quote.status = StepStatus.COMPLETE;
     await quoteRepository.save(quote);
-    console.log("Updated quote status to COMPLETE");
+    // console.log("Updated quote status to COMPLETE");
 
     // ------------------------
     // For admin-generated quotes, require 'forceConvert' flag unless it's already set.
     // This acts as a confirmation step for admin conversions.
     // ------------------------
     if (quote.source === QuoteSource.ADMIN && !forceConvert) {
-      console.log("Admin quote requires manual conversion");
+      // console.log("Admin quote requires manual conversion");
       res.status(400).json({
         error: "Admin-generated quotes require manual conversion confirmation",
         requiresManualConversion: true,
@@ -736,12 +736,12 @@ router.post("/from-quote", async (req: Request, res: Response) => {
     // ------------------------
     // Call the service function to create a policy from the quote.
     // ------------------------
-    console.log("Creating policy from quote");
+    // console.log("Creating policy from quote");
     const policy = await createPolicyFromQuote(quote.id);
-    console.log("Created policy:", {
-      id: policy.id,
-      policyNumber: policy.policyNumber,
-    });
+    // console.log("Created policy:", {
+    //   id: policy.id,
+    //   policyNumber: policy.policyNumber,
+    // });
 
     // ------------------------
     // For admin-generated quotes, create a payment record with SUCCESS status
@@ -781,7 +781,7 @@ router.post("/from-quote", async (req: Request, res: Response) => {
       relations: ["quote", "event", "event.venue", "policyHolder"],
     });
 
-    console.log("Sending success response");
+    // console.log("Sending success response");
     res.status(201).json({
       message: "Quote converted to policy successfully",
       policyNumber: policy.policyNumber,

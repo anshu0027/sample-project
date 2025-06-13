@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import { MapPin, CalendarCheck, ChevronDown, AlertCircle } from 'lucide-react';
 // import Card from "@/components/ui/Card";
@@ -6,15 +7,83 @@ import Input from '@/components/ui/Input';
 // import Select from "@/components/ui/Select";
 import Checkbox from '@/components/ui/Checkbox';
 import { VENUE_TYPES, INDOOR_OUTDOOR_OPTIONS, COUNTRIES, US_STATES } from '@/utils/constants';
-import { QuoteState } from '@/context/QuoteContext';
+
+// Define the shape of the state data Step2Form actually needs for displaying and editing fields.
+// This is compatible with QuoteFormState from the edit page and a subset of QuoteState from context.
+interface Step2FormData {
+  eventType: string;
+  honoree1FirstName: string;
+  honoree1LastName: string;
+  honoree2FirstName: string;
+  honoree2LastName: string;
+
+  ceremonyLocationType: string;
+  indoorOutdoor: string;
+  venueName: string;
+  venueAddress1: string;
+  venueAddress2: string;
+  venueCountry: string;
+  venueCity: string;
+  venueState: string;
+  venueZip: string;
+  venueAsInsured: boolean;
+
+  receptionLocationType: string;
+  receptionIndoorOutdoor: string;
+  receptionVenueName: string;
+  receptionVenueAddress1: string;
+  receptionVenueAddress2: string;
+  receptionVenueCountry: string;
+  receptionVenueCity: string;
+  receptionVenueState: string;
+  receptionVenueZip: string;
+  receptionVenueAsInsured: boolean;
+
+  brunchLocationType: string;
+  brunchIndoorOutdoor: string;
+  brunchVenueName: string;
+  brunchVenueAddress1: string;
+  brunchVenueAddress2: string;
+  brunchVenueCountry: string;
+  brunchVenueCity: string;
+  brunchVenueState: string;
+  brunchVenueZip: string;
+  brunchVenueAsInsured: boolean;
+
+  rehearsalLocationType: string;
+  rehearsalIndoorOutdoor: string;
+  rehearsalVenueName: string;
+  rehearsalVenueAddress1: string;
+  rehearsalVenueAddress2: string;
+  rehearsalVenueCountry: string;
+  rehearsalVenueCity: string;
+  rehearsalVenueState: string;
+  rehearsalVenueZip: string;
+  rehearsalVenueAsInsured: boolean;
+
+  rehearsalDinnerLocationType: string;
+  rehearsalDinnerIndoorOutdoor: string;
+  rehearsalDinnerVenueName: string;
+  rehearsalDinnerVenueAddress1: string;
+  rehearsalDinnerVenueAddress2: string;
+  rehearsalDinnerVenueCountry: string;
+  rehearsalDinnerVenueCity: string;
+  rehearsalDinnerVenueState: string;
+  rehearsalDinnerVenueZip: string;
+  rehearsalDinnerVenueAsInsured: boolean;
+  // Ensure all fields accessed via state[keyof QuoteState] or state.fieldName are listed here
+  // For example, if renderVenueSection dynamically creates keys like `${prefix}VenueName`,
+  // those effective keys need to be part of this interface if type safety is desired for them.
+  // The current implementation of renderVenueSection uses direct prop names, which is fine.
+}
 
 // ------------------------
 // Type definition for the props of Step2Form component
 // ------------------------
 type Step2FormProps = {
-  state: QuoteState; // The current state of the quote form
-  errors: Record<keyof QuoteState, string | undefined>; // Object containing validation errors for form fields
-  onChange: (field: keyof QuoteState, value: any) => void; // Callback function to handle field changes
+  state: Step2FormData; // The current state of the quote form, specific to Step 2 data fields
+  errors: Record<string, string | undefined>; // Object containing validation errors for form fields
+  onChange: (field: string, value: any) => void; // Callback function to handle field changes
   onValidate?: () => void; // Optional callback for form validation
   onContinue?: () => void; // Optional callback to proceed to the next step
   onSave?: () => void; // Optional callback to save the form data
@@ -55,14 +124,14 @@ export default function Step2Form({
   // ------------------------
   const renderVenueSection = (
     title: string,
-    nameField: keyof QuoteState,
-    address1Field: keyof QuoteState,
-    address2Field: keyof QuoteState,
-    countryField: keyof QuoteState,
-    cityField: keyof QuoteState,
-    stateField: keyof QuoteState,
-    zipField: keyof QuoteState,
-    asInsuredField: keyof QuoteState,
+    nameField: keyof Step2FormData,
+    address1Field: keyof Step2FormData,
+    address2Field: keyof Step2FormData,
+    countryField: keyof Step2FormData,
+    cityField: keyof Step2FormData,
+    stateField: keyof Step2FormData,
+    zipField: keyof Step2FormData,
+    asInsuredField: keyof Step2FormData,
   ) => (
     // ------------------------
     // Main container for a venue section

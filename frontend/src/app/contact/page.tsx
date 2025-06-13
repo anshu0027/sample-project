@@ -8,7 +8,7 @@ export default function ContactPage() {
           <Mail className="mx-auto h-12 w-12 text-blue-600" />
           <h1 className="mt-6 text-3xl font-extrabold text-gray-900">Get in Touch</h1>
           <p className="mt-2 text-md text-gray-600">
-            We'd love to hear from you! Send us a message using the form below.
+            We&apos;d love to hear from you! Send us a message using the form below.
           </p>
         </div>
         <form className="mt-8 space-y-6">

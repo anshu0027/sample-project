@@ -9,7 +9,7 @@ import clsx from 'clsx';
 // Step component: Renders an individual step in the progress tracker.
 // ------------------------
 
-const Step = ({
+const Step = React.memo(({
   number,
   title,
   path,
@@ -78,7 +78,8 @@ const Step = ({
   ) : (
     <div>{stepContent}</div>
   );
-};
+});
+Step.displayName = 'Step'; // For better debugging
 
 // ------------------------
 // Connector component: Renders the connecting line between steps.
@@ -102,7 +103,7 @@ interface ProgressTrackerProps {
 // ProgressTracker component: Displays a series of steps to guide the user through a process.
 // It can be configured for either customer or admin flows.
 // ------------------------
-const ProgressTracker: React.FC<ProgressTrackerProps> = ({ admin = false }) => {
+const ProgressTracker: React.FC<ProgressTrackerProps> = React.memo(({ admin = false }) => {
   // ------------------------
   // Get the current pathname from Next.js navigation.
   // ------------------------
@@ -211,6 +212,7 @@ const ProgressTracker: React.FC<ProgressTrackerProps> = ({ admin = false }) => {
       </div>
     </div>
   );
-};
+});
+ProgressTracker.displayName = 'ProgressTracker'; // For better debugging
 
 export default ProgressTracker;

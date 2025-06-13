@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
@@ -287,7 +288,7 @@ export default function EditQuote() {
       });
     }
   };
-  console.log(formState);
+  // console.log(formState);
   // Validation functions for each step (implement as needed)
   const validateStep1 = () => {
     const newErrors: Record<string, string> = {};
@@ -326,7 +327,7 @@ export default function EditQuote() {
     if (!formState.city) newErrors.city = 'Required';
     if (!formState.state) newErrors.state = 'Required';
     if (!formState.zip) newErrors.zip = 'Required';
-    if (!formState.legalNotices) newErrors.legalNotices = 'Required';
+    // if (!formState.legalNotices) newErrors.legalNotices = 'Required';
     if (!formState.completingFormName) newErrors.completingFormName = 'Required';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -417,6 +418,7 @@ export default function EditQuote() {
           errors={errors}
           onChange={handleInputChange}
           onSave={handleSave}
+          onValidate={validateStep3}
         />
       )}
       {step === 4 && (
