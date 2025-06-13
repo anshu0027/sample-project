@@ -44,7 +44,10 @@ export default function AdminLogin() {
           setPageLoading(false);
         }
       }, 200); // Adjust delay as needed
-      return () => { isMounted = false; clearTimeout(timer); };
+      return () => {
+        isMounted = false;
+        clearTimeout(timer);
+      };
     }
   }, [router]); // Include router as it's used. replace() will unmount.
 
@@ -198,7 +201,12 @@ export default function AdminLogin() {
               {/* ============================= */}
               {/* ===== Submit Button ===== */}
               {/* ============================= */}
-              <Button type="submit" variant="primary" size="lg">
+              <Button
+                type="submit"
+                variant="primary"
+                size="lg"
+                onMouseEnter={() => router.prefetch('/admin')}
+              >
                 {isSubmitting ? 'Signing In...' : 'Sign In'}
               </Button>
             </div>

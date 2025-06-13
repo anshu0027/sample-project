@@ -16,7 +16,8 @@ interface Quote {
   createdAt: string;
   totalPremium?: number;
   quoteNumber?: string;
-  event?: { // Added for potentially nested eventType
+  event?: {
+    // Added for potentially nested eventType
     eventType?: string;
   };
   policyHolder?: {
@@ -121,19 +122,25 @@ export default function AdminDashboard() {
             mostRecentQuotes.push(quote);
             // Sort the small array after adding, to keep the oldest at the end if we reach K items
             if (mostRecentQuotes.length === K) {
-              mostRecentQuotes.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+              mostRecentQuotes.sort(
+                (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+              );
             }
           } else {
             // Compare with the oldest in the current top K (at index K-1 due to descending sort)
             if (quoteDate > new Date(mostRecentQuotes[K - 1].createdAt).getTime()) {
               mostRecentQuotes[K - 1] = quote; // Replace the oldest
-              mostRecentQuotes.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()); // Re-sort
+              mostRecentQuotes.sort(
+                (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+              ); // Re-sort
             }
           }
         }
         // If there were fewer than K quotes in total, ensure the array is sorted.
         if (mostRecentQuotes.length > 0 && mostRecentQuotes.length < K) {
-          mostRecentQuotes.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+          mostRecentQuotes.sort(
+            (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+          );
         }
         setRecentQuotes(mostRecentQuotes);
 
@@ -271,7 +278,11 @@ export default function AdminDashboard() {
             <PlusCircle size={18} />
             Generate Policy
           </Button> */}
-          <Button variant="outline" onClick={() => router.push('/admin/create-quote/step1')}>
+          <Button
+            variant="outline"
+            onClick={() => router.push('/admin/create-quote/step1')}
+            onMouseEnter={() => router.prefetch('/admin/create-quote/step1')}
+          >
             <PlusCircle size={18} />
             Create Quote
           </Button>
@@ -284,6 +295,11 @@ export default function AdminDashboard() {
             key={index}
             className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 cursor-pointer hover:shadow-md transition-shadow"
             onClick={stat.onClick}
+            onMouseEnter={() => {
+              if (stat.title === 'Total Policies') router.prefetch('/admin/policies');
+              if (stat.title === 'Total Quotes') router.prefetch('/admin/quotes');
+              if (stat.title === 'Premium Revenue') router.prefetch('/admin/transactions');
+            }}
           >
             <div className="flex items-center justify-between mb-4">
               <div className="p-2 bg-gray-50 rounded-lg">{stat.icon}</div>
@@ -307,7 +323,12 @@ export default function AdminDashboard() {
           className="text-gray-800"
           footer={
             <div className="text-right">
-              <Button variant="outline" size="sm" onClick={() => router.push('/admin/quotes')}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => router.push('/admin/quotes')}
+                onMouseEnter={() => router.prefetch('/admin/quotes')}
+              >
                 View All Quotes
               </Button>
             </div>
@@ -322,7 +343,8 @@ export default function AdminDashboard() {
                   <div>
                     <p className="font-medium text-gray-900">{quote.quoteNumber}</p>
                     <p className="text-sm text-gray-500">
-                      {quote.event?.eventType || 'Wedding Event'} • Premium: ${quote.totalPremium || 0}
+                      {quote.event?.eventType || 'Wedding Event'} • Premium: $
+                      {quote.totalPremium || 0}
                     </p>
                   </div>
                   <span className="text-sm text-gray-500">
@@ -345,6 +367,7 @@ export default function AdminDashboard() {
                 variant="outline"
                 size="sm"
                 onClick={() => router.push('/admin/transactions')}
+                onMouseEnter={() => router.prefetch('/admin/transactions')}
               >
                 View All Transactions
               </Button>

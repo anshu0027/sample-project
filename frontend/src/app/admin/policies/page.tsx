@@ -288,7 +288,11 @@ export default function Policies() {
           </p>
         </div>
         <div className="mt-2 sm:mt-0 flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
-          <Button variant="default" onClick={() => router.push('/admin/create-quote/step1')}>
+          <Button
+            variant="default"
+            onClick={() => router.push('/admin/create-quote/step1')}
+            onMouseEnter={() => router.prefetch('/admin/create-quote/step1')}
+          >
             <PlusCircle size={18} className="mr-2" /> Generate New Policy
           </Button>
           {/* ... Other buttons remain identical ... */}
@@ -425,6 +429,7 @@ export default function Policies() {
                           variant="outline"
                           size="sm"
                           onClick={() => handleView(policy.policyId)}
+                          onMouseEnter={() => router.prefetch(`/admin/policies/${policy.policyId}`)}
                         >
                           <Eye size={16} className="mr-1" /> View
                         </Button>
@@ -432,6 +437,9 @@ export default function Policies() {
                           variant="outline"
                           size="sm"
                           onClick={() => handleEdit(policy.policyId)}
+                          onMouseEnter={() =>
+                            router.prefetch(`/admin/policies/${policy.policyId}/edit`)
+                          }
                         >
                           <Edit size={16} className="mr-1" /> Edit
                         </Button>

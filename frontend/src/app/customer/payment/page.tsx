@@ -2,10 +2,10 @@
 'use client';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { 
-  CreditCard, 
-  // Banknote, 
-  // QrCode 
+import {
+  CreditCard,
+  // Banknote,
+  // QrCode
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { toast } from '@/hooks/use-toast';
@@ -368,7 +368,12 @@ export default function Payment() {
           )}
 
           <div className="mt-8">
-            <Button onClick={handlePay} disabled={processing} className="w-full">
+            <Button
+              onClick={handlePay}
+              disabled={processing}
+              onMouseEnter={() => router.prefetch('/customer/review')}
+              className="w-full"
+            >
               {processing ? 'Processing...' : `Pay $${quoteDetails?.totalPremium || 0}`}
             </Button>
           </div>

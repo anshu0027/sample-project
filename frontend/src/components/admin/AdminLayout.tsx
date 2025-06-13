@@ -162,6 +162,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                           setIsSidebarOpen(false);
                         }
                       }}
+                      onMouseEnter={() => router.prefetch(item.href)}
                       // ------------------------
                       // Dynamically sets class names for active and hover states.
                       // ------------------------

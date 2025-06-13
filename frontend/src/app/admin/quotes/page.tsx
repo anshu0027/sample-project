@@ -132,7 +132,7 @@ export default function Quotes() {
 
   useEffect(() => {
     fetchQuotes();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -553,7 +553,12 @@ export default function Quotes() {
           </p>
         </div>
         <div className="mt-2 sm:mt-0 flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
-          <Button variant="default" onClick={handleCreateNewQuote} className="w-full sm:w-auto">
+          <Button
+            variant="default"
+            onClick={handleCreateNewQuote}
+            onMouseEnter={() => router.prefetch('/admin/create-quote/step1')}
+            className="w-full sm:w-auto"
+          >
             <PlusCircle size={18} className="mr-2" />
             Create New Quote
           </Button>
@@ -746,6 +751,7 @@ export default function Quotes() {
                         variant="outline"
                         size="sm"
                         onClick={() => handleViewQuote(quote.quoteNumber)}
+                        onMouseEnter={() => router.prefetch(`/admin/quotes/${quote.quoteNumber}`)}
                       >
                         <Eye size={16} />
                       </Button>

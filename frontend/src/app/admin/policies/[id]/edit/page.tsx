@@ -665,6 +665,7 @@ export default function EditPolicy() {
             variant="outline"
             size="sm"
             className="w-full justify-center sm:w-auto"
+            onMouseEnter={() => router.prefetch('/admin/policies')}
             onClick={() => router.push('/admin/policies')}
           >
             Back to Policies

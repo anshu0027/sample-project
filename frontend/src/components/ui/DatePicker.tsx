@@ -17,7 +17,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
   onChange,
   minDate,
   maxDate,
-  placeholderText = 'Select date',
+  // placeholderText = 'Select date',
   error = false,
   disabled = false,
   className = '',

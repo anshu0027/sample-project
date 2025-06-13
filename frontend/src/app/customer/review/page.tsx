@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   FileCog,
@@ -141,7 +141,71 @@ async function validateRetrievedQuoteFields(quoteNumber: string): Promise<boolea
   }
 }
 
-export default function Review() {
+// Define ReviewPageSkeleton at the top level so it can be used by Suspense fallback
+const ReviewPageSkeleton = () => (
+  <div className="relative flex justify-center min-h-screen bg-white z-0 animate-pulse">
+    <div className="w-full max-w-3xl z-0">
+      <div className="flex flex-col md:flex-row gap-8 max-w-6xl mx-auto px-2 sm:px-4 md:px-6 pb-12 w-full mt-8">
+        <div className="flex-1 min-w-0">
+          {/* Main Card Skeleton */}
+          <div className="mb-8 shadow-lg border-0 bg-gray-100 p-6 rounded-lg">
+            <div className="flex items-center mb-4">
+              <div className="h-7 w-7 bg-gray-300 rounded-full mr-3"></div>
+              <div>
+                <div className="h-6 bg-gray-300 rounded w-48 mb-1"></div>
+                <div className="h-4 bg-gray-300 rounded w-32"></div>
+              </div>
+            </div>
+            <div className="bg-yellow-100 border-l-4 border-yellow-300 p-4 mb-6 rounded-md">
+              <div className="h-4 bg-yellow-200 rounded w-full"></div>
+            </div>
+            <div className="bg-gray-200 rounded-xl p-6 mb-6">
+              <div className="h-6 bg-gray-300 rounded w-1/3 mx-auto mb-2"></div>
+              <div className="h-10 bg-gray-300 rounded w-1/2 mx-auto mb-4"></div>
+              <div className="h-4 bg-gray-300 rounded w-1/4 mb-2"></div>
+              <div className="h-4 bg-gray-300 rounded w-2/5 mb-1"></div>
+              <div className="h-4 bg-gray-300 rounded w-2/5"></div>
+            </div>
+            <div className="h-10 bg-gray-300 rounded-md w-48 mx-auto"></div> {/* Download button */}
+          </div>
+
+          {/* Review Section Skeletons (repeat 3 times) */}
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="mb-6 border border-gray-200 rounded-lg">
+              <div className="bg-gray-100 px-4 py-3 flex items-center border-b">
+                <div className="h-5 w-5 bg-gray-300 rounded-full mr-2"></div>
+                <div className="h-5 bg-gray-300 rounded w-1/3"></div>
+              </div>
+              <div className="p-4 space-y-3">
+                {[...Array(2)].map(
+                  (
+                    _,
+                    j, // 2 items per section
+                  ) => (
+                    <div key={j} className="py-2 flex justify-between border-b border-gray-100">
+                      <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+                      <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+                    </div>
+                  ),
+                )}
+              </div>
+            </div>
+          ))}
+          {/* Payment Card Skeleton */}
+          <div className="mb-8 shadow-lg border-0 bg-gray-100 p-6 rounded-lg">
+            <div className="h-6 bg-gray-300 rounded w-1/2 mb-2"></div>
+            <div className="h-4 bg-gray-300 rounded w-3/4 mb-6"></div>
+            <div className="h-12 bg-gray-300 rounded-md w-1/2 mx-auto"></div>
+          </div>
+          {/* Back Button Skeleton */}
+          <div className="h-10 bg-gray-200 rounded-md w-40"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+function ReviewClientContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const paymentSuccessParam = searchParams.get('payment') === 'success';
@@ -495,70 +559,6 @@ export default function Review() {
     return () => clearTimeout(timer);
   }, [router, state.step3Complete, state.quoteNumber]);
 
-  const ReviewPageSkeleton = () => (
-    <div className="relative flex justify-center min-h-screen bg-white z-0 animate-pulse">
-      <div className="w-full max-w-3xl z-0">
-        <div className="flex flex-col md:flex-row gap-8 max-w-6xl mx-auto px-2 sm:px-4 md:px-6 pb-12 w-full mt-8">
-          <div className="flex-1 min-w-0">
-            {/* Main Card Skeleton */}
-            <div className="mb-8 shadow-lg border-0 bg-gray-100 p-6 rounded-lg">
-              <div className="flex items-center mb-4">
-                <div className="h-7 w-7 bg-gray-300 rounded-full mr-3"></div>
-                <div>
-                  <div className="h-6 bg-gray-300 rounded w-48 mb-1"></div>
-                  <div className="h-4 bg-gray-300 rounded w-32"></div>
-                </div>
-              </div>
-              <div className="bg-yellow-100 border-l-4 border-yellow-300 p-4 mb-6 rounded-md">
-                <div className="h-4 bg-yellow-200 rounded w-full"></div>
-              </div>
-              <div className="bg-gray-200 rounded-xl p-6 mb-6">
-                <div className="h-6 bg-gray-300 rounded w-1/3 mx-auto mb-2"></div>
-                <div className="h-10 bg-gray-300 rounded w-1/2 mx-auto mb-4"></div>
-                <div className="h-4 bg-gray-300 rounded w-1/4 mb-2"></div>
-                <div className="h-4 bg-gray-300 rounded w-2/5 mb-1"></div>
-                <div className="h-4 bg-gray-300 rounded w-2/5"></div>
-              </div>
-              <div className="h-10 bg-gray-300 rounded-md w-48 mx-auto"></div>{' '}
-              {/* Download button */}
-            </div>
-
-            {/* Review Section Skeletons (repeat 3 times) */}
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="mb-6 border border-gray-200 rounded-lg">
-                <div className="bg-gray-100 px-4 py-3 flex items-center border-b">
-                  <div className="h-5 w-5 bg-gray-300 rounded-full mr-2"></div>
-                  <div className="h-5 bg-gray-300 rounded w-1/3"></div>
-                </div>
-                <div className="p-4 space-y-3">
-                  {[...Array(2)].map(
-                    (
-                      _,
-                      j, // 2 items per section
-                    ) => (
-                      <div key={j} className="py-2 flex justify-between border-b border-gray-100">
-                        <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-                        <div className="h-4 bg-gray-200 rounded w-1/3"></div>
-                      </div>
-                    ),
-                  )}
-                </div>
-              </div>
-            ))}
-            {/* Payment Card Skeleton */}
-            <div className="mb-8 shadow-lg border-0 bg-gray-100 p-6 rounded-lg">
-              <div className="h-6 bg-gray-300 rounded w-1/2 mb-2"></div>
-              <div className="h-4 bg-gray-300 rounded w-3/4 mb-6"></div>
-              <div className="h-12 bg-gray-300 rounded-md w-1/2 mx-auto"></div>
-            </div>
-            {/* Back Button Skeleton */}
-            <div className="h-10 bg-gray-200 rounded-md w-40"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
   if (!pageReady) {
     return <ReviewPageSkeleton />;
   }
@@ -689,6 +689,7 @@ export default function Review() {
                           <Button
                             variant="primary"
                             onClick={() => router.push('/')}
+                            onMouseEnter={() => router.prefetch('/')}
                             className="transition-transform duration-150 hover:scale-105"
                           >
                             Return to Home
@@ -891,6 +892,7 @@ export default function Review() {
                         variant="primary"
                         size="lg"
                         onClick={() => router.push('/customer/payment')}
+                        onMouseEnter={() => router.prefetch('/customer/payment')}
                         className="min-w-44 transition-transform duration-150 hover:scale-105"
                       >
                         <DollarSign size={18} />
@@ -906,6 +908,7 @@ export default function Review() {
                     <Button
                       variant="secondary"
                       onClick={handleBack}
+                      onMouseEnter={() => router.prefetch('/customer/policy-holder')}
                       className="transition-transform duration-150 hover:scale-105"
                     >
                       Back to Policyholder
@@ -922,5 +925,16 @@ export default function Review() {
       </div>
       {renderAdditionalVenues()}
     </>
+  );
+}
+
+// This is the actual page component.
+// Since the file has 'use client' at the top, this is also a Client Component.
+// It wraps the content that uses useSearchParams with Suspense.
+export default function ReviewPage() {
+  return (
+    <Suspense fallback={<ReviewPageSkeleton />}>
+      <ReviewClientContent />
+    </Suspense>
   );
 }

@@ -45,7 +45,8 @@ function flattenPolicy(policy: any) {
     totalPremium: policy.totalPremium ?? policy.quote?.totalPremium ?? null,
     basePremium: policy.basePremium ?? policy.quote?.basePremium ?? null,
     liabilityPremium: policy.liabilityPremium ?? policy.quote?.liabilityPremium ?? null,
-    liquorLiabilityPremium: policy.liquorLiabilityPremium ?? policy.quote?.liquorLiabilityPremium ?? null,
+    liquorLiabilityPremium:
+      policy.liquorLiabilityPremium ?? policy.quote?.liquorLiabilityPremium ?? null,
 
     // Policy Holder Info (can be on policy or quote)
     firstName: policyHolderSource?.firstName || '',
@@ -172,7 +173,6 @@ export default function PolicyDetail() {
         const flattenedPolicy = flattenPolicy(data.policy);
         setPolicy(flattenedPolicy);
         setQuote(data.policy.quote || null); // Keep quote state if needed elsewhere, but not used in rendering now
-
       } catch (error) {
         console.error('Error fetching policy:', error);
         toast({
@@ -309,6 +309,7 @@ export default function PolicyDetail() {
             <div className="flex items-center">
               <button
                 onClick={handleBack}
+                onMouseEnter={() => router.prefetch('/admin/policies')}
                 className="mr-4 p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
               >
                 <ArrowLeft size={20} />
@@ -326,7 +327,11 @@ export default function PolicyDetail() {
               </div>
             </div>
             <div className="flex gap-3">
-              <Button variant="outline" onClick={handleEdit}>
+              <Button
+                variant="outline"
+                onClick={handleEdit}
+                onMouseEnter={() => router.prefetch(`/admin/policies/${id}/edit`)}
+              >
                 <Edit size={18} className="mr-2" /> Edit Policy
               </Button>
             </div>
@@ -335,7 +340,9 @@ export default function PolicyDetail() {
 
         {/* Policy Summary */}
         <div className="bg-white shadow-sm rounded-xl p-6 mb-6">
-          <h2 className="text-base sm:text-lg font-semibold mb-4 text-gray-900 border-b pb-2">Policy Summary</h2>
+          <h2 className="text-base sm:text-lg font-semibold mb-4 text-gray-900 border-b pb-2">
+            Policy Summary
+          </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="bg-blue-50 rounded-lg p-4">
               <div className="flex items-center">
@@ -482,7 +489,10 @@ export default function PolicyDetail() {
           {/* Contact Information */}
           <div className="bg-white shadow-sm rounded-xl p-6">
             <h2 className="text-lg font-semibold mb-4 text-gray-900 border-b pb-2">
-              <span className="bg-green-100 text-green-800 text-xs font-medium px-2 py-0.5 rounded-full mr-2">3</span>Contact Information
+              <span className="bg-green-100 text-green-800 text-xs font-medium px-2 py-0.5 rounded-full mr-2">
+                3
+              </span>
+              Contact Information
             </h2>
             <div className="space-y-4">
               <div>
@@ -542,7 +552,9 @@ export default function PolicyDetail() {
             </div>
             <div>
               <h3 className="text-sm font-medium text-gray-500">Ceremony Location Type</h3>
-              <p className="mt-1 text-sm sm:text-base font-medium">{policy.ceremonyLocationType || '-'}</p>
+              <p className="mt-1 text-sm sm:text-base font-medium">
+                {policy.ceremonyLocationType || '-'}
+              </p>
             </div>
             <div>
               <h3 className="text-sm font-medium text-gray-500">Indoor/Outdoor</h3>
@@ -575,7 +587,10 @@ export default function PolicyDetail() {
           {policy.eventType === 'wedding' && (
             <>
               <h2 className="text-lg font-semibold mb-4 text-gray-900 border-b pb-2">
-                <span className="bg-yellow-100 text-yellow-800 text-xs font-medium px-2 py-0.5 rounded-full mr-2">2.1</span>Additional Venue Information
+                <span className="bg-yellow-100 text-yellow-800 text-xs font-medium px-2 py-0.5 rounded-full mr-2">
+                  2.1
+                </span>
+                Additional Venue Information
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Reception Venue */}
@@ -676,20 +691,20 @@ export default function PolicyDetail() {
           <h2 className="text-lg font-semibold mb-4 text-gray-900 border-b pb-2">
             Additional Information
           </h2>
-            <div>
-              <h3 className="text-sm font-medium text-gray-500">Hear About Us</h3>
-              <p className="mt-1 font-medium">{policy.hearAboutUs || '-'}</p>
-            </div>
-            <div>
-              <h3 className="text-sm font-medium text-gray-500">Legal Notices</h3>
-              <p className="mt-1 font-medium">{policy.legalNotices ? 'Yes' : 'No'}</p>
-            </div>
-            <div>
-              <h3 className="text-sm font-medium text-gray-500">Completing Form Name</h3>
-              <p className="mt-1 font-medium">{policy.completingFormName || '-'}</p>
-            </div>
+          <div>
+            <h3 className="text-sm font-medium text-gray-500">Hear About Us</h3>
+            <p className="mt-1 font-medium">{policy.hearAboutUs || '-'}</p>
+          </div>
+          <div>
+            <h3 className="text-sm font-medium text-gray-500">Legal Notices</h3>
+            <p className="mt-1 font-medium">{policy.legalNotices ? 'Yes' : 'No'}</p>
+          </div>
+          <div>
+            <h3 className="text-sm font-medium text-gray-500">Completing Form Name</h3>
+            <p className="mt-1 font-medium">{policy.completingFormName || '-'}</p>
           </div>
         </div>
       </div>
+    </div>
   );
 }

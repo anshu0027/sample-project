@@ -436,6 +436,7 @@ export default function QuoteDetail() {
             <div className="flex items-center">
               <button
                 onClick={handleBack}
+                onMouseEnter={() => router.prefetch(`/admin/quotes`)}
                 className="mr-4 p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
               >
                 <ArrowLeft size={20} />

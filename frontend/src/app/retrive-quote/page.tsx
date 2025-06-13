@@ -51,7 +51,8 @@ const RetrieveQuote = () => {
 
             try {
               // Use the new backend endpoint to fetch the quote
-              const res = await fetch(`${apiUrl}/quotes?quoteNumber=${input.trim()}`, { // UPDATED PATH
+              const res = await fetch(`${apiUrl}/quotes?quoteNumber=${input.trim()}`, {
+                // UPDATED PATH
                 signal: controller.signal,
               });
               clearTimeout(timeoutId); // Clear the timeout if the request completes in time

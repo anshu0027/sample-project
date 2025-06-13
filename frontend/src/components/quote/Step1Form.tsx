@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect } from 'react';
 import { AlertCircle, DollarSign, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/Button';

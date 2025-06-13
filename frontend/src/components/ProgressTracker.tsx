@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { CheckCircle2 } from 'lucide-react';
 import { useQuote } from '../context/QuoteContext';
 import clsx from 'clsx';
@@ -9,76 +9,79 @@ import clsx from 'clsx';
 // Step component: Renders an individual step in the progress tracker.
 // ------------------------
 
-const Step = React.memo(({
-  number,
-  title,
-  path,
-  isActive,
-  isCompleted,
-  isClickable,
-}: {
-  number: number;
-  title: string;
-  path: string;
-  isActive: boolean;
-  isCompleted: boolean;
-  isClickable: boolean;
-}) => {
-  // ------------------------
-  // Content of a single step, including icon and title.
-  // ------------------------
-  const stepContent = (
-    <div
-      className={clsx(
-        'flex items-center gap-2 p-2 rounded-lg transition-all duration-300',
-        isActive && 'bg-blue-50 shadow-md',
-        isClickable ? 'cursor-pointer hover:bg-blue-100/50' : 'cursor-not-allowed opacity-60',
-      )}
-    >
+const Step = React.memo(
+  ({
+    number,
+    title,
+    path,
+    isActive,
+    isCompleted,
+    isClickable,
+  }: {
+    number: number;
+    title: string;
+    path: string;
+    isActive: boolean;
+    isCompleted: boolean;
+    isClickable: boolean;
+  }) => {
+    const router = useRouter();
+    // ------------------------
+    // Content of a single step, including icon and title.
+    // ------------------------
+    const stepContent = (
       <div
-        // ------------------------
-        // Step number/icon container.
-        // ------------------------
         className={clsx(
-          'flex items-center justify-center w-8 h-8 rounded-full border-2 shrink-0',
-          isActive
-            ? 'border-blue-600 bg-blue-600 text-white'
-            : isCompleted
-              ? 'border-green-500 bg-green-500 text-white'
-              : 'border-gray-300 bg-gray-100 text-gray-600',
+          'flex items-center gap-2 p-2 rounded-lg transition-all duration-300',
+          isActive && 'bg-blue-50 shadow-md',
+          isClickable ? 'cursor-pointer hover:bg-blue-100/50' : 'cursor-not-allowed opacity-60',
         )}
       >
-        {isCompleted ? (
-          <CheckCircle2 size={20} />
-        ) : (
-          <span className="text-sm font-semibold">{number}</span>
-        )}
+        <div
+          // ------------------------
+          // Step number/icon container.
+          // ------------------------
+          className={clsx(
+            'flex items-center justify-center w-8 h-8 rounded-full border-2 shrink-0',
+            isActive
+              ? 'border-blue-600 bg-blue-600 text-white'
+              : isCompleted
+                ? 'border-green-500 bg-green-500 text-white'
+                : 'border-gray-300 bg-gray-100 text-gray-600',
+          )}
+        >
+          {isCompleted ? (
+            <CheckCircle2 size={20} />
+          ) : (
+            <span className="text-sm font-semibold">{number}</span>
+          )}
+        </div>
+        <span
+          // ------------------------
+          // Step title.
+          // ------------------------
+          className={clsx(
+            'text-sm font-medium hidden sm:block',
+            isActive ? 'text-blue-700' : isCompleted ? 'text-green-600' : 'text-gray-500',
+          )}
+        >
+          {title}
+        </span>
       </div>
-      <span
-        // ------------------------
-        // Step title.
-        // ------------------------
-        className={clsx(
-          'text-sm font-medium hidden sm:block',
-          isActive ? 'text-blue-700' : isCompleted ? 'text-green-600' : 'text-gray-500',
-        )}
-      >
-        {title}
-      </span>
-    </div>
-  );
+    );
 
-  // ------------------------
-  // If the step is clickable, wrap it in a Link component. Otherwise, render it as a div.
-  // ------------------------
-  return isClickable ? (
-    <Link href={path} className="outline-none">
-      {stepContent}
-    </Link>
-  ) : (
-    <div>{stepContent}</div>
-  );
-});
+    // ------------------------
+    // If the step is clickable, wrap it in a Link component. Otherwise, render it as a div.
+    // ------------------------
+    return isClickable ? (
+      <Link href={path} className="outline-none" onMouseEnter={() => router.prefetch(path)}>
+        {stepContent}
+      </Link>
+    ) : (
+      <div>{stepContent}</div>
+    );
+  },
+);
 Step.displayName = 'Step'; // For better debugging
 
 // ------------------------

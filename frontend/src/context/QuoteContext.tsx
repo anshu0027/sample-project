@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 import React, { createContext, useContext, useReducer, ReactNode } from 'react';
 
@@ -327,65 +328,65 @@ const quoteReducer = (state: QuoteState, action: QuoteAction): QuoteState => {
 // These functions are currently defined within the context but are not directly used by the reducer.
 // The premium calculation logic is expected to be handled externally (e.g., in the component calling dispatch).
 // ------------------------
-const calculateBasePremium = (level: CoverageLevel | null): number => {
-  if (!level) return 0;
+// const calculateBasePremium = (level: CoverageLevel | null): number => {
+//   if (!level) return 0;
 
-  // Coverage level premium mapping
-  const premiumMap: Record<CoverageLevel, number> = {
-    1: 160, // $7,500 coverage
-    2: 200,
-    3: 250,
-    4: 300,
-    5: 355, // $50,000 coverage
-    6: 450,
-    7: 600,
-    8: 750,
-    9: 900,
-    10: 1025, // $175,000 coverage
-  };
+//   // Coverage level premium mapping
+//   const premiumMap: Record<CoverageLevel, number> = {
+//     1: 160, // $7,500 coverage
+//     2: 200,
+//     3: 250,
+//     4: 300,
+//     5: 355, // $50,000 coverage
+//     6: 450,
+//     7: 600,
+//     8: 750,
+//     9: 900,
+//     10: 1025, // $175,000 coverage
+//   };
 
-  return premiumMap[level] || 0;
-};
+//   return premiumMap[level] || 0;
+// };
 
-const calculateLiabilityPremium = (option: LiabilityOption | NewLiabilityOption): number => {
-  switch (option) {
-    case 'option1': // $1M liability with $25K property damage
-      return 195; // Updated price
-    case 'option2': // $1M liability with $250K property damage
-      return 210; // Updated price
-    case 'option3': // $1M liability with $1M property damage
-      return 240; // Updated price
-    case 'option4': // $1M/$2M Aggregate Liability with $25K PD
-      return 240; // Price from constants
-    case 'option5': // $1M/$2M Aggregate Liability with $250K PD
-      return 255; // Price from constants
-    case 'option6': // $1M/$2M Aggregate Liability with $1M PD
-      return 265; // Price from constants
-    default:
-      return 0;
-  }
-};
+// const calculateLiabilityPremium = (option: LiabilityOption | NewLiabilityOption): number => {
+//   switch (option) {
+//     case 'option1': // $1M liability with $25K property damage
+//       return 195; // Updated price
+//     case 'option2': // $1M liability with $250K property damage
+//       return 210; // Updated price
+//     case 'option3': // $1M liability with $1M property damage
+//       return 240; // Updated price
+//     case 'option4': // $1M/$2M Aggregate Liability with $25K PD
+//       return 240; // Price from constants
+//     case 'option5': // $1M/$2M Aggregate Liability with $250K PD
+//       return 255; // Price from constants
+//     case 'option6': // $1M/$2M Aggregate Liability with $1M PD
+//       return 265; // Price from constants
+//     default:
+//       return 0;
+//   }
+// };
 
-const calculateLiquorLiabilityPremium = (
-  hasLiquorLiability: boolean,
-  guestRange: GuestRange,
-): number => {
-  if (!hasLiquorLiability) return 0;
+// const calculateLiquorLiabilityPremium = (
+//   hasLiquorLiability: boolean,
+//   guestRange: GuestRange,
+// ): number => {
+//   if (!hasLiquorLiability) return 0;
 
-  // Guest count range premium mapping
-  const premiumMap: Record<GuestRange, number> = {
-    '1-50': 65,
-    '51-100': 65,
-    '101-150': 85,
-    '151-200': 85,
-    '201-250': 100,
-    '251-300': 100,
-    '301-350': 150,
-    '351-400': 150,
-  };
+//   // Guest count range premium mapping
+//   const premiumMap: Record<GuestRange, number> = {
+//     '1-50': 65,
+//     '51-100': 65,
+//     '101-150': 85,
+//     '151-200': 85,
+//     '201-250': 100,
+//     '251-300': 100,
+//     '301-350': 150,
+//     '351-400': 150,
+//   };
 
-  return premiumMap[guestRange] || 0;
-};
+//   return premiumMap[guestRange] || 0;
+// };
 
 // ------------------------
 // NOTE: getNextQuoteNumber is ONLY for display purposes and should NOT be used for DB operations. This is only for UI preview, not DB.
@@ -401,7 +402,7 @@ const getNextQuoteNumber = () => {
   let seq = 1;
   if (typeof window !== 'undefined') {
     const lastDate = localStorage.getItem('quoteDate');
-    let lastSeq = parseInt(localStorage.getItem('quoteSeq') || '0', 10);
+    const lastSeq = parseInt(localStorage.getItem('quoteSeq') || '0', 10);
     if (lastDate === dateStr) {
       seq = lastSeq + 1;
     }

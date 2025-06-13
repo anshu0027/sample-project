@@ -1729,6 +1729,7 @@ export default function EventInformation() {
           <Button
             variant="outline"
             onClick={handleBack}
+            onMouseEnter={() => router.prefetch('/admin/create-quote/step1')}
             className="w-full sm:w-auto transition-transform duration-150 hover:scale-105"
           >
             Back to Quote
@@ -1736,6 +1737,7 @@ export default function EventInformation() {
           <Button
             variant="primary"
             onClick={handleContinue}
+            onMouseEnter={() => router.prefetch('/admin/create-quote/step3')}
             className="w-full sm:w-auto transition-transform duration-150 hover:scale-105"
           >
             Continue to Policyholder

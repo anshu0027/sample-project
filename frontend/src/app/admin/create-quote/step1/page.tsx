@@ -351,6 +351,7 @@ export default function QuoteGenerator() {
         });
         setShowQuoteResults(true);
         dispatch({ type: 'COMPLETE_STEP', step: 1 });
+        // router.prefetch('/admin/create-quote/step2'); // Prefetch can be moved to button's onMouseEnter
       } catch (error) {
         const message = error instanceof Error ? error.message : 'An unknown error occurred.';
         toast.error(message);
@@ -385,7 +386,7 @@ export default function QuoteGenerator() {
     if (isLiquorLiabilityDisabled && state.liquorLiability) {
       handleInputChange('liquorLiability', false);
     }
-  }, [state.liabilityCoverage]);
+  });
 
   // =============================
   // ===== Special Activities Modal Handling =====
@@ -901,6 +902,7 @@ export default function QuoteGenerator() {
                 variant="primary"
                 size="lg"
                 onClick={handleContinue}
+                onMouseEnter={() => router.prefetch('/admin/create-quote/step2')}
                 className="transition-transform duration-150 hover:scale-105"
               >
                 <DollarSign size={24} className="text-blue-600" />

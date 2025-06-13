@@ -69,7 +69,8 @@ export default function PolicyHolder() {
   // ================================
   // ===== Input Change Handler =====
   // ================================
-  const handleInputChange = (field: keyof typeof state, value: string | boolean) => { // changed value: any to this
+  const handleInputChange = (field: keyof typeof state, value: string | boolean) => {
+    // changed value: any to this
     dispatch({ type: 'UPDATE_FIELD', field, value });
     if (errors[field]) {
       setErrors((prev) => {
@@ -672,6 +673,7 @@ export default function PolicyHolder() {
           <Button
             variant="secondary"
             onClick={handleBack}
+            onMouseEnter={() => router.prefetch('/admin/create-quote/step2')}
             className="transition-transform duration-150 hover:scale-105"
           >
             Back to Event Details
@@ -679,6 +681,7 @@ export default function PolicyHolder() {
           <Button
             variant="primary"
             onClick={handleContinue}
+            onMouseEnter={() => router.prefetch('/admin/create-quote/step4')}
             className="transition-transform duration-150 hover:scale-105"
           >
             Continue to Review

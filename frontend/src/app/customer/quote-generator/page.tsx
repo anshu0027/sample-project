@@ -274,7 +274,8 @@ export default function QuoteGenerator() {
               const emailData = await emailRes.json();
               toast.error(`Failed to send email: ${emailData.error || 'Unknown error'}`);
             }
-          } catch { // removed (err)
+          } catch {
+            // removed (err)
             toast.error('Failed to send email.');
           }
         } else {
@@ -765,6 +766,7 @@ export default function QuoteGenerator() {
                 variant="primary"
                 size="lg"
                 onClick={handleContinue}
+                onMouseEnter={() => router.prefetch('/customer/event-information')}
                 className="transition-transform duration-150 hover:scale-105"
               >
                 Continue to Event Details

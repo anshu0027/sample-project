@@ -261,7 +261,12 @@ export default function Step4() {
                 <Mail size={18} />
                 {emailSent ? 'Email Sent!' : 'Email Quote'}
               </Button>
-              <Button variant="primary" size="lg" onClick={handleSave}>
+              <Button
+                variant="primary"
+                size="lg"
+                onClick={handleSave}
+                onMouseEnter={() => router.prefetch('/admin/quotes')}
+              >
                 Save Quote
               </Button>
             </div>
@@ -308,7 +313,12 @@ export default function Step4() {
         // Navigation button to go back to the previous step.
         // ------------------------ */}
         <div className="flex justify-between">
-          <Button type="button" variant="outline" onClick={handleBack}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleBack}
+            onMouseEnter={() => router.prefetch('/admin/create-quote/step3')}
+          >
             Back
           </Button>
         </div>

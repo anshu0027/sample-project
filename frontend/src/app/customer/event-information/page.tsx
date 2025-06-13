@@ -330,7 +330,6 @@ export default function EventInformation() {
     const isCruiseShipVenue =
       venueState[`${prefix}LocationType` as keyof QuoteState] === 'cruise_ship';
 
-
     return (
       <div className="mb-8 shadow-lg border-0 bg-white p-8 sm:p-10 md:p-12 rounded-2xl w-full">
         <div className="flex items-center justify-center text-left mb-4 gap-4">
@@ -1097,12 +1096,14 @@ export default function EventInformation() {
           <Button
             variant="outline"
             onClick={handleBack}
+            onMouseEnter={() => router.prefetch('/customer/quote-generator')}
             className="w-full sm:w-auto transition-transform duration-150 hover:scale-105"
           >
             Back to Quote
           </Button>
           <Button
             variant="primary"
+            onMouseEnter={() => router.prefetch('/customer/policy-holder')}
             onClick={handleContinue}
             className="w-full sm:w-auto transition-transform duration-150 hover:scale-105"
           >

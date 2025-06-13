@@ -35,7 +35,6 @@ interface Transaction {
   paymentMethod?: string | null;
 }
 
-
 const Transactions = () => {
   const router = useRouter();
   const [startDate, setStartDate] = useState<Date | null>(null);
@@ -300,7 +299,8 @@ const Transactions = () => {
         head: [tableHeaders],
         body: chunk,
         startY: 25,
-        didDrawPage: () => { // removed "data" variable
+        didDrawPage: () => {
+          // removed "data" variable
           doc.setFontSize(18);
           doc.setTextColor(40);
           doc.text('Transaction Report', doc.internal.pageSize.getWidth() / 2, 15, {
@@ -442,6 +442,7 @@ const Transactions = () => {
           variant="outline"
           size="sm"
           onClick={handleBack}
+          onMouseEnter={() => router.prefetch('/admin')}
           className="w-full sm:w-auto text-gray-800"
         >
           <ArrowLeft size={16} />

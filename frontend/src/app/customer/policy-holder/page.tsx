@@ -573,6 +573,7 @@ export default function PolicyHolder() {
           <Button
             variant="secondary"
             onClick={handleBack}
+            onMouseEnter={() => router.prefetch('/customer/event-information')}
             className="transition-transform duration-150 hover:scale-105"
           >
             Back to Event Details
@@ -580,6 +581,7 @@ export default function PolicyHolder() {
           <Button
             variant="primary"
             onClick={handleContinue}
+            onMouseEnter={() => router.prefetch('/customer/review')}
             className="transition-transform duration-150 hover:scale-105"
           >
             Continue to Review
