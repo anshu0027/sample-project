@@ -56,9 +56,9 @@ export default function PolicyHolder() {
     return () => clearTimeout(timer);
   }, [router, state.step2Complete]);
 
-  // =============================
+  // ==========================================
   // ===== Phone Number Formatting Effect =====
-  // =============================
+  // ==========================================
   // Formats the phone number whenever it changes in the global state.
   useEffect(() => {
     if (state.phone) {
@@ -66,10 +66,10 @@ export default function PolicyHolder() {
     }
   }, [state.phone]);
 
-  // =============================
+  // ================================
   // ===== Input Change Handler =====
-  // =============================
-  const handleInputChange = (field: keyof typeof state, value: any) => {
+  // ================================
+  const handleInputChange = (field: keyof typeof state, value: string | boolean) => { // changed value: any to this
     dispatch({ type: 'UPDATE_FIELD', field, value });
     if (errors[field]) {
       setErrors((prev) => {

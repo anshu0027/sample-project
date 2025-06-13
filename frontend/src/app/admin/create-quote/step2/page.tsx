@@ -10,7 +10,6 @@ import Checkbox from '@/components/ui/Checkbox';
 import { VENUE_TYPES, INDOOR_OUTDOOR_OPTIONS, COUNTRIES, US_STATES } from '@/utils/constants';
 import { isEmpty, isValidZip } from '@/utils/validators';
 import dynamic from 'next/dynamic';
-// import { Toaster } from "@/components/ui/toaster";
 import { toast } from '@/hooks/use-toast';
 
 // =============================
@@ -118,9 +117,7 @@ export default function EventInformation() {
   // ===== useEffect for Authentication and Step Completion Check =====
   // =============================
   useEffect(() => {
-    // Replace with real admin auth check
     const isAdminAuthenticated = () => {
-      // Use the same key as AdminLayout
       return typeof window !== 'undefined' && localStorage.getItem('admin_logged_in') === 'true';
     };
 
