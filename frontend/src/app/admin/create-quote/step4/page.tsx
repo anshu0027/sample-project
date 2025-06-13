@@ -8,19 +8,32 @@ import { formatCurrency } from '@/utils/validators';
 import { Mail } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
+// ------------------------
+// Component for Step 4 of the admin quote creation process: Review and Save/Email.
+// This step displays a summary of the quote and allows the admin to save it
+// or email it to the customer.
+// ------------------------
 export default function Step4() {
   const { state } = useQuote();
   const router = useRouter();
+  // State to track if the email has been successfully sent, for UI feedback.
   const [emailSent, setEmailSent] = useState(false);
+  // State to manage page readiness, primarily for showing a skeleton loader.
   const [pageReady, setPageReady] = useState(false);
+  // State to hold any validation errors.
   const [errors, setErrors] = useState({});
 
+  // ------------------------
+  // useEffect hook to handle page initialization, authentication, and step completion checks.
+  // Redirects to login if not authenticated or to previous steps if they are not complete.
+  // ------------------------
   useEffect(() => {
     const isAdminAuthenticated = () => {
       return typeof window !== 'undefined' && localStorage.getItem('admin_logged_in') === 'true';
     };
 
     const timer = setTimeout(() => {
+      // Check if admin is authenticated
       if (!isAdminAuthenticated()) {
         router.replace('/admin/login');
         return;
@@ -35,10 +48,16 @@ export default function Step4() {
     return () => clearTimeout(timer);
   }, [router, state.step3Complete]);
 
+  // ------------------------
+  // Navigates back to Step 3 (Policyholder Information).
+  // ------------------------
   const handleBack = () => {
     router.push('/admin/create-quote/step3');
   };
 
+  // ------------------------
+  // Validates that all essential fields in the quote state are filled.
+  // ------------------------
   function validateAllFields(state: QuoteState): boolean {
     const requiredFields: (keyof QuoteState)[] = [
       'eventType',
@@ -65,6 +84,9 @@ export default function Step4() {
     return true;
   }
 
+  // ------------------------
+  // Main form validation function, currently just calls validateAllFields.
+  // ------------------------
   function validateForm(): boolean {
     const errors = {};
     if (!validateAllFields(state)) {
@@ -74,6 +96,10 @@ export default function Step4() {
     return true;
   }
 
+  // ------------------------
+  // Handles saving the quote by making a PUT request to the API.
+  // Updates the quote status to 'COMPLETE'.
+  // ------------------------
   // ==================================================================
   // ===== API CHANGE #1: Saving the quote ==========================
   // ==================================================================
@@ -82,6 +108,7 @@ export default function Step4() {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
       const quoteNumber = localStorage.getItem('quoteNumber');
 
+      // Ensure quoteNumber is available from localStorage
       if (!quoteNumber) {
         toast.error('Quote number not found. Please start over.');
         router.push('/admin/create-quote/step1');
@@ -107,6 +134,7 @@ export default function Step4() {
           }),
         });
 
+        // Handle API response
         if (!res.ok) {
           const errorData = await res.json();
           throw new Error(errorData.error || 'Failed to update quote');
@@ -114,19 +142,26 @@ export default function Step4() {
 
         toast.success('Quote saved successfully!');
         router.push('/admin/quotes');
+        // Navigate to the admin quotes list page after successful save
       } catch (error) {
         const message = error instanceof Error ? error.message : 'An unknown error occurred.';
         toast.error(message);
       }
     } else {
+      // Display validation errors if form is not valid
       Object.entries(errors).forEach(([, msg]) => toast.error(msg as string));
     }
   };
 
+  // ------------------------
+  // Handles sending the quote details via email by making a POST request to the email API.
+  // Sends the entire quote state as data for the email template.
+  // ------------------------
   // ==================================================================
   // ===== API CHANGE #2: Sending the email =========================
   // ==================================================================
   const handleEmail = async () => {
+    // Validate fields before attempting to send email
     if (!validateAllFields(state)) {
       return;
     }
@@ -143,6 +178,7 @@ export default function Step4() {
         }),
       });
 
+      // Handle API response for email sending
       if (res.ok) {
         setEmailSent(true);
         toast.success('Quote emailed successfully!');
@@ -157,6 +193,10 @@ export default function Step4() {
     }
   };
 
+  // ------------------------
+  // Skeleton loader component for Step 4.
+  // Provides a visual placeholder while page data is loading or checks are being performed.
+  // ------------------------
   const Step4Skeleton = () => (
     <div className="space-y-8 animate-pulse">
       <div className="bg-gray-100 rounded-lg shadow-md p-6">
@@ -194,10 +234,17 @@ export default function Step4() {
     </div>
   );
 
+  // ------------------------
+  // Conditional rendering: Show skeleton if page is not ready, otherwise render the full Step 4 content.
+  // ------------------------
   if (!pageReady) {
     return <Step4Skeleton />;
   }
 
+  // ------------------------
+  // Main render for Step 4. Displays the quote summary in a Card component
+  // with options to email or save the quote, and a button to go back.
+  // ------------------------
   return (
     <>
       <div className="space-y-8">
@@ -206,6 +253,9 @@ export default function Step4() {
           subtitle={`Quote #${state.quoteNumber || '(New Quote)'}`}
           className="mb-6 border-blue-100 bg-blue-50"
           footer={
+            // ------------------------
+            // Footer of the card containing action buttons: Email Quote and Save Quote.
+            // ------------------------
             <div className="flex justify-end gap-4">
               <Button variant="outline" size="lg" onClick={handleEmail}>
                 <Mail size={18} />
@@ -218,6 +268,9 @@ export default function Step4() {
           }
         >
           <div className="space-y-4">
+            {/* // ------------------------
+            // Section displaying the total premium and a breakdown of costs.
+            // ------------------------ */}
             <div className="bg-white rounded-lg p-4 border border-blue-100">
               <div className="text-center">
                 <h3 className="text-xl font-semibold text-gray-800 mb-1">Total Premium</h3>
@@ -251,6 +304,9 @@ export default function Step4() {
             </div>
           </div>
         </Card>
+        {/* // ------------------------
+        // Navigation button to go back to the previous step.
+        // ------------------------ */}
         <div className="flex justify-between">
           <Button type="button" variant="outline" onClick={handleBack}>
             Back

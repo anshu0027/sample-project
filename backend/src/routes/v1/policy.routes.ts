@@ -744,6 +744,35 @@ router.post("/from-quote", async (req: Request, res: Response) => {
     });
 
     // ------------------------
+    // For admin-generated quotes, create a payment record with SUCCESS status
+    // and ensure the quote relation is properly maintained
+    // ------------------------
+    if (quote.source === QuoteSource.ADMIN) {
+      const paymentRepository = AppDataSource.getRepository(Payment);
+      const newPayment = paymentRepository.create({
+        quoteId: quote.id,
+        policyId: policy.id,
+        amount: quote.totalPremium,
+        status: PaymentStatus.SUCCESS,
+        method: "admin",
+        reference: `admin-payment-${Date.now()}`,
+      });
+      await paymentRepository.save(newPayment);
+
+      // Ensure the quote relation is properly maintained
+      policy.quote = quote;
+      policy.quoteId = quote.id;
+
+      // Ensure venue locationType is properly set
+      if (policy.event?.venue) {
+        policy.event.venue.locationType = policy.event.venue.ceremonyLocationType || policy.event.venue.locationType;
+        await AppDataSource.manager.getRepository(Venue).save(policy.event.venue);
+      }
+
+      await AppDataSource.manager.getRepository(Policy).save(policy);
+    }
+
+    // ------------------------
     // Fetch the complete policy with all relations to return in the response.
     // ------------------------
     // Fetch the complete policy with all relations

@@ -29,14 +29,23 @@ import {
 import { toast } from '@/hooks/use-toast';
 import Card from '@/components/ui/Card';
 
+// =============================
+// ===== Type Definitions for Form Fields =====
+// =============================
 // Add type definitions
 type GuestRange = (typeof GUEST_RANGES)[number]['value'];
 type CoverageLevel = number;
 type LiabilityOption = string;
 
+// =============================
+// ===== Premium Calculation Functions =====
+// =============================
 // Add premium calculation functions
 const calculateBasePremium = (level: CoverageLevel | null): number => {
   if (!level) return 0;
+  // =============================
+  // ===== Mapping of Coverage Level to Base Premium =====
+  // =============================
   const premiumMap: Record<CoverageLevel, number> = {
     1: 160, // $7,500 coverage
     2: 200,
@@ -53,6 +62,9 @@ const calculateBasePremium = (level: CoverageLevel | null): number => {
 };
 
 const calculateLiabilityPremium = (option: LiabilityOption): number => {
+  // =============================
+  // ===== Calculation of Liability Premium based on Selected Option =====
+  // =============================
   switch (option) {
     case 'option1': // $1M liability with $25K property damage
       return 195;
@@ -76,6 +88,9 @@ const calculateLiquorLiabilityPremium = (
   guestRange: GuestRange,
 ): number => {
   if (!hasLiquorLiability) return 0;
+  // =============================
+  // ===== Mapping of Guest Range to Liquor Liability Premium =====
+  // =============================
   const premiumMap: Record<GuestRange, number> = {
     '1-50': 65,
     '51-100': 65,
@@ -89,20 +104,28 @@ const calculateLiquorLiabilityPremium = (
   return premiumMap[guestRange] || 0;
 };
 
+// =============================
+// ===== QuoteGenerator Component =====
+// =============================
 export default function QuoteGenerator() {
   const router = useRouter();
   const { state, dispatch } = useQuote();
 
+  // =============================
+  // ===== Component State =====
+  // =============================
   // Form state
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showQuoteResults, setShowQuoteResults] = useState(false);
   const [showSpecialActivitiesModal, setShowSpecialActivitiesModal] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading] = useState(false); // removed setIsLoading as it was never used
 
+  // =============================
+  // ===== Input Change Handler =====
+  // =============================
   // Handle form field changes
   const handleInputChange = (field: keyof QuoteState, value: QuoteState[keyof QuoteState]) => {
     dispatch({ type: 'UPDATE_FIELD', field, value });
-
     // Clear error for this field when it's updated
     if (errors[field]) {
       setErrors((prev) => {
@@ -111,16 +134,17 @@ export default function QuoteGenerator() {
         return newErrors;
       });
     }
-
     // Reset quote results when key fields change
     if (['coverageLevel', 'liabilityCoverage', 'liquorLiability', 'maxGuests'].includes(field)) {
       setShowQuoteResults(false);
     }
   };
 
+  // =============================
+  // ===== Date Handling =====
+  // =============================
   // Format date for the date picker
   const selectedDate = state.eventDate ? new Date(state.eventDate) : null;
-
   // Handle date change
   const handleDateChange = (date: Date | null) => {
     if (date) {
@@ -129,23 +153,22 @@ export default function QuoteGenerator() {
       handleInputChange('eventDate', '');
     }
   };
-
   // Calculate minimum date (48 hours from now)
   const minDate = new Date();
   minDate.setHours(minDate.getHours() + 48);
-
   // Calculate maximum date (2 years from now)
   const maxDate = new Date();
   maxDate.setFullYear(maxDate.getFullYear() + 2);
 
+  // =============================
+  // ===== Form Validation Logic =====
+  // =============================
   // Validate form
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-
     if (!state.residentState) {
       newErrors.residentState = 'Please select your state of residence';
     }
-
     if (!state.eventType) {
       newErrors.eventType = 'Please select an event type';
     }
@@ -153,7 +176,6 @@ export default function QuoteGenerator() {
     if (!state.maxGuests) {
       newErrors.maxGuests = 'Please select the maximum number of guests';
     }
-
     if (!state.eventDate) {
       newErrors.eventDate = 'Please select the event date';
     } else {
@@ -166,25 +188,24 @@ export default function QuoteGenerator() {
         newErrors.eventDate = 'Event date must be within the next 2 years';
       }
     }
-
     if (!state.email) {
       newErrors.email = 'Please enter your email address';
     } else if (!/^\S+@\S+\.\S+$/.test(state.email)) {
       newErrors.email = 'Please enter a valid email address';
     }
-
     if (state.coverageLevel === null) {
       newErrors.coverageLevel = 'Please select a coverage level';
     }
-
     if (!state.covidDisclosure) {
       newErrors.covidDisclosure = 'You must acknowledge the COVID-19 exclusion';
     }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
+  // =============================
+  // ===== Calculate Quote and API Call =====
+  // =============================
   // Handle calculate quote
   const handleCalculateQuote = async () => {
     if (validateForm()) {
@@ -197,7 +218,6 @@ export default function QuoteGenerator() {
           state.maxGuests as GuestRange,
         );
         const totalPremium = basePremium + liabilityPremium + liquorLiabilityPremium;
-
         // Update state with calculated values
         dispatch({
           type: 'CALCULATE_QUOTE',
@@ -208,9 +228,7 @@ export default function QuoteGenerator() {
             totalPremium,
           },
         });
-
         const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-
         // Create initial quote with step 1 data
         const res = await fetch(`${apiUrl}/quotes`, {
           method: 'POST',
@@ -234,7 +252,6 @@ export default function QuoteGenerator() {
             eventType: state.eventType,
             eventDate: state.eventDate,
             maxGuests: state.maxGuests,
-
             // Event data structure for compatibility
             event: {
               eventType: state.eventType,
@@ -294,7 +311,6 @@ export default function QuoteGenerator() {
                 rehearsalDinnerVenueAsInsured: false,
               },
             },
-
             // Policy holder data
             policyHolder: {
               firstName: '',
@@ -313,12 +329,10 @@ export default function QuoteGenerator() {
             },
           }),
         });
-
         if (!res.ok) {
           const errorData = await res.json();
           throw new Error(errorData.error || 'Failed to create quote');
         }
-
         const data = await res.json();
         localStorage.setItem('quoteNumber', data.quote.quoteNumber);
         dispatch({
@@ -337,6 +351,9 @@ export default function QuoteGenerator() {
     }
   };
 
+  // =============================
+  // ===== Navigation: Continue to Next Step =====
+  // =============================
   // Handle continue to next step
   const handleContinue = () => {
     if (validateForm()) {
@@ -349,9 +366,11 @@ export default function QuoteGenerator() {
     }
   };
 
+  // =============================
+  // ===== Conditional Logic for Liquor Liability =====
+  // =============================
   // Disable liquor liability if no liability coverage selected
   const isLiquorLiabilityDisabled = state.liabilityCoverage === 'none';
-
   // If liability is none, ensure liquor liability is false
   useEffect(() => {
     if (isLiquorLiabilityDisabled && state.liquorLiability) {
@@ -359,10 +378,16 @@ export default function QuoteGenerator() {
     }
   }, [state.liabilityCoverage]);
 
+  // =============================
+  // ===== Special Activities Modal Handling =====
+  // =============================
   // Handle special activities checkbox
   const handleSpecialActivitiesChange = (checked: boolean) => {
     if (checked) {
       setShowSpecialActivitiesModal(true);
+      // =============================
+      // ===== useEffect for Admin Authentication =====
+      // =============================
     } else {
       handleInputChange('specialActivities', false);
     }
@@ -379,11 +404,17 @@ export default function QuoteGenerator() {
     }
   }, [router]);
 
+  // =============================
+  // ===== Main Component Render =====
+  // =============================
   return (
     <>
       {/* Replaced Card with div structure from Step1Form.tsx */}
       {/* Outermost div simplified. Layout handles max-width and centering. This div now focuses on card-like styling. */}
       <div className="w-full mb-10 text-center shadow-2xl border-0 bg-white/90 rounded-2xl p-8 sm:p-10 md:p-12">
+        {/* ============================= */}
+        {/* ===== Page Header ===== */}
+        {/* ============================= */}
         <div className="mb-8">
           <p className="text-3xl md:text-4xl font-extrabold text-blue-900 drop-shadow text-center">
             Get Your Wedding Insurance Quote
@@ -392,7 +423,13 @@ export default function QuoteGenerator() {
             Tell us about your event to receive an instant quote
           </p>
         </div>
+        {/* ============================= */}
+        {/* ===== Form Fields Grid ===== */}
+        {/* ============================= */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 px-2 sm:px-4 md:px-8">
+          {/* ============================= */}
+          {/* ===== Resident State Field ===== */}
+          {/* ============================= */}
           {/* Resident State */}
           <div className="flex flex-col">
             <label
@@ -430,6 +467,9 @@ export default function QuoteGenerator() {
             )}
           </div>
 
+          {/* ============================= */}
+          {/* ===== Event Type Field ===== */}
+          {/* ============================= */}
           {/* Event Type */}
           <div className="flex flex-col">
             <label
@@ -465,6 +505,9 @@ export default function QuoteGenerator() {
             )}
           </div>
 
+          {/* ============================= */}
+          {/* ===== Maximum Guests Field ===== */}
+          {/* ============================= */}
           {/* Maximum Guests */}
           <div className="flex flex-col">
             <label
@@ -500,6 +543,9 @@ export default function QuoteGenerator() {
             )}
           </div>
 
+          {/* ============================= */}
+          {/* ===== Event Date Field ===== */}
+          {/* ============================= */}
           {/* Event Date */}
           <div className="flex flex-col">
             <label
@@ -525,8 +571,14 @@ export default function QuoteGenerator() {
             )}
           </div>
 
+          {/* ============================= */}
+          {/* ===== Email and Coverage Level Container ===== */}
+          {/* ============================= */}
           {/* Email and Coverage Level Container */}
           <div className="flex flex-col md:col-span-2 gap-y-6">
+            {/* ============================= */}
+            {/* ===== Email Address Field ===== */}
+            {/* ============================= */}
             {/* Email Address */}
             <div className="flex flex-col">
               <label
@@ -554,6 +606,9 @@ export default function QuoteGenerator() {
               )}
             </div>
 
+            {/* ============================= */}
+            {/* ===== Coverage Level Field ===== */}
+            {/* ============================= */}
             {/* Coverage Level */}
             <div className="flex flex-col">
               <label
@@ -602,6 +657,9 @@ export default function QuoteGenerator() {
               {errors.coverageLevel && (
                 <p className="mt-1 text-xs text-red-500 text-left">{errors.coverageLevel}</p>
               )}
+              {/* ============================= */}
+              {/* ===== Coverage Details Section ===== */}
+              {/* ============================= */}
               {/* Coverage Details Section */}
               {state.coverageLevel && COVERAGE_DETAILS[state.coverageLevel.toString()] && (
                 <div className="mt-4 w-full bg-blue-50 rounded-lg p-4 border border-blue-100 text-left">
@@ -619,6 +677,9 @@ export default function QuoteGenerator() {
             </div>
           </div>
 
+          {/* ============================= */}
+          {/* ===== Liability Coverage Field ===== */}
+          {/* ============================= */}
           {/* Liability Coverage */}
           <div className="flex flex-col">
             <label
@@ -676,6 +737,9 @@ export default function QuoteGenerator() {
             )}
           </div>
 
+          {/* ============================= */}
+          {/* ===== Liquor Liability Field ===== */}
+          {/* ============================= */}
           {/* Liquor Liability */}
           <div className="flex flex-col items-start">
             <label
@@ -717,6 +781,9 @@ export default function QuoteGenerator() {
             )}
           </div>
 
+          {/* ============================= */}
+          {/* ===== Special Activities Field ===== */}
+          {/* ============================= */}
           {/* Special Activities */}
           <div className="flex flex-col items-start">
             <label
@@ -747,6 +814,9 @@ export default function QuoteGenerator() {
           </div>
         </div>
 
+        {/* ============================= */}
+        {/* ===== COVID-19 Disclosure Section ===== */}
+        {/* ============================= */}
         {/* COVID-19 Disclosure */}
         <div className="px-2 sm:px-4 md:px-8 mt-8">
           <div className="bg-yellow-50 border-l-4 border-yellow-400 rounded-lg p-4 mt-8 flex flex-col sm:flex-row items-start gap-3">
@@ -786,6 +856,9 @@ export default function QuoteGenerator() {
             </div>
           </div>
         </div>
+        {/* ============================= */}
+        {/* ===== Calculate Quote Button ===== */}
+        {/* ============================= */}
         <div className="px-2 sm:px-4 md:px-8">
           <div className="flex flex-col md:flex-row justify-center mt-10 gap-4 w-full">
             <Button
@@ -803,6 +876,9 @@ export default function QuoteGenerator() {
         </div>
       </div>
 
+      {/* ============================= */}
+      {/* ===== Quote Results Section ===== */}
+      {/* ============================= */}
       {/* Quote Results */}
       {(showQuoteResults || isLoading) && (
         <Card
@@ -825,6 +901,9 @@ export default function QuoteGenerator() {
           }
         >
           <div className="space-y-6">
+            {/* ============================= */}
+            {/* ===== Total Premium Display ===== */}
+            {/* ============================= */}
             <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
               <div className="text-center">
                 <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-1">
@@ -838,6 +917,9 @@ export default function QuoteGenerator() {
                   </p>
                 )}
               </div>
+              {/* ============================= */}
+              {/* ===== Premium Breakdown ===== */}
+              {/* ============================= */}
               <div className="mt-4 pt-4 border-t border-gray-100">
                 <h4 className="text-sm font-medium text-gray-700 mb-2">Premium Breakdown:</h4>
                 <div className="space-y-1 text-gray-700">
@@ -885,6 +967,9 @@ export default function QuoteGenerator() {
               </div>
             </div>
 
+            {/* ============================= */}
+            {/* ===== Coverage Summary ===== */}
+            {/* ============================= */}
             <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
               <h3 className="text-sm font-semibold text-gray-800 mb-2">Coverage Summary</h3>
               <ul className="space-y-2 text-sm text-gray-700">
@@ -950,6 +1035,9 @@ export default function QuoteGenerator() {
               </ul>
             </div>
 
+            {/* ============================= */}
+            {/* ===== Quote Validity Information ===== */}
+            {/* ============================= */}
             <div className="flex items-center text-sm bg-gray-100 text-gray-700 p-4 rounded-lg">
               <AlertCircle size={16} className="flex-shrink-0 mr-2" />
               <p>
@@ -961,6 +1049,9 @@ export default function QuoteGenerator() {
         </Card>
       )}
 
+      {/* ============================= */}
+      {/* ===== Special Activities Modal ===== */}
+      {/* ============================= */}
       {/* Special Activities Modal */}
       {showSpecialActivitiesModal && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center px-4 py-6 sm:px-6">

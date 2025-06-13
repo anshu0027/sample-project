@@ -22,7 +22,7 @@ const router = Router();
 // ------------------------
 const manualPaymentLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 10, // Limit each IP to 10 manual payment creations per hour
+  max: 30, // Limit each IP to 10 manual payment creations per hour
   message: "Too many payment creation attempts, please try again later.",
 });
 
@@ -43,15 +43,21 @@ const authorizeNetLimiter = rateLimit({
 const apiLoginId = process.env.AUTHORIZE_NET_API_LOGIN_ID_SANDBOX;
 const transactionKey = process.env.AUTHORIZE_NET_TRANSACTION_KEY_SANDBOX;
 
+if (!apiLoginId || !transactionKey) {
+  const errorMsg = "CRITICAL CONFIGURATION ERROR: AUTHORIZE_NET_API_LOGIN_ID_SANDBOX and/or AUTHORIZE_NET_TRANSACTION_KEY_SANDBOX environment variables are not set. Authorize.Net payments will fail.";
+  console.error(errorMsg);
+  // For a production system, consider throwing an error here to halt application startup
+  // to ensure this critical configuration issue is addressed immediately.
+  // Example: throw new Error(errorMsg);
+}
+
 // ------------------------
 // Merchant authentication type for Authorize.Net API calls.
 // ------------------------
 const merchantAuthenticationType =
   new APIContracts.MerchantAuthenticationType();
-
 merchantAuthenticationType.setName(apiLoginId!);
 merchantAuthenticationType.setTransactionKey(transactionKey!);
-
 // ------------------------
 // Helper function to map internal payment status enums to more user-friendly strings
 // for display on the frontend.

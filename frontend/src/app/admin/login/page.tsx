@@ -10,19 +10,33 @@ import FormField from '@/components/ui/FormField';
 // const ADMIN_EMAIL = "admin@weddingguard.com";
 // const ADMIN_PASS = "admin123";
 
+// =============================
+// ===== AdminLogin Component =====
+// =============================
 export default function AdminLogin() {
   const router = useRouter();
+  // =============================
+  // ===== Component State =====
+  // =============================
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [pageLoading, setPageLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // =============================
+  // ===== API Base URL =====
+  // =============================
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000/api/v1';
 
+  // =============================
+  // ===== useEffect for Authentication Check and Page Loading =====
+  // =============================
   useEffect(() => {
+    // Check if admin is already logged in
     if (typeof window !== 'undefined' && localStorage.getItem('admin_logged_in') === 'true') {
       router.replace('/admin');
     } else {
+      // Simulate a brief loading period
       // Simulate a brief loading period or wait for other initializations if any
       const timer = setTimeout(() => setPageLoading(false), 200); // Adjust delay as needed
       return () => clearTimeout(timer);
@@ -30,6 +44,9 @@ export default function AdminLogin() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // router dependency removed to prevent re-triggering on navigation
 
+  // =============================
+  // ===== Login Handler =====
+  // =============================
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -39,6 +56,9 @@ export default function AdminLogin() {
       setIsSubmitting(false);
       return;
     }
+    // =============================
+    // ===== API Call for Login =====
+    // =============================
     try {
       const response = await fetch(`${API_BASE_URL}/login`, {
         method: 'POST',
@@ -48,6 +68,9 @@ export default function AdminLogin() {
         body: JSON.stringify({ id: email, password: password }),
       });
 
+      // =============================
+      // ===== Handle API Response =====
+      // =============================
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Login failed');
@@ -55,9 +78,15 @@ export default function AdminLogin() {
 
       const data = await response.json();
 
+      // =============================
+      // ===== Handle Successful Login =====
+      // =============================
       if (data.success) {
         localStorage.setItem('admin_logged_in', 'true');
         router.replace(data.route || '/admin');
+        // =============================
+        // ===== Handle Failed Login =====
+        // =============================
       } else {
         setError(data.message || 'Invalid email or password');
       }
@@ -68,6 +97,9 @@ export default function AdminLogin() {
     setIsSubmitting(false);
   };
 
+  // =============================
+  // ===== Skeleton Component for Login Page =====
+  // =============================
   const LoginSkeleton = () => (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 animate-pulse">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
@@ -95,10 +127,16 @@ export default function AdminLogin() {
     </div>
   );
 
+  // =============================
+  // ===== Render Skeleton if Page is Loading =====
+  // =============================
   if (pageLoading) {
     return <LoginSkeleton />;
   }
 
+  // =============================
+  // ===== Main Component Render =====
+  // =============================
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
@@ -114,12 +152,21 @@ export default function AdminLogin() {
       </div>
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <Card>
+          {/* ============================= */}
+          {/* ===== Login Form ===== */}
+          {/* ============================= */}
           <form onSubmit={handleLogin} className="space-y-6">
+            {/* ============================= */}
+            {/* ===== Error Message Display ===== */}
+            {/* ============================= */}
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm">
                 {error}
               </div>
             )}
+            {/* ============================= */}
+            {/* ===== Email Input Field ===== */}
+            {/* ============================= */}
             <FormField label="Email Address" htmlFor="email" required>
               <Input
                 id="email"
@@ -130,6 +177,9 @@ export default function AdminLogin() {
                 placeholder="Admin Email"
               />
             </FormField>
+            {/* ============================= */}
+            {/* ===== Password Input Field ===== */}
+            {/* ============================= */}
             <FormField label="Password" htmlFor="password" required>
               <Input
                 id="password"
@@ -141,6 +191,9 @@ export default function AdminLogin() {
               />
             </FormField>
             <div>
+              {/* ============================= */}
+              {/* ===== Submit Button ===== */}
+              {/* ============================= */}
               <Button type="submit" variant="primary" size="lg">
                 {isSubmitting ? 'Signing In...' : 'Sign In'}
               </Button>

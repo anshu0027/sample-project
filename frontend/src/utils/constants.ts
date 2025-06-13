@@ -1,5 +1,8 @@
 // Form constants and options
 
+// ------------------------
+// Array of U.S. states and territories for dropdowns.
+// ------------------------
 // U.S. States and territories
 export const US_STATES = [
   { value: 'AL', label: 'Alabama' },
@@ -60,6 +63,9 @@ export const US_STATES = [
   { value: 'MP', label: 'Northern Mariana Islands' },
 ];
 
+// ------------------------
+// Array of event types for dropdowns.
+// ------------------------
 // Event types
 export const EVENT_TYPES = [
   { value: 'wedding', label: 'Wedding' },
@@ -75,6 +81,9 @@ export const EVENT_TYPES = [
   { value: 'other', label: 'Other Private Event' },
 ];
 
+// ------------------------
+// Array of guest count ranges for dropdowns.
+// ------------------------
 // Guest count ranges
 export const GUEST_RANGES = [
   { value: '1-50', label: '1-50 guests' },
@@ -87,6 +96,9 @@ export const GUEST_RANGES = [
   { value: '351-400', label: '351-400 guests' },
 ];
 
+// ------------------------
+// Array of core coverage levels with their respective details and base prices.
+// ------------------------
 // Coverage levels with their limits and premiums
 export const COVERAGE_LEVELS = [
   {
@@ -151,6 +163,9 @@ export const COVERAGE_LEVELS = [
   },
 ];
 
+// ------------------------
+// Detailed breakdown of coverage limits for each core coverage level.
+// ------------------------
 export const COVERAGE_DETAILS: Record<string, Array<{ name: string; limit: string }>> = {
   '1': [
     { name: 'Coverage A - Cancellation Postponement', limit: '$7,500' },
@@ -254,6 +269,9 @@ export const COVERAGE_DETAILS: Record<string, Array<{ name: string; limit: strin
   ],
 };
 
+// ------------------------
+// Array of liability coverage options with descriptions and prices.
+// ------------------------
 // Liability coverage options
 export const LIABILITY_OPTIONS = [
   {
@@ -310,6 +328,9 @@ export const LIABILITY_OPTIONS = [
   },
 ];
 
+// ------------------------
+// Premiums for standard liquor liability, indexed by guest count range.
+// ------------------------
 // Liquor liability premiums by guest count
 export const LIQUOR_LIABILITY_PREMIUMS: Record<string, number> = {
   '1-50': 65,
@@ -322,6 +343,9 @@ export const LIQUOR_LIABILITY_PREMIUMS: Record<string, number> = {
   '351-400': 150,
 };
 
+// ------------------------
+// Premiums for new liquor liability options (e.g., $1M/$2M Aggregate), indexed by guest count range.
+// ------------------------
 // New liquor liability premiums for $1M/$2M Aggregate
 export const LIQUOR_LIABILITY_PREMIUMS_NEW: Record<string, number> = {
   '1-50': 100,
@@ -334,6 +358,9 @@ export const LIQUOR_LIABILITY_PREMIUMS_NEW: Record<string, number> = {
   '351-400': 175,
 };
 
+// ------------------------
+// Array of venue location types for dropdowns.
+// ------------------------
 // Venue location types
 export const VENUE_TYPES = [
   { value: 'banquet_hall', label: 'Banquet Hall' },
@@ -352,6 +379,9 @@ export const VENUE_TYPES = [
   { value: 'other', label: 'Other' },
 ];
 
+// ------------------------
+// Array of indoor/outdoor options for venue specification.
+// ------------------------
 // Indoor/Outdoor options
 export const INDOOR_OUTDOOR_OPTIONS = [
   { value: 'indoor', label: 'Indoor' },
@@ -359,6 +389,9 @@ export const INDOOR_OUTDOOR_OPTIONS = [
   { value: 'both', label: 'Both Indoor and Outdoor' },
 ];
 
+// ------------------------
+// Array of countries for address forms, primarily for US, Canada, Mexico.
+// ------------------------
 // Countries
 export const COUNTRIES = [
   { value: 'United States', label: 'United States' },
@@ -367,6 +400,9 @@ export const COUNTRIES = [
   { value: 'Other', label: 'Other (International)' },
 ];
 
+// ------------------------
+// Array of relationship options for the person completing the form.
+// ------------------------
 // Relationship to couple
 export const RELATIONSHIP_OPTIONS = [
   { value: 'honoree1', label: 'I am Honoree #1' },
@@ -379,6 +415,9 @@ export const RELATIONSHIP_OPTIONS = [
   { value: 'other', label: 'Other' },
 ];
 
+// ------------------------
+// Array of referral sources for marketing tracking.
+// ------------------------
 // How did you hear about us
 export const REFERRAL_OPTIONS = [
   { value: 'search', label: 'Internet Search' },
@@ -391,6 +430,9 @@ export const REFERRAL_OPTIONS = [
   { value: 'other', label: 'Other' },
 ];
 
+// ------------------------
+// List of activities that are prohibited under the policy.
+// ------------------------
 // Special activities that are prohibited
 export const PROHIBITED_ACTIVITIES = [
   'Bungee jumping',
@@ -407,6 +449,9 @@ export const PROHIBITED_ACTIVITIES = [
   'Circus acts',
 ];
 
+// ------------------------
+// Dynamically generated record of core coverage premiums, indexed by guest range and coverage level value.
+// ------------------------
 // Premiums for Core Coverage Levels, structured by guest range
 // The price for each coverage level is currently the same across all guest ranges,
 // as it's taken directly from the `price` field in `COVERAGE_LEVELS`.
@@ -425,6 +470,9 @@ export const CORE_COVERAGE_PREMIUMS: Record<string, Record<string, number>> = GU
   {} as Record<string, Record<string, number>>,
 );
 
+// ------------------------
+// Dynamically generated record of liability coverage premiums, indexed by guest range and liability option value.
+// ------------------------
 // Premiums for Liability Coverage Options, structured by guest range
 // The price for each liability option is currently the same across all guest ranges,
 // as it's taken directly from the `price` field in `LIABILITY_OPTIONS`.

@@ -3,7 +3,14 @@ import { User, Phone, MapPin, ChevronDown, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import Checkbox from '@/components/ui/Checkbox';
 import { US_STATES, RELATIONSHIP_OPTIONS, REFERRAL_OPTIONS } from '@/utils/constants';
-
+// ------------------------
+// Type definition for the props of Step3Form component.
+// state: An object representing the current form data.
+// errors: An object containing validation error messages for form fields.
+// onChange: Callback function to handle changes in form fields.
+// onSave: Optional callback function to save the form data.
+// isRestored: Optional boolean indicating if the form data is restored from a previous session.
+// ------------------------
 type Step3FormProps = {
   state: Record<string, any>;
   errors: Record<string, string>;
@@ -11,7 +18,11 @@ type Step3FormProps = {
   onSave?: () => void;
   isRestored?: boolean;
 };
-
+// ------------------------
+// Step3Form component: Handles the third step of the quote generation process.
+// It collects information about the policyholder, including contact details,
+// mailing address, and legal acknowledgments.
+// ------------------------
 export default function Step3Form({
   state,
   errors,
@@ -21,6 +32,10 @@ export default function Step3Form({
 }: Step3FormProps) {
   return (
     <>
+      {/* ------------------------ */}
+      {/* Restored Form Notification */}
+      {/* Displays a message if the form data was restored from a previous session. */}
+      {/* ------------------------ */}
       {isRestored && (
         <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
           <div className="flex items-center text-blue-800">
@@ -31,8 +46,14 @@ export default function Step3Form({
           </div>
         </div>
       )}
+      {/* ------------------------ */}
       {/* Policyholder Information Section */}
+      {/* Collects the first and last name of the policyholder. */}
+      {/* ------------------------ */}
       <div className="mb-10 shadow-2xl border-0 bg-white/90 p-8 sm:p-10 md:p-12 rounded-2xl w-full max-w-4xl mx-auto">
+        {/* ------------------------ */}
+        {/* Section Header */}
+        {/* ------------------------ */}
         <div className="flex items-center justify-center text-left mb-4 gap-4">
           <div className="flex-shrink-0">
             <User size={36} className="text-indigo-600" />
@@ -48,8 +69,13 @@ export default function Step3Form({
         </div>
 
         <div className="space-y-10">
+          {/* ------------------------ */}
+          {/* Grid for First Name and Last Name fields */}
+          {/* ------------------------ */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
-            {/* First Name */}
+            {/* ------------------------ */}
+            {/* First Name Field */}
+            {/* ------------------------ */}
             <div className="mb-4">
               <label htmlFor="firstName" className="block font-medium text-gray-800 mb-1">
                 First Name <span className="text-red-500">*</span>
@@ -65,7 +91,9 @@ export default function Step3Form({
               {errors.firstName && <p className="text-sm text-red-500 mt-1">{errors.firstName}</p>}
             </div>
 
-            {/* Last Name */}
+            {/* ------------------------ */}
+            {/* Last Name Field */}
+            {/* ------------------------ */}
             <div className="mb-4">
               <label htmlFor="lastName" className="block font-medium text-gray-800 mb-1">
                 Last Name <span className="text-red-500">*</span>
@@ -84,8 +112,14 @@ export default function Step3Form({
         </div>
       </div>
 
+      {/* ------------------------ */}
       {/* Contact Information Section */}
+      {/* Collects phone number, relationship to honorees, and referral source. */}
+      {/* ------------------------ */}
       <div className="mb-8 shadow-lg border-0 bg-white p-8 sm:p-10 md:p-12 rounded-2xl w-full max-w-4xl mx-auto">
+        {/* ------------------------ */}
+        {/* Section Header */}
+        {/* ------------------------ */}
         <div className="flex items-center justify-center text-left mb-4 gap-4">
           <div className="flex-shrink-0">
             <Phone size={28} className="text-blue-600" />
@@ -100,8 +134,13 @@ export default function Step3Form({
           </div>
         </div>
 
+        {/* ------------------------ */}
+        {/* Grid for contact fields */}
+        {/* ------------------------ */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 w-full px-2 sm:px-4 md:px-2">
-          {/* Phone Number */}
+          {/* ------------------------ */}
+          {/* Phone Number Field */}
+          {/* ------------------------ */}
           <div className="mb-4">
             <label htmlFor="phone" className="block font-medium text-gray-800 mb-1">
               Phone Number <span className="text-red-500">*</span>
@@ -121,7 +160,9 @@ export default function Step3Form({
             {errors.phone && <p className="text-sm text-red-500 mt-1">{errors.phone}</p>}
           </div>
 
-          {/* Relationship to Honorees */}
+          {/* ------------------------ */}
+          {/* Relationship to Honorees Field */}
+          {/* ------------------------ */}
           <div className="mb-4">
             <label htmlFor="relationship" className="block font-medium text-gray-800 mb-1">
               Relationship to Honorees <span className="text-red-500">*</span>
@@ -154,7 +195,9 @@ export default function Step3Form({
             )}
           </div>
 
-          {/* How Did You Hear About Us */}
+          {/* ------------------------ */}
+          {/* How Did You Hear About Us Field (Optional) */}
+          {/* ------------------------ */}
           <div className="mb-4">
             <label htmlFor="hearAboutUs" className="block font-medium text-gray-800 mb-1">
               How Did You Hear About Us?
@@ -182,8 +225,14 @@ export default function Step3Form({
         </div>
       </div>
 
+      {/* ------------------------ */}
       {/* Mailing Address Section */}
+      {/* Collects the policyholder's mailing address. */}
+      {/* ------------------------ */}
       <div className="mb-8 shadow-lg border-0 bg-white p-8 sm:p-10 md:p-12 rounded-2xl w-full max-w-4xl mx-auto">
+        {/* ------------------------ */}
+        {/* Section Header */}
+        {/* ------------------------ */}
         <div className="flex items-center justify-center text-left mb-4 gap-4">
           <div className="flex-shrink-0">
             <MapPin size={28} className="text-blue-600" />
@@ -198,8 +247,13 @@ export default function Step3Form({
           </div>
         </div>
 
+        {/* ------------------------ */}
+        {/* Form fields for mailing address */}
+        {/* ------------------------ */}
         <div className="space-y-8 w-full px-2 sm:px-4 md:px-8">
-          {/* Address */}
+          {/* ------------------------ */}
+          {/* Address Line 1 Field */}
+          {/* ------------------------ */}
           <div className="mb-4">
             <label htmlFor="address" className="block font-medium text-gray-800 mb-1">
               Address <span className="text-red-500">*</span>
@@ -216,9 +270,13 @@ export default function Step3Form({
             {errors.address && <p className="text-sm text-red-500 mt-1">{errors.address}</p>}
           </div>
 
-          {/* Country + City */}
+          {/* ------------------------ */}
+          {/* Grid for Country and City fields */}
+          {/* ------------------------ */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
-            {/* Country */}
+            {/* ------------------------ */}
+            {/* Country Field (Disabled, defaults to United States) */}
+            {/* ------------------------ */}
             <div className="mb-4">
               <label htmlFor="country" className="block font-medium text-gray-800 mb-1">
                 Country <span className="text-red-500">*</span>
@@ -231,7 +289,9 @@ export default function Step3Form({
               />
             </div>
 
-            {/* City */}
+            {/* ------------------------ */}
+            {/* City Field */}
+            {/* ------------------------ */}
             <div className="mb-4">
               <label htmlFor="city" className="block font-medium text-gray-800 mb-1">
                 City <span className="text-red-500">*</span>
@@ -248,9 +308,13 @@ export default function Step3Form({
             </div>
           </div>
 
-          {/* State + Zip */}
+          {/* ------------------------ */}
+          {/* Grid for State and ZIP Code fields */}
+          {/* ------------------------ */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
-            {/* State */}
+            {/* ------------------------ */}
+            {/* State Field */}
+            {/* ------------------------ */}
             <div className="mb-4">
               <label htmlFor="state" className="block font-medium text-gray-800 mb-1">
                 State <span className="text-red-500">*</span>
@@ -281,7 +345,9 @@ export default function Step3Form({
               {errors.state && <p className="text-sm text-red-500 mt-1">{errors.state}</p>}
             </div>
 
-            {/* ZIP Code */}
+            {/* ------------------------ */}
+            {/* ZIP Code Field */}
+            {/* ------------------------ */}
             <div className="mb-4">
               <label htmlFor="zip" className="block font-medium text-gray-800 mb-1">
                 ZIP Code <span className="text-red-500">*</span>
@@ -301,10 +367,18 @@ export default function Step3Form({
         </div>
       </div>
 
+      {/* ------------------------ */}
       {/* Legal Notices Section */}
+      {/* Displays legal disclaimers and requires acknowledgment. */}
+      {/* ------------------------ */}
       <div className="mb-8 shadow-lg border-0 bg-white p-8 sm:p-10 md:p-12 rounded-2xl w-full max-w-4xl mx-auto">
-        {/* This card did not have a title, subtitle, or icon, so we don't need to recreate that header structure */}
+        {/* ------------------------ */}
+        {/* Form fields for legal notices and acceptance */}
+        {/* ------------------------ */}
         <div className="space-y-8 w-full px-2 sm:px-4 md:px-8">
+          {/* ------------------------ */}
+          {/* Legal Notices Text Block */}
+          {/* ------------------------ */}
           <div className="bg-yellow-50 border-l-4 border-yellow-400 rounded-lg p-4 mb-4">
             <h3 className="font-semibold text-yellow-800 mb-2">Legal Notices</h3>
             <p className="text-sm text-gray-700 mb-4">
@@ -331,7 +405,9 @@ export default function Step3Form({
               </li>
             </ul>
           </div>
-          {/* Legal Acceptance */}
+          {/* ------------------------ */}
+          {/* Legal Acceptance Checkbox */}
+          {/* ------------------------ */}
           <div className="mb-4">
             <label htmlFor="legalNotices" className="block font-medium text-gray-800 mb-1">
               Legal Acceptance <span className="text-red-500">*</span>
@@ -352,7 +428,9 @@ export default function Step3Form({
             )}
           </div>
 
-          {/* Name of Person Completing Form */}
+          {/* ------------------------ */}
+          {/* Name of Person Completing Form Field */}
+          {/* ------------------------ */}
           <div className="mb-4">
             <label
               htmlFor="completingFormName"
@@ -384,7 +462,9 @@ export default function Step3Form({
           </div>
         </div>
       </div>
-
+      {/* ------------------------ */}
+      {/* Save Button (Optional, displayed if onSave prop is provided) */}
+      {/* ------------------------ */}
       <div className="flex flex-col md:flex-row justify-end mt-8 gap-4 w-full">
         {onSave && (
           <Button

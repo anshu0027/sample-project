@@ -1,3 +1,7 @@
+// ------------------------
+// Interface for a PolicyVersion record.
+// Represents a snapshot of a policy at a specific point in time.
+// ------------------------
 export interface PolicyVersion {
   id: number;
   policyId: number;
@@ -5,6 +9,11 @@ export interface PolicyVersion {
   createdAt: Date;
 }
 
+// ------------------------
+// Interface for the data structure stored within a PolicyVersion's 'data' field.
+// This mirrors the structure of the quote/policy form, capturing all relevant fields
+// at the time the version was created.
+// ------------------------
 export interface PolicyVersionData {
   // Step 1
   residentState: string;

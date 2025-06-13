@@ -15,8 +15,15 @@ const QuotePreview = dynamic(() => import('@/components/ui/QuotePreview'), {
   ssr: false,
 });
 
+// =============================
+// ===== PolicyHolder Component: Step 3 of Admin Quote Creation =====
+// =============================
+// This component handles the collection of policyholder information.
 export default function PolicyHolder() {
   const router = useRouter();
+  // =============================
+  // ===== State and Context Hooks =====
+  // =============================
   const { state, dispatch } = useQuote();
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formattedPhone, setFormattedPhone] = useState(state.phone);
@@ -24,6 +31,9 @@ export default function PolicyHolder() {
 
   useEffect(() => {
     const isAdminAuthenticated = () => {
+      // =============================
+      // ===== Admin Authentication Check =====
+      // =============================
       return typeof window !== 'undefined' && localStorage.getItem('admin_logged_in') === 'true';
     };
 
@@ -32,6 +42,9 @@ export default function PolicyHolder() {
         router.replace('/admin/login');
         return;
       }
+      // =============================
+      // ===== Step Completion Check =====
+      // =============================
       if (!state.step2Complete) {
         toast.error('Please complete Step 2: Event & Venue Details first.');
         router.replace('/admin/create-quote/step2');
@@ -43,12 +56,19 @@ export default function PolicyHolder() {
     return () => clearTimeout(timer);
   }, [router, state.step2Complete]);
 
+  // =============================
+  // ===== Phone Number Formatting Effect =====
+  // =============================
+  // Formats the phone number whenever it changes in the global state.
   useEffect(() => {
     if (state.phone) {
       setFormattedPhone(formatPhoneNumber(state.phone));
     }
   }, [state.phone]);
 
+  // =============================
+  // ===== Input Change Handler =====
+  // =============================
   const handleInputChange = (field: keyof typeof state, value: any) => {
     dispatch({ type: 'UPDATE_FIELD', field, value });
     if (errors[field]) {
@@ -60,11 +80,18 @@ export default function PolicyHolder() {
     }
   };
 
+  // =============================
+  // ===== Phone Input Change Handler =====
+  // =============================
+  // Specifically handles changes to the phone input, stripping non-digit characters.
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const input = e.target.value.replace(/\D/g, '');
     handleInputChange('phone', input);
   };
 
+  // =============================
+  // ===== Form Validation =====
+  // =============================
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
     if (isEmpty(state.firstName)) newErrors.firstName = 'Please enter your first name';
@@ -85,10 +112,16 @@ export default function PolicyHolder() {
     return Object.keys(newErrors).length === 0;
   };
 
+  // =============================
+  // ===== Back Navigation Handler =====
+  // =============================
   const handleBack = () => {
     router.push('/admin/create-quote/step2');
   };
 
+  // =============================
+  // ===== Continue Navigation and API Call Handler =====
+  // =============================
   const handleContinue = async () => {
     if (validateForm()) {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -101,7 +134,9 @@ export default function PolicyHolder() {
       }
 
       try {
-        // Update quote with policy holder information
+        // =============================
+        // ===== API Call: Update Quote with Policy Holder Info =====
+        // =============================
         const res = await fetch(`${apiUrl}/quotes/${quoteNumber}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
@@ -143,6 +178,9 @@ export default function PolicyHolder() {
     }
   };
 
+  // =============================
+  // ===== Skeleton Loader Component for Step 3 =====
+  // =============================
   const Step3Skeleton = () => (
     <div className="w-full mx-auto pb-12 lg:mr-[28.25rem] animate-pulse">
       {/* Policyholder Information Skeleton */}
@@ -226,10 +264,16 @@ export default function PolicyHolder() {
     </div>
   );
 
+  // =============================
+  // ===== Page Readiness Check =====
+  // =============================
   if (!pageReady) {
     return <Step3Skeleton />;
   }
 
+  // =============================
+  // ===== Main Render for Step 3 =====
+  // =============================
   return (
     <>
       <div className="w-full mx-auto pb-12 lg:mr-[28.25rem]">
@@ -251,6 +295,9 @@ export default function PolicyHolder() {
             </div>
           </div>
 
+          {/* =============================
+          // ===== Policyholder Name Fields =====
+          // ============================= */}
           <div className="space-y-10">
             {' '}
             {/* Retained space-y-10 from original admin for consistency within this card */}
@@ -300,7 +347,9 @@ export default function PolicyHolder() {
             </div>
           </div>
         </div>
-        {/* Contact Information Section */}
+        {/* =============================
+        // ===== Contact Information Section =====
+        // ============================= */}
         <div className="mb-8 shadow-lg border-0 bg-white p-4 sm:p-8 md:p-10 lg:p-12 rounded-2xl w-full">
           <div className="flex flex-col sm:flex-row items-center justify-center text-center sm:text-left mb-4 gap-2 sm:gap-4">
             <div className="flex-shrink-0 mb-2 sm:mb-0">
@@ -405,7 +454,9 @@ export default function PolicyHolder() {
             </div>
           </div>
         </div>
-        {/* Mailing Address Section */}
+        {/* =============================
+        // ===== Mailing Address Section =====
+        // ============================= */}
         <div className="mb-8 shadow-lg border-0 bg-white p-8 sm:p-10 md:p-12 rounded-2xl w-full">
           <div className="flex items-center justify-center text-left mb-4 gap-4">
             <div className="flex-shrink-0">
@@ -523,7 +574,9 @@ export default function PolicyHolder() {
             </div>
           </div>
         </div>
-        {/* Legal Notices Section */}
+        {/* =============================
+        // ===== Legal Notices Section =====
+        // ============================= */}
         <div className="mb-8 shadow-lg border-0 bg-white p-8 sm:p-10 md:p-12 rounded-2xl w-full">
           <div className="space-y-8 w-full px-2 sm:px-4 md:px-8">
             <div className="bg-yellow-50 border-l-4 border-yellow-400 rounded-lg p-4 mb-4">
@@ -612,7 +665,9 @@ export default function PolicyHolder() {
             </div>
           </div>
         </div>
-        {/* Navigation Buttons */}
+        {/* =============================
+        // ===== Navigation Buttons =====
+        // ============================= */}
         <div className="flex justify-between mt-10 gap-4 w-full">
           <Button
             variant="secondary"
@@ -630,6 +685,9 @@ export default function PolicyHolder() {
           </Button>
         </div>
       </div>
+      {/* =============================
+      // ===== Quote Preview Sidebar =====
+      // ============================= */}
       <div className="hidden lg:block fixed w-80 right-11 mr-2 top-[260px] z-10">
         {' '}
         <QuotePreview />

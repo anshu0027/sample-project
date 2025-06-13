@@ -233,15 +233,16 @@ export default function EditPolicy() {
         if (!res.ok) throw new Error('Policy not found');
         const data = await res.json();
 
-        // Debug logs for raw data
-        console.log('=== Raw API Response ===');
-        console.log('Full API response:', data);
-        console.log('Policy data:', data.policy);
-        console.log('Event data:', data.policy?.event);
-        console.log('Venue data:', data.policy?.event?.venue);
-        console.log('Quote data:', data.policy?.quote);
-        console.log('Quote event data:', data.policy?.quote?.event);
-        console.log('Quote venue data:', data.policy?.quote?.event?.venue);
+        // ================================================================================
+        // console.log('=== Raw API Response ===');
+        // console.log('Full API response:', data);
+        // console.log('Policy data:', data.policy);
+        // console.log('Event data:', data.policy?.event);
+        // console.log('Venue data:', data.policy?.event?.venue);
+        // console.log('Quote data:', data.policy?.quote);
+        // console.log('Quote event data:', data.policy?.quote?.event);
+        // console.log('Quote venue data:', data.policy?.quote?.event?.venue);
+        // ================================================================================
 
         if (!data.policy) {
           throw new Error('Policy data is missing');

@@ -7,7 +7,7 @@ import rateLimit from "express-rate-limit";
 // ------------------------
 const emailLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 25, // limit each IP to 25 emails per hour
+  max: 45, // limit each IP to 25 emails per hour
 });
 
 // ------------------------

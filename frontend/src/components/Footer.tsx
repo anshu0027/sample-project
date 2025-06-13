@@ -2,12 +2,27 @@ import React from 'react';
 // import { Phone, Mail, MapPin } from 'lucide-react';
 import Link from 'next/link';
 
+// ------------------------
+// Footer component: Displays copyright information and links to legal pages.
+// It's a functional component that doesn't manage its own state.
+// ------------------------
 const Footer: React.FC = () => {
+  // ------------------------
+  // Get the current year to display in the copyright notice.
+  // ------------------------
   const currentYear = new Date().getFullYear();
 
   return (
+    // ------------------------
+    // Main footer container.
+    // Uses Tailwind CSS for styling: dark blue background, white text, padding.
+    // ------------------------
     <footer className="bg-blue-900 text-white pt-8 pb-6">
       <div className="max-w-6xl mx-auto px-4">
+        {/* ------------------------ */}
+        {/* Commented out section: This part of the footer, which included logo, quick links, and contact info, is currently disabled. */}
+        {/* It can be re-enabled by removing the comment tags. */}
+        {/* ------------------------ */}
         {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
              <div className="flex items-center gap-2 mb-4">
@@ -69,10 +84,19 @@ const Footer: React.FC = () => {
           </div>
         </div> */}
 
+        {/* ------------------------ */}
+        {/* Bottom section of the footer. */}
+        {/* Displays copyright information and links to Privacy Policy, Terms of Service, and Licenses. */}
+        {/* Uses flexbox for layout, adjusting for different screen sizes (md:flex-row). */}
+        {/* ------------------------ */}
         <div className=" border-blue-300 mt-6 pt-6 text-sm text-blue-300 flex flex-col md:flex-row justify-between">
           {' '}
           {/* border-t-2*/}
           <p>&copy; {currentYear} Wedevent Focalat Insurance. All rights reserved.</p>
+          {/* ------------------------ */}
+          {/* Links to legal pages. */}
+          {/* Arranged horizontally with spacing, stacking vertically on smaller screens. */}
+          {/* ------------------------ */}
           <div className="space-x-4 mt-2 md:mt-0">
             <Link href="/" className="hover:text-white transition-colors duration-200">
               Privacy Policy

@@ -1,5 +1,8 @@
 // Validation utility functions for form fields in the wedding insurance application
 
+// ------------------------
+// Checks if a string is empty or contains only whitespace.
+// ------------------------
 /**
  * Checks if a string is empty or contains only whitespace.
  * @param value - The string to check.
@@ -9,6 +12,9 @@ export const isEmpty = (value: string): boolean => {
   return value.trim() === '';
 };
 
+// ------------------------
+// Validates email format using a standard regex.
+// ------------------------
 /**
  * Validates email format using a standard regex.
  * @param email - The email string to validate.
@@ -19,6 +25,9 @@ export const isValidEmail = (email: string): boolean => {
   return emailRegex.test(email);
 };
 
+// ------------------------
+// Checks if two emails match (case-insensitive).
+// ------------------------
 /**
  * Checks if two emails match (case-insensitive).
  * @param email1 - First email.
@@ -29,6 +38,9 @@ export const doEmailsMatch = (email1: string, email2: string): boolean => {
   return email1.toLowerCase() === email2.toLowerCase();
 };
 
+// ------------------------
+// Validates US phone number format.
+// ------------------------
 /**
  * Validates US phone number format.
  * Accepts (123) 456-7890, 123-456-7890, 1234567890, and similar.
@@ -40,6 +52,9 @@ export const isValidPhone = (phone: string): boolean => {
   return phoneRegex.test(phone);
 };
 
+// ------------------------
+// Validates US ZIP code format (5 digits or ZIP+4).
+// ------------------------
 /**
  * Validates US ZIP code format (5 digits or ZIP+4).
  * @param zip - The ZIP code string.
@@ -50,6 +65,9 @@ export const isValidZip = (zip: string): boolean => {
   return zipRegex.test(zip);
 };
 
+// ------------------------
+// Checks if a date is today or in the future.
+// ------------------------
 /**
  * Checks if a date is today or in the future.
  * @param date - The date to check.
@@ -61,6 +79,9 @@ export const isDateInFuture = (date: Date): boolean => {
   return date >= today;
 };
 
+// ------------------------
+// Checks if a date is at least 48 hours ahead from now.
+// ------------------------
 /**
  * Checks if a date is at least 48 hours ahead from now.
  * @param date - The date to check.
@@ -72,6 +93,9 @@ export const isDateAtLeast48HoursAhead = (date: Date): boolean => {
   return date >= minDate;
 };
 
+// ------------------------
+// Checks if a date is within two years from now.
+// ------------------------
 /**
  * Checks if a date is within two years from now.
  * @param date - The date to check.
@@ -83,6 +107,9 @@ export const isDateWithinTwoYears = (date: Date): boolean => {
   return date <= maxDate;
 };
 
+// ------------------------
+// Formats a number as USD currency.
+// ------------------------
 /**
  * Formats a number as USD currency.
  * @param amount - The amount to format.
@@ -96,6 +123,9 @@ export const formatCurrency = (amount: number): string => {
   }).format(amount);
 };
 
+// ------------------------
+// Formats a phone number to (XXX) XXX-XXXX if possible.
+// ------------------------
 /**
  * Formats a phone number to (XXX) XXX-XXXX if possible.
  * @param phoneNumberString - The phone number string.

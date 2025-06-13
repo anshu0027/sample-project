@@ -27,7 +27,7 @@ import { rateLimit } from "express-rate-limit";
 // ------------------------
 const quoteLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 10, // limit each IP to 10 quote creations per hour
+  max: 100, // limit each IP to 10 quote creations per hour
 });
 // import { In } from 'typeorm';
 
@@ -255,7 +255,7 @@ router.post("/", quoteLimiter, async (req: Request, res: Response) => {
           city: fields.venueCity,
           state: fields.venueState,
           zip: fields.venueZip,
-          locationType: fields.locationType,
+          ceremonyLocationType: fields.ceremonyLocationType,
           indoorOutdoor: fields.indoorOutdoor,
           receptionLocationType: fields.receptionLocationType,
           receptionIndoorOutdoor: fields.receptionIndoorOutdoor,
@@ -596,7 +596,7 @@ router.put("/:quoteNumber", async (req: Request, res: Response) => {
         state: fields.venueState || "",
         zip: fields.venueZip || "",
         country: fields.venueCountry || "",
-        locationType: fields.ceremonyLocationType || "",
+        ceremonyLocationType: fields.ceremonyLocationType || "",
         indoorOutdoor: fields.indoorOutdoor || "",
         receptionLocationType: fields.receptionLocationType || "",
         receptionIndoorOutdoor: fields.receptionIndoorOutdoor || "",

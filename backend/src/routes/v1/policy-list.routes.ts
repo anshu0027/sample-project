@@ -88,6 +88,14 @@ router.get("/", async (req: Request, res: Response) => {
       }
 
       // ------------------------
+      // Get the total premium from either the quote or the first payment
+      // For admin quotes, prioritize the quote's total premium
+      // ------------------------
+      const totalPremium = policy.quote?.source === QuoteSource.ADMIN
+        ? policy.quote?.totalPremium
+        : (payment?.amount || policy.quote?.totalPremium || 0);
+
+      // ------------------------
       // Construct the formatted policy object.
       // ------------------------
       const formattedPolicy = {
@@ -112,7 +120,7 @@ router.get("/", async (req: Request, res: Response) => {
         },
         eventType: event?.eventType || null,
         eventDate: event?.eventDate || null,
-        totalPremium: policy.quote?.totalPremium || payment?.amount || 0,
+        totalPremium: totalPremium,
         status: paymentStatus,
         createdAt: policy.createdAt,
         updatedAt: policy.updatedAt,

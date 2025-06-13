@@ -13,6 +13,9 @@ import dynamic from 'next/dynamic';
 // import { Toaster } from "@/components/ui/toaster";
 import { toast } from '@/hooks/use-toast';
 
+// =============================
+// ===== Dynamic Import for QuotePreview =====
+// =============================
 const QuotePreview = dynamic(() => import('@/components/ui/QuotePreview'), {
   ssr: false,
   loading: () => (
@@ -22,7 +25,9 @@ const QuotePreview = dynamic(() => import('@/components/ui/QuotePreview'), {
   ),
 });
 
-// Skeleton Component for Step 2
+// =============================
+// ===== Skeleton Component for Step 2 =====
+// =============================
 const EventInformationSkeleton = () => (
   <div className="w-full pb-12 animate-pulse">
     {/* Honoree Information Skeleton */}
@@ -98,12 +103,20 @@ const EventInformationSkeleton = () => (
   </div>
 );
 
+// =============================
+// ===== EventInformation Component =====
+// =============================
 export default function EventInformation() {
   const router = useRouter();
   const { state, dispatch } = useQuote();
+  // =============================
+  // ===== Component State =====
+  // =============================
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [pageReady, setPageReady] = useState(false);
-
+  // =============================
+  // ===== useEffect for Authentication and Step Completion Check =====
+  // =============================
   useEffect(() => {
     // Replace with real admin auth check
     const isAdminAuthenticated = () => {
@@ -127,6 +140,9 @@ export default function EventInformation() {
     return () => clearTimeout(timer);
   }, [router, state.step1Complete]); // state.step1Complete is a dependency
 
+  // =============================
+  // ===== Input Change Handler =====
+  // =============================
   const handleInputChange = (field: keyof QuoteState, value: string | boolean) => {
     // Ensure pageReady is true before allowing input changes if needed,
     // though typically inputs would be disabled or not present if !pageReady
@@ -141,6 +157,9 @@ export default function EventInformation() {
     }
   };
 
+  // =============================
+  // ===== Form Validation Logic =====
+  // =============================
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
     if (isEmpty(state.honoree1FirstName))
@@ -229,10 +248,16 @@ export default function EventInformation() {
     return Object.keys(newErrors).length === 0;
   };
 
+  // =============================
+  // ===== Navigation: Back to Step 1 =====
+  // =============================
   const handleBack = () => {
     router.push('/admin/create-quote/step1');
   };
 
+  // =============================
+  // ===== Continue to Next Step (Step 3) and API Call =====
+  // =============================
   const handleContinue = async () => {
     if (validateForm()) {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -267,7 +292,7 @@ export default function EventInformation() {
             venueState: state.venueState,
             venueZip: state.venueZip,
             venueCountry: state.venueCountry,
-            locationType: state.ceremonyLocationType,
+            ceremonyLocationType: state.ceremonyLocationType,
             indoorOutdoor: state.indoorOutdoor,
             venueAsInsured: state.venueAsInsured,
 
@@ -342,12 +367,21 @@ export default function EventInformation() {
     }
   };
 
+  // =============================
+  // ===== Conditional Rendering Check for Cruise Ship Venue Type =====
+  // =============================
   const isCruiseShip = state.ceremonyLocationType === 'cruise_ship';
 
+  // =============================
+  // ===== Render Skeleton if Page is Not Ready =====
+  // =============================
   if (!pageReady) {
     return <EventInformationSkeleton />;
   }
 
+  // =============================
+  // ===== Main Component Render =====
+  // =============================
   return (
     <>
       {/* Outermost div simplified: max-width, margins, horizontal padding, and top margin are now handled by CreateQuoteLayout.tsx */}
@@ -355,6 +389,9 @@ export default function EventInformation() {
         {' '}
         {/* Retain bottom padding, or manage spacing within sections */}
         {/* Honoree Information */}
+        {/* ============================= */}
+        {/* ===== Honoree Information Section ===== */}
+        {/* ============================= */}
         <div className="mb-10 shadow-2xl border-0 bg-white/90 p-8 sm:p-10 md:p-12 rounded-2xl w-full">
           <div className="flex items-center justify-center text-center mb-4 gap-4">
             <div className="flex-shrink-0">
@@ -466,6 +503,9 @@ export default function EventInformation() {
           </div>
         </div>
         {/* Venue Information */}
+        {/* ============================= */}
+        {/* ===== Ceremony Venue Information Section ===== */}
+        {/* ============================= */}
         <div className="mb-8 shadow-lg border-0 bg-white p-8 sm:p-10 md:p-12 rounded-2xl w-full">
           <div className="flex items-center justify-center text-left mb-4 gap-4">
             <div className="flex-shrink-0">
@@ -482,6 +522,9 @@ export default function EventInformation() {
           </div>
           <div className="space-y-8 w-full px-2 sm:px-4 md:px-2">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+              {/* ============================= */}
+              {/* ===== Venue Type Field ===== */}
+              {/* ============================= */}
               {/* Venue Type */}
               <div className="mb-4 text-left">
                 <label
@@ -518,6 +561,9 @@ export default function EventInformation() {
                 )}
               </div>
 
+              {/* ============================= */}
+              {/* ===== Indoor/Outdoor Field ===== */}
+              {/* ============================= */}
               {/* Indoor/Outdoor */}
               <div className="mb-4 text-left">
                 <label htmlFor="indoorOutdoor" className="block mb-1 font-medium text-gray-800">
@@ -552,6 +598,9 @@ export default function EventInformation() {
               </div>
             </div>
 
+            {/* ============================= */}
+            {/* ===== Venue Name Field ===== */}
+            {/* ============================= */}
             <div className="mb-4 text-left">
               <label htmlFor="venueName" className="block mb-1 font-medium text-gray-800">
                 Venue Name <span className="text-red-500">*</span>
@@ -570,6 +619,9 @@ export default function EventInformation() {
             </div>
 
             {/* Cruise ship conditionals */}
+            {/* ============================= */}
+            {/* ===== Conditional Fields for Cruise Ship Venue ===== */}
+            {/* ============================= */}
             {isCruiseShip ? (
               <>
                 <div className="mb-4 text-left">
@@ -612,6 +664,9 @@ export default function EventInformation() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
                 <div className="mb-4 text-left">
+                  {/* ============================= */}
+                  {/* ===== Address Line 1 Field (Non-Cruise) ===== */}
+                  {/* ============================= */}
                   <label htmlFor="venueAddress1" className="block mb-1 font-medium text-gray-800">
                     Address Line 1 <span className="text-red-500">*</span>
                   </label>
@@ -630,6 +685,9 @@ export default function EventInformation() {
                   )}
                 </div>
                 <div className="mb-4 text-left">
+                  {/* ============================= */}
+                  {/* ===== Address Line 2 Field (Non-Cruise) ===== */}
+                  {/* ============================= */}
                   <label htmlFor="venueAddress2" className="block mb-1 font-medium text-gray-800">
                     Address Line 2
                   </label>
@@ -647,9 +705,15 @@ export default function EventInformation() {
             )}
 
             {/* Country, City, State are only relevant if not a cruise ship */}
+            {/* ============================= */}
+            {/* ===== Address Fields (Non-Cruise) ===== */}
+            {/* ============================= */}
             {!isCruiseShip && (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+                  {/* ============================= */}
+                  {/* ===== Country Field ===== */}
+                  {/* ============================= */}
                   {/* Country */}
                   <div className="mb-4 text-left">
                     <label htmlFor="venueCountry" className="block mb-1 font-medium text-gray-800">
@@ -683,6 +747,9 @@ export default function EventInformation() {
                     )}
                   </div>
 
+                  {/* ============================= */}
+                  {/* ===== City Field ===== */}
+                  {/* ============================= */}
                   {/* City */}
                   <div className="mb-4 text-left">
                     <label htmlFor="venueCity" className="block mb-1 font-medium text-gray-800">
@@ -703,6 +770,9 @@ export default function EventInformation() {
                   </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+                  {/* ============================= */}
+                  {/* ===== State Field ===== */}
+                  {/* ============================= */}
                   {/* State */}
                   <div className="mb-4 text-left">
                     <label htmlFor="venueState" className="block mb-1 font-medium text-gray-800">
@@ -735,6 +805,9 @@ export default function EventInformation() {
                       <p className="text-sm text-red-500 mt-1">{errors.venueState}</p>
                     )}
                   </div>
+                  {/* ============================= */}
+                  {/* ===== ZIP Code Field ===== */}
+                  {/* ============================= */}
                   {/* ZIP Code */}
                   <div className="mb-4 text-left">
                     <label htmlFor="venueZip" className="block mb-1 font-medium text-gray-800">
@@ -757,6 +830,9 @@ export default function EventInformation() {
               </>
             )}
             {/* Checkbox for "Add venue as Additional Insured" */}
+            {/* ============================= */}
+            {/* ===== Venue as Additional Insured Checkbox ===== */}
+            {/* ============================= */}
             <div className="mb-4 text-left">
               <div className="w-full flex justify-start">
                 {' '}
@@ -776,9 +852,15 @@ export default function EventInformation() {
           </div>
         </div>
         {/* Additional Venue Sections for Weddings */}
+        {/* ============================= */}
+        {/* ===== Conditional Rendering for Wedding Event Type (Additional Venues) ===== */}
+        {/* ============================= */}
         {state.eventType === 'wedding' && (
           <>
             {/* Reception Venue */}
+            {/* ============================= */}
+            {/* ===== Reception Venue Section ===== */}
+            {/* ============================= */}
             <div className="mb-8 shadow-lg border-0 bg-white p-8 sm:p-10 md:p-12 rounded-2xl w-full">
               <div className="flex items-center justify-center text-left mb-4 gap-4">
                 <div className="flex-shrink-0">
@@ -990,6 +1072,9 @@ export default function EventInformation() {
             </div>
 
             {/* Brunch Venue */}
+            {/* ============================= */}
+            {/* ===== Brunch Venue Section ===== */}
+            {/* ============================= */}
             <div className="mb-8 shadow-lg border-0 bg-white p-8 sm:p-10 md:p-12 rounded-2xl w-full">
               <div className="flex items-center justify-center text-left mb-4 gap-4">
                 <div className="flex-shrink-0">
@@ -1194,6 +1279,9 @@ export default function EventInformation() {
             </div>
 
             {/* Rehearsal Venue */}
+            {/* ============================= */}
+            {/* ===== Rehearsal Venue Section ===== */}
+            {/* ============================= */}
             <div className="mb-8 shadow-lg border-0 bg-white p-8 sm:p-10 md:p-12 rounded-2xl w-full">
               <div className="flex items-center justify-center text-left mb-4 gap-4">
                 <div className="flex-shrink-0">
@@ -1405,6 +1493,9 @@ export default function EventInformation() {
             </div>
 
             {/* Rehearsal Dinner Venue */}
+            {/* ============================= */}
+            {/* ===== Rehearsal Dinner Venue Section ===== */}
+            {/* ============================= */}
             <div className="mb-8 shadow-lg border-0 bg-white p-8 sm:p-10 md:p-12 rounded-2xl w-full">
               <div className="flex items-center justify-center text-left mb-4 gap-4">
                 <div className="flex-shrink-0">
@@ -1634,6 +1725,9 @@ export default function EventInformation() {
             </div>
           </>
         )}
+        {/* ============================= */}
+        {/* ===== Navigation Buttons (Back/Continue) ===== */}
+        {/* ============================= */}
         <div className="flex flex-col sm:flex-row justify-between items-center mt-10 gap-4 w-full">
           <Button
             variant="outline"
@@ -1651,6 +1745,9 @@ export default function EventInformation() {
           </Button>
         </div>
       </div>
+      {/* ============================= */}
+      {/* ===== Quote Preview (Sticky Sidebar) ===== */}
+      {/* ============================= */}
       <div className="hidden lg:block fixed w-80 right-11 mr-2 top-[260px] z-10">
         <QuotePreview />
       </div>
