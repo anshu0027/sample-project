@@ -681,7 +681,7 @@ export default function EditPolicy() {
             className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 w-full justify-center sm:w-auto"
           >
             <Download size={16} />
-            <span className="hidden sm:inline">Download Current Version</span>
+            <span className="hidden sm:inline">Current Version</span>
           </Button>
         </div>
       </div>
