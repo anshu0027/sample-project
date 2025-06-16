@@ -33,6 +33,7 @@ export interface PolicyVersionData {
   honoree2FirstName: string;
   honoree2LastName: string;
   ceremonyLocationType: string;
+  locationType: string;
   indoorOutdoor: string;
   venueName: string;
   venueAddress1: string;

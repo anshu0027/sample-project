@@ -9,6 +9,9 @@ import { PolicyHolder } from "../../entities/policy-holder.entity";
 import { Payment } from "../../entities/payment.entity";
 import { QuoteSource, StepStatus, PaymentStatus } from "../../entities/enums";
 import { createPolicyFromQuote } from "../../services/policy.service";
+import { VersionPdfService } from "../../services/versionPdf.service";
+import fs from "fs";
+import path from "path";
 
 // Router for handling policy-related API endpoints.
 // Base path: /api/v1/policies
@@ -22,19 +25,19 @@ const router = Router();
 router.get("/:id", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { versionsOnly } = req.query;
-    
-    // If 'versionsOnly' query parameter is true, fetch and return only policy versions.
-    if (versionsOnly === "true") {
-      const versionRepository = AppDataSource.getRepository(PolicyVersion);
-      const versions = await versionRepository.find({
-        where: { policy: { id: Number(id) } },
-        order: { createdAt: "DESC" },
-      });
-      res.json({ versions });
-      return;
-    }
-    
+    // const { versionsOnly } = req.query;
+
+    // // If 'versionsOnly' query parameter is true, fetch and return only policy versions.
+    // if (versionsOnly === "true") {
+    //   const versionRepository = AppDataSource.getRepository(PolicyVersion);
+    //   const versions = await versionRepository.find({
+    //     where: { policy: { id: Number(id) } },
+    //     order: { createdAt: "DESC" },
+    //   });
+    //   res.json({ versions });
+    //   return;
+    // }
+
     // Fetch the policy with all its relations.
     const policyRepository = AppDataSource.getRepository(Policy);
     const policy = await policyRepository.findOne({
@@ -48,24 +51,22 @@ router.get("/:id", async (req: Request, res: Response) => {
         "event.venue",
         "policyHolder",
         "payments",
-        "versions",
+        // "versions",
       ],
     });
 
-    
-    // If policy not found, return 404.    
+    // If policy not found, return 404.
     if (!policy) {
       res.status(404).json({ error: "Policy not found" });
       return;
     }
 
-    // Log the policy data for debugging    
-    // Log the policy data being sent for debugging purposes.    
+    // Log the policy data for debugging
+    // Log the policy data being sent for debugging purposes.
     // console.log("Policy data being sent:", JSON.stringify(policy, null, 2));
     res.json({ policy });
   } catch (error) {
-    
-    // Error handling for GET /api/v1/policies/:id.    
+    // Error handling for GET /api/v1/policies/:id.
     console.error("GET /api/policies/:id error:", error);
     res.status(500).json({ error: "Failed to fetch policy" });
   }
@@ -87,13 +88,13 @@ router.get("/", async (req: Request, res: Response) => {
         "event.venue",
         "policyHolder",
         "payments",
-        "versions",
+        // "versions",
       ],
     });
     res.json({ policies });
+    console.log("Policies from database:", JSON.stringify(policies, null, 2));
   } catch (error) {
-    
-    // Error handling for GET /api/v1/policies.    
+    // Error handling for GET /api/v1/policies.
     console.error("GET /api/policies error:", error);
     res.status(500).json({ error: "Failed to fetch policies" });
   }
@@ -106,8 +107,8 @@ router.get("/", async (req: Request, res: Response) => {
 router.post("/", async (req: Request, res: Response) => {
   try {
     const fields = req.body;
-    
-    // Validate required fields for policy creation.    
+
+    // Validate required fields for policy creation.
     if (
       !fields.policyNumber ||
       !fields.eventType ||
@@ -123,8 +124,7 @@ router.post("/", async (req: Request, res: Response) => {
     const policyHolderRepository = AppDataSource.getRepository(PolicyHolder);
     const paymentRepository = AppDataSource.getRepository(Payment);
 
-    
-    // Check if a policy with the given policyNumber already exists.    
+    // Check if a policy with the given policyNumber already exists.
     // Check if policy already exists
     const existingPolicy = await policyRepository.findOne({
       where: { policyNumber: fields.policyNumber },
@@ -137,8 +137,7 @@ router.post("/", async (req: Request, res: Response) => {
       return;
     }
 
-    
-    // Create and save the related Event entity.    
+    // Create and save the related Event entity.
     // Create and save event first
     const event = eventRepository.create({
       eventType: fields.eventType,
@@ -149,8 +148,7 @@ router.post("/", async (req: Request, res: Response) => {
 
     const savedEvent = await eventRepository.save(event);
 
-    
-    // Create and save the related PolicyHolder entity.    
+    // Create and save the related PolicyHolder entity.
     // Create and save policy holder
     const policyHolder = policyHolderRepository.create({
       firstName: fields.firstName,
@@ -166,8 +164,7 @@ router.post("/", async (req: Request, res: Response) => {
 
     const savedPolicyHolder = await policyHolderRepository.save(policyHolder);
 
-    
-    // Create and save the related Payment entity.    
+    // Create and save the related Payment entity.
     // Create and save payment
     const payment = paymentRepository.create({
       amount: parseFloat(fields.paymentAmount),
@@ -177,8 +174,7 @@ router.post("/", async (req: Request, res: Response) => {
     });
     const savedPayment = await paymentRepository.save(payment);
 
-    
-    // Create the main Policy entity and associate the saved related entities.    
+    // Create the main Policy entity and associate the saved related entities.
     // Create the main policy with saved relations
     const newPolicy = policyRepository.create({
       policyNumber: fields.policyNumber,
@@ -190,8 +186,7 @@ router.post("/", async (req: Request, res: Response) => {
 
     const savedPolicy = await policyRepository.save(newPolicy);
 
-    
-    // Fetch the complete policy with all relations to return in the response.    
+    // Fetch the complete policy with all relations to return in the response.
     // Fetch the complete policy with all relations
     const completePolicy = await policyRepository.findOne({
       where: { id: savedPolicy.id },
@@ -200,8 +195,7 @@ router.post("/", async (req: Request, res: Response) => {
 
     res.status(201).json({ policy: completePolicy });
   } catch (error) {
-    
-    // Error handling for POST /api/v1/policies.    
+    // Error handling for POST /api/v1/policies.
     console.error("POST /api/policies error:", error);
     res.status(500).json({ error: "Server error during policy creation" });
   }
@@ -217,67 +211,75 @@ router.put("/:id", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { versionMetadata, ...fields } = req.body;
-    
+
     // Fetch the policy to be updated, including its relations.
-    
     const policyRepository = AppDataSource.getRepository(Policy);
     const versionRepository = AppDataSource.getRepository(PolicyVersion);
     const policyRecord = await policyRepository.findOne({
       where: { id: Number(id) },
-      relations: ["quote", "event", "event.venue", "policyHolder", "versions"],
+      relations: ["quote", "event", "event.venue", "policyHolder"],
     });
 
-    
-    // If policy not found, return 404.
-    
     if (!policyRecord) {
       res.status(404).json({ error: "Policy not found" });
       return;
     }
 
-    
+    // --- PDF Versioning Logic ---
     // Create a snapshot of the current policy data before making changes.
-    
-    // Create snapshot of current policy data
     const policySnapshot = {
       policy: policyRecord,
       quote: policyRecord.quote,
       event: policyRecord.event,
       venue: policyRecord.event?.venue,
       policyHolder: policyRecord.policyHolder,
-      versionMetadata,
     };
 
-    
-    // Create and save a new PolicyVersion entity with the snapshot.
-    
-    // Create new version
+    // Generate PDF buffer
+    const pdfBuffer = await VersionPdfService.generateVersionPdf(
+      policySnapshot
+    );
+    // Save PDF to /uploads with unique name
+    const uploadsDir = path.join(__dirname, "../../uploads");
+    if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir);
+    const versionTimestamp = Date.now();
+    const fileName = `policy_${id}_version_${versionTimestamp}.pdf`;
+    const filePath = path.join(uploadsDir, fileName);
+    fs.writeFileSync(filePath, pdfBuffer);
+
+    // Save PolicyVersion record
     const newVersion = versionRepository.create({
-      policy: policyRecord,
+      policyId: Number(id),
       data: policySnapshot,
+      // Add file path to data for reference
     });
+    // Attach file path to data
+    newVersion.data = { ...policySnapshot, pdfFile: fileName };
     await versionRepository.save(newVersion);
 
-    
-    // Check if the number of versions exceeds the limit (10).
-    // If so, delete the oldest versions.
-    
-    // Check and cleanup old versions if needed
-    const versions = await versionRepository.find({
-      where: { policy: { id: Number(id) } },
+    // Keep only the latest 10 versions (and their PDFs)
+    const allVersions = await versionRepository.find({
+      where: { policyId: Number(id) },
       order: { createdAt: "DESC" },
     });
-
-    if (versions.length > 10) {
-      // Delete oldest versions beyond the limit
-      const versionsToDelete = versions.slice(10);
-      await versionRepository.remove(versionsToDelete);
+    if (allVersions.length > 10) {
+      const versionsToDelete = allVersions.slice(10);
+      for (const v of versionsToDelete) {
+        const fileToDelete = (v.data as any)?.pdfFile;
+        if (fileToDelete) {
+          const filePathToDelete = path.join(uploadsDir, fileToDelete);
+          if (fs.existsSync(filePathToDelete)) {
+            fs.unlinkSync(filePathToDelete);
+          }
+        }
+        await versionRepository.delete(v.id);
+      }
     }
 
     // --- Update Logic ---
-    
+
     // Merge and update top-level policy fields.
-    
+
     // Merge top-level policy fields
     // Note: status field exists in database but not in Policy entity
     // This is handled by TypeORM at runtime despite TypeScript warning
@@ -288,9 +290,8 @@ router.put("/:id", async (req: Request, res: Response) => {
       status: fields.status,
     } as any);
 
-    
     // Update related Event entity fields if provided.
-    
+
     // Update event fields if provided
     if (
       fields.eventType ||
@@ -318,9 +319,8 @@ router.put("/:id", async (req: Request, res: Response) => {
       policyRecord.event = event;
     }
 
-    
     // Update related Venue entity fields if provided.
-    
+
     // Update venue fields if provided
     if (
       fields.venueName ||
@@ -367,16 +367,16 @@ router.put("/:id", async (req: Request, res: Response) => {
       fields.rehearsalDinnerVenueZip ||
       fields.rehearsalDinnerVenueAsInsured
     ) {
-      // console.log("=== Venue Update Debug ===");
-      // console.log("Fields received:", fields);
-      // console.log("Policy record before update:", policyRecord);
-      // console.log("Event before update:", policyRecord.event);
-      // console.log("Venue before update:", policyRecord.event?.venue);
+      console.log("=== Venue Update Debug ===");
+      console.log("Fields received:", fields);
+      console.log("Policy record before update:", policyRecord);
+      console.log("Event before update:", policyRecord.event);
+      console.log("Venue before update:", policyRecord.event?.venue);
 
       const venueRepository = AppDataSource.getRepository(Venue);
       const venue = policyRecord.event?.venue || new Venue();
 
-      // console.log("Venue entity before merge:", venue);
+      console.log("Venue entity before merge:", venue);
 
       venueRepository.merge(venue, {
         name: fields.venueName,
@@ -432,20 +432,19 @@ router.put("/:id", async (req: Request, res: Response) => {
         rehearsalDinnerVenueAsInsured: fields.rehearsalDinnerVenueAsInsured,
       });
 
-      // console.log("Venue entity after merge:", venue);
+      console.log("Venue entity after merge:", venue);
 
       await venueRepository.save(venue);
-      // console.log("Venue saved successfully:", venue);
+      console.log("Venue saved successfully:", venue);
 
       if (policyRecord.event) {
         policyRecord.event.venue = venue;
-        // console.log("Venue attached to event:", policyRecord.event.venue);
+        console.log("Venue attached to event:", policyRecord.event.venue);
       }
     }
 
-    
     // Update related PolicyHolder entity fields if provided.
-    
+
     // Update policy holder fields if provided
     if (
       fields.firstName ||
@@ -483,9 +482,8 @@ router.put("/:id", async (req: Request, res: Response) => {
       policyRecord.policyHolder = policyHolder;
     }
 
-    
     // Update related Quote entity fields if provided (if the policy originated from a quote).
-    
+
     // Update quote fields if provided
     if (
       fields.email ||
@@ -521,26 +519,23 @@ router.put("/:id", async (req: Request, res: Response) => {
       policyRecord.quote = quote;
     }
 
-    
     // Save the updated policy record.
-    
+
     // Save the updated policy
     const updatedPolicy = await policyRepository.save(policyRecord);
 
-    
     // Fetch the complete policy with all relations to return in the response.
-    
+
     // Fetch the complete policy with all relations
     const completePolicy = await policyRepository.findOne({
       where: { id: updatedPolicy.id },
-      relations: ["quote", "event", "event.venue", "policyHolder", "versions"],
+      relations: ["quote", "event", "event.venue", "policyHolder"],
     });
 
     res.json({ policy: completePolicy });
   } catch (error) {
-    
     // Error handling for PUT /api/v1/policies/:id.
-    
+
     console.error("PUT /api/policies error:", error);
     res.status(500).json({ error: "Failed to update policy" });
   }
@@ -555,9 +550,9 @@ router.delete("/:id", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const policyRepository = AppDataSource.getRepository(Policy);
-    
+
     // Fetch the policy to be deleted, including all its relations.
-    
+
     const policy = await policyRepository.findOne({
       where: { id: Number(id) },
       relations: [
@@ -569,7 +564,7 @@ router.delete("/:id", async (req: Request, res: Response) => {
         "event.venue",
         "policyHolder",
         "payments",
-        "versions",
+        // "versions",
       ],
     });
 
@@ -578,27 +573,24 @@ router.delete("/:id", async (req: Request, res: Response) => {
       return;
     }
 
-    
     // Use a database transaction to ensure all deletions are atomic.
-    
+
     // Use transaction for safe deletion
     await AppDataSource.manager.transaction(
       async (transactionalEntityManager) => {
-        
         // Delete dependent records first to avoid foreign key constraint violations.
-        
+
         // Delete all dependents first
-        if (policy.versions.length > 0)
-          await transactionalEntityManager.remove(policy.versions);
+
         if (policy.payments.length > 0)
           await transactionalEntityManager.remove(policy.payments);
 
         // If it's a quote-based policy (admin flow)
         if (policy.quote) {
           const quote = policy.quote;
-          
+
           // Delete records related to the quote.
-          
+
           if (quote.event?.venue)
             await transactionalEntityManager.remove(quote.event.venue);
           if (quote.event) await transactionalEntityManager.remove(quote.event);
@@ -607,9 +599,8 @@ router.delete("/:id", async (req: Request, res: Response) => {
           // First remove the policy, then the quote
           await transactionalEntityManager.remove(policy);
           await transactionalEntityManager.remove(quote);
-          
+
           // If it's a direct policy (customer flow), delete its direct relations.
-          
         } else {
           // If it's a direct policy (customer flow)
           if (policy.event?.venue)
@@ -625,9 +616,8 @@ router.delete("/:id", async (req: Request, res: Response) => {
 
     res.json({ message: "Policy and related records deleted successfully" });
   } catch (error) {
-    
     // Error handling for DELETE /api/v1/policies/:id.
-    
+
     console.error("DELETE /api/policies error:", error);
     res.status(500).json({ error: "Failed to delete policy" });
   }
@@ -640,11 +630,11 @@ router.delete("/:id", async (req: Request, res: Response) => {
 
 router.post("/from-quote", async (req: Request, res: Response) => {
   try {
-    // console.log("Received request body:", req.body);
+    console.log("Received request body:", req.body);
     const { quoteNumber, forceConvert } = req.body;
-    
+
     // Validate that quoteNumber is provided.
-    
+
     if (!quoteNumber) {
       console.error("Missing quoteNumber in request");
       res.status(400).json({ error: "Missing quoteNumber" });
@@ -654,56 +644,51 @@ router.post("/from-quote", async (req: Request, res: Response) => {
     const quoteRepository = AppDataSource.getRepository(Quote);
     const policyRepository = AppDataSource.getRepository(Policy);
 
-    
     // Fetch the quote by quoteNumber, including its relations.
-    
-    // console.log("Looking up quote:", quoteNumber);
+
+    console.log("Looking up quote:", quoteNumber);
     const quote = await quoteRepository.findOne({
       where: { quoteNumber },
       relations: ["policy", "event", "event.venue", "policyHolder"],
     });
 
     if (!quote) {
-      
       // If quote not found, return 404.
-      
+
       console.error("Quote not found:", quoteNumber);
       res.status(404).json({ error: "Quote not found" });
       return;
     }
 
-    // console.log("Found quote:", {
-    //   id: quote.id,
-    //   quoteNumber: quote.quoteNumber,
-    //   source: quote.source,
-    //   convertedToPolicy: quote.convertedToPolicy,
-    //   hasEvent: !!quote.event,
-    //   hasPolicyHolder: !!quote.policyHolder,
-    // });
+    console.log("Found quote:", {
+      id: quote.id,
+      quoteNumber: quote.quoteNumber,
+      source: quote.source,
+      convertedToPolicy: quote.convertedToPolicy,
+      hasEvent: !!quote.event,
+      hasPolicyHolder: !!quote.policyHolder,
+    });
 
-    
     // Check if the quote has already been converted to a policy.
-    
+
     if (quote.convertedToPolicy) {
       console.error("Quote already converted:", quoteNumber);
       res.status(400).json({ error: "Quote is already converted to a policy" });
       return;
     }
 
-    
     // Update the quote's status to COMPLETE.
-    
+
     // Update the quote status to COMPLETE
     quote.status = StepStatus.COMPLETE;
     await quoteRepository.save(quote);
-    // console.log("Updated quote status to COMPLETE");
+    console.log("Updated quote status to COMPLETE");
 
-    
     // For admin-generated quotes, require 'forceConvert' flag unless it's already set.
     // This acts as a confirmation step for admin conversions.
-    
+
     if (quote.source === QuoteSource.ADMIN && !forceConvert) {
-      // console.log("Admin quote requires manual conversion");
+      console.log("Admin quote requires manual conversion");
       res.status(400).json({
         error: "Admin-generated quotes require manual conversion confirmation",
         requiresManualConversion: true,
@@ -711,20 +696,18 @@ router.post("/from-quote", async (req: Request, res: Response) => {
       return;
     }
 
-    
     // Call the service function to create a policy from the quote.
-    
-    // console.log("Creating policy from quote");
-    const policy = await createPolicyFromQuote(quote.id);
-    // console.log("Created policy:", {
-    //   id: policy.id,
-    //   policyNumber: policy.policyNumber,
-    // });
 
-    
+    console.log("Creating policy from quote");
+    const policy = await createPolicyFromQuote(quote.id);
+    console.log("Created policy:", {
+      id: policy.id,
+      policyNumber: policy.policyNumber,
+    });
+
     // For admin-generated quotes, create a payment record with SUCCESS status
     // and ensure the quote relation is properly maintained
-    
+
     if (quote.source === QuoteSource.ADMIN) {
       const paymentRepository = AppDataSource.getRepository(Payment);
       const newPayment = paymentRepository.create({
@@ -743,32 +726,34 @@ router.post("/from-quote", async (req: Request, res: Response) => {
 
       // Ensure venue locationType is properly set
       if (policy.event?.venue) {
-        policy.event.venue.locationType = policy.event.venue.ceremonyLocationType || policy.event.venue.locationType;
-        await AppDataSource.manager.getRepository(Venue).save(policy.event.venue);
+        policy.event.venue.locationType =
+          policy.event.venue.ceremonyLocationType ||
+          policy.event.venue.locationType;
+        await AppDataSource.manager
+          .getRepository(Venue)
+          .save(policy.event.venue);
       }
 
       await AppDataSource.manager.getRepository(Policy).save(policy);
     }
 
-    
     // Fetch the complete policy with all relations to return in the response.
-    
+
     // Fetch the complete policy with all relations
     const completePolicy = await policyRepository.findOne({
       where: { id: policy.id },
       relations: ["quote", "event", "event.venue", "policyHolder"],
     });
 
-    // console.log("Sending success response");
+    console.log("Sending success response");
     res.status(201).json({
       message: "Quote converted to policy successfully",
       policyNumber: policy.policyNumber,
       policy: completePolicy || policy,
     });
   } catch (error) {
-    
     // Error handling for POST /api/v1/policies/from-quote.
-    
+
     console.error("POST /from-quote error:", error);
     console.error("Error details:", {
       name: (error as Error).name,
@@ -781,62 +766,62 @@ router.post("/from-quote", async (req: Request, res: Response) => {
 });
 
 // --- GET /api/v1/policies/:id/versions ---
-
 // Handles fetching all versions for a specific policy ID.
-
 router.get("/:id/versions", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const versionRepository = AppDataSource.getRepository(PolicyVersion);
-
     const versions = await versionRepository.find({
-      where: { policy: { id: Number(id) } },
+      where: { policyId: Number(id) },
       order: { createdAt: "DESC" },
     });
-
     res.json({ versions });
   } catch (error) {
-    
-    // Error handling for GET /api/v1/policies/:id/versions.
-    
     console.error("GET /api/policies/:id/versions error:", error);
     res.status(500).json({ error: "Failed to fetch policy versions" });
   }
 });
 
-// --- GET /api/v1/policies/:id/versions/:versionId ---
-
-// Handles fetching a specific version by its ID, for a given policy ID.
-
-router.get("/:id/versions/:versionId", async (req: Request, res: Response) => {
-  try {
-    const { id, versionId } = req.params;
-    const versionRepository = AppDataSource.getRepository(PolicyVersion);
-
-    const version = await versionRepository.findOne({
-      where: {
-        id: Number(versionId),
-        policy: { id: Number(id) },
-      },
-    });
-
-    if (!version) {
-      
-      // If policy version not found, return 404.
-      
-      res.status(404).json({ error: "Policy version not found" });
-      return;
+// --- GET /api/v1/policies/:id/versions/:versionId/download ---
+// Handles downloading the PDF for a specific version.
+router.get(
+  "/:id/versions/:versionId/download",
+  async (req: Request, res: Response) => {
+    try {
+      const { id, versionId } = req.params;
+      const versionRepository = AppDataSource.getRepository(PolicyVersion);
+      const version = await versionRepository.findOne({
+        where: { id: Number(versionId), policyId: Number(id) },
+      });
+      if (!version) {
+        res.status(404).json({ error: "Policy version not found" });
+        return;
+      }
+      const pdfFile = (version.data as any)?.pdfFile;
+      if (!pdfFile) {
+        res.status(404).json({ error: "PDF file not found for this version" });
+        return;
+      }
+      const filePath = path.join(__dirname, "../../uploads", pdfFile);
+      if (!fs.existsSync(filePath)) {
+        res.status(404).json({ error: "PDF file missing on server" });
+        return;
+      }
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename=\"${pdfFile}\"`
+      );
+      fs.createReadStream(filePath).pipe(res);
+    } catch (error) {
+      console.error(
+        "GET /api/policies/:id/versions/:versionId/download error:",
+        error
+      );
+      res.status(500).json({ error: "Failed to download policy version PDF" });
     }
-
-    res.json({ version });
-  } catch (error) {
-    
-    // Error handling for GET /api/v1/policies/:id/versions/:versionId.
-    
-    console.error("GET /api/policies/:id/versions/:versionId error:", error);
-    res.status(500).json({ error: "Failed to fetch policy version" });
   }
-});
+);
 
 // Endpoint to fetch event data for a policy
 
@@ -852,18 +837,16 @@ router.get("/:id/event", async (req: Request, res: Response) => {
     });
 
     if (!policy || !policy.event) {
-      
       // If policy or its event not found, return 404.
-      
+
       res.status(404).json({ error: "Event not found" });
       return;
     }
 
     res.json({ event: policy.event });
   } catch (error) {
-    
     // Error handling for GET /api/v1/policies/:id/event.
-    
+
     console.error("GET /api/policies/:id/event error:", error);
     res.status(500).json({ error: "Failed to fetch event data" });
   }
@@ -883,18 +866,16 @@ router.get("/:id/policy-holder", async (req: Request, res: Response) => {
     });
 
     if (!policy || !policy.policyHolder) {
-      
       // If policy or its policy holder not found, return 404.
-      
+
       res.status(404).json({ error: "Policy holder not found" });
       return;
     }
 
     res.json({ policyHolder: policy.policyHolder });
   } catch (error) {
-    
     // Error handling for GET /api/v1/policies/:id/policy-holder.
-    
+
     console.error("GET /api/policies/:id/policy-holder error:", error);
     res.status(500).json({ error: "Failed to fetch policy holder data" });
   }
@@ -914,20 +895,71 @@ router.get("/:id/payments", async (req: Request, res: Response) => {
     });
 
     if (!policy || !policy.payments) {
-      
       // If policy or its payments not found, return 404.
-      
+
       res.status(404).json({ error: "Payments not found" });
       return;
     }
 
     res.json({ payments: policy.payments });
   } catch (error) {
-    
     // Error handling for GET /api/v1/policies/:id/payments.
-    
+
     console.error("GET /api/policies/:id/payments error:", error);
     res.status(500).json({ error: "Failed to fetch payments data" });
   }
 });
+
+// Add this new endpoint before the export
+router.get("/:id/version-pdf", async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const policyRepository = AppDataSource.getRepository(Policy);
+
+    // Fetch the policy with all its relations
+    const policy = await policyRepository.findOne({
+      where: { id: Number(id) },
+      relations: [
+        "quote",
+        "quote.event",
+        "quote.event.venue",
+        "quote.policyHolder",
+        "event",
+        "event.venue",
+        "policyHolder",
+        "payments",
+      ],
+    });
+
+    if (!policy) {
+      res.status(404).json({ error: "Policy not found" });
+      return;
+    }
+
+    // Generate PDF using the VersionPdfService
+    const pdfBuffer = await VersionPdfService.generateVersionPdf({
+      policy,
+      event: policy.event,
+      venue: policy.event?.venue,
+      policyHolder: policy.policyHolder,
+      quote: policy.quote,
+    });
+
+    // Set response headers for PDF download
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename=policy-version-${
+        policy.policyNumber
+      }-${new Date().toISOString()}.pdf`
+    );
+
+    // Send the PDF buffer
+    res.send(pdfBuffer);
+  } catch (error) {
+    console.error("GET /api/policies/:id/version-pdf error:", error);
+    res.status(500).json({ error: "Failed to generate version PDF" });
+  }
+});
+
 export default router;

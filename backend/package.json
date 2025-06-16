@@ -18,6 +18,7 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@types/pdfkit": "^0.14.0",
     "authorizenet": "^1.0.10",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
@@ -43,6 +44,7 @@
     "@types/nodemailer": "^6.4.17",
     "@types/oracledb": "^6.6.0",
     "nodemon": "^3.1.10",
+    "pdfkit": "^0.17.1",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.8.3"

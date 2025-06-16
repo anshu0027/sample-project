@@ -8,7 +8,7 @@ import { toast } from '@/hooks/use-toast';
 import dynamic from 'next/dynamic';
 import { PolicyVersion, PolicyVersionData } from '@/types/policy';
 import { EditPolicySkeleton } from '@/components/ui/EditPolicySkeleton';
-import { ChevronDown, History } from 'lucide-react';
+import { ChevronDown, History, Download } from 'lucide-react';
 
 const StepFormLoading = () => <div className="p-8 text-center text-gray-500">Loading form...</div>;
 const Step1Form = dynamic(() => import('@/components/quote/Step1Form'), {
@@ -35,6 +35,8 @@ function flattenPolicy(policy: any): PolicyVersionData | null {
   const data = policy.quote || policy;
   const event = data.event || policy.event;
   const venue = event?.venue || policy.event?.venue;
+  const eventSource = data.event || policy.event;
+  const venueSource = eventSource?.venue;
 
   return {
     residentState: data.residentState || data.policyHolder?.state || '',
@@ -52,7 +54,8 @@ function flattenPolicy(policy: any): PolicyVersionData | null {
     honoree2FirstName: event?.honoree2FirstName || '',
     honoree2LastName: event?.honoree2LastName || '',
     // Main venue fields
-    ceremonyLocationType: venue?.locationType || '',
+    ceremonyLocationType: venueSource?.ceremonyLocationType || '',
+    locationType: venue?.locationType || '',
     indoorOutdoor: venue?.indoorOutdoor || '',
     venueName: venue?.name || '',
     venueAddress1: venue?.address1 || '',
@@ -178,40 +181,15 @@ export default function EditPolicy() {
   const id = params.id as string; // This can be a quoteNumber or policyId
   const [step, setStep] = useState(1);
   const [formState, setFormState] = useState<PolicyVersionData | null>(null);
-  const [policyVersions, setPolicyVersions] = useState<PolicyVersion[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedVersion, setSelectedVersion] = useState<PolicyVersion | null>(null);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const versionDropdownRef = useRef<HTMLDivElement>(null);
-  const [restoredFromVersion, setRestoredFromVersion] = useState<PolicyVersion | null>(null);
   const [showQuoteResults, setShowQuoteResults] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
-  const [isLoadingVersion, setIsLoadingVersion] = useState(false);
-
-  const handleDropdownToggle = () => {
-    setIsDropdownOpen((prev) => !prev);
-  };
-
-  const handleClickOutside = (event: MouseEvent) => {
-    const dropdownElement = document.getElementById('version-dropdown');
-    if (dropdownElement && !dropdownElement.contains(event.target as Node)) {
-      setIsDropdownOpen(false);
-    }
-  };
-
-  useEffect(() => {
-    if (isDropdownOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    } else {
-      document.removeEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isDropdownOpen]);
+  const [policyVersions, setPolicyVersions] = useState<PolicyVersion[]>([]);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [selectedVersion, setSelectedVersion] = useState<PolicyVersion | null>(null);
+  const versionDropdownRef = useRef<HTMLDivElement>(null);
 
   // ==================================================================
   // ===== API CHANGE #1: Fetching the initial policy data ==========
@@ -274,13 +252,8 @@ export default function EditPolicy() {
         // Phase 2: Fetch versions (background)
         fetch(`${apiUrl}/policies/${id}/versions`)
           .then((vRes) => vRes.json())
-          .then((vData) => {
-            // console.log('Fetched versions:', vData); // Removed for production
-            setPolicyVersions(vData.versions || []);
-          })
-          .catch((err) => {
-            console.warn('Versions fetch failed:', err);
-          });
+          .then((vData) => setPolicyVersions(vData.versions || []))
+          .catch((err) => console.warn('Versions fetch failed:', err));
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Unknown error';
         console.error('Error fetching policy:', error);
@@ -310,39 +283,51 @@ export default function EditPolicy() {
     }
   };
 
-  // Function to restore a previous version
-  const handleRestoreVersion = (version: PolicyVersion) => {
+  // ==================================================================
+  // ===== API CHANGE #2: Saving the updated policy =================
+  // ==================================================================
+  const handleDownloadVersionPdf = async () => {
     try {
-      // Check if data is already an object or needs parsing
-      const versionData =
-        typeof version.data === 'string' ? JSON.parse(version.data) : version.data;
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      const response = await fetch(`${apiUrl}/policies/${id}/version-pdf`, {
+        method: 'GET',
+        headers: {
+          Accept: 'application/pdf',
+        },
+      });
 
-      // Ensure we keep the current policyId and policyNumber
-      setFormState({
-        ...versionData,
-        policyId: formState?.policyId,
-        policyNumber: formState?.policyNumber,
-      });
-      setSelectedVersion(version);
-      setRestoredFromVersion(version);
-      toast({
-        title: 'Version restored',
-        description: `Loaded version from ${new Date(version.createdAt).toLocaleString()}. Save to keep changes.`,
-        variant: 'default',
-      });
+      if (!response.ok) {
+        throw new Error('Failed to download PDF');
+      }
+
+      // Get the blob from the response
+      const blob = await response.blob();
+
+      // Create a URL for the blob
+      const url = window.URL.createObjectURL(blob);
+
+      // Create a temporary link element
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `policy-version-${formState?.policyNumber}.pdf`;
+
+      // Append to body, click, and remove
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // Clean up the URL
+      window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error('Error parsing version data:', error);
+      console.error('Error downloading PDF:', error);
       toast({
-        title: 'Failed to restore version',
-        description: 'Invalid version data format.',
+        title: 'Failed to download PDF',
+        description: error instanceof Error ? error.message : 'Unknown error',
         variant: 'destructive',
       });
     }
   };
 
-  // ==================================================================
-  // ===== API CHANGE #2: Saving the updated policy =================
-  // ==================================================================
   const handleSave = async () => {
     if (!formState) return;
     const currentPolicyId = formState.policyId;
@@ -355,8 +340,12 @@ export default function EditPolicy() {
       return;
     }
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
     try {
+      // First, generate and download the PDF of the current version
+      await handleDownloadVersionPdf();
+
+      // Then proceed with saving the updated policy
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
       // Structure the data according to the backend's expectations
       const payload = {
         policyNumber: formState.policyNumber,
@@ -378,6 +367,7 @@ export default function EditPolicy() {
         venueState: formState.venueState,
         venueZip: formState.venueZip,
         ceremonyLocationType: formState.ceremonyLocationType,
+        locationType: formState.locationType,
         indoorOutdoor: formState.indoorOutdoor,
         venueAsInsured: formState.venueAsInsured,
         // Additional venue fields
@@ -452,13 +442,13 @@ export default function EditPolicy() {
         liquorLiabilityPremium: formState.liquorLiabilityPremium,
         status: formState.status,
         // Version metadata
-        versionMetadata: restoredFromVersion
-          ? {
-              restoredFromVersionId: restoredFromVersion.id,
-              restoredFromVersionDate: restoredFromVersion.createdAt,
-              isRestored: true,
-            }
-          : undefined,
+        // versionMetadata: restoredFromVersion
+        //   ? {
+        //       restoredFromVersionId: restoredFromVersion.id,
+        //       restoredFromVersionDate: restoredFromVersion.createdAt,
+        //       isRestored: true,
+        //     }
+        //   : undefined,
       };
 
       const response = await fetch(`${apiUrl}/policies/${currentPolicyId}`, {
@@ -472,15 +462,15 @@ export default function EditPolicy() {
         throw new Error(errorData.error || 'Failed to update policy');
       }
 
-      setRestoredFromVersion(null);
-      setSelectedVersion(null);
+      // setRestoredFromVersion(null);
+      // setSelectedVersion(null);
 
-      // Re-fetch versions to show the newly created one
-      const versionsRes = await fetch(`${apiUrl}/policies/${currentPolicyId}?versionsOnly=true`);
-      if (versionsRes.ok) {
-        const versionsData = await versionsRes.json();
-        setPolicyVersions(versionsData.versions);
-      }
+      // // Re-fetch versions to show the newly created one
+      // const versionsRes = await fetch(`${apiUrl}/policies/${currentPolicyId}?versionsOnly=true`);
+      // if (versionsRes.ok) {
+      //   const versionsData = await versionsRes.json();
+      //   setPolicyVersions(versionsData.versions);
+      // }
 
       toast({ title: 'Policy updated successfully!', variant: 'default' });
     } catch (error) {
@@ -582,48 +572,28 @@ export default function EditPolicy() {
   //     }
   // }, [id]);
 
-  const handleVersionClick = async (versionId: number) => {
-    setIsLoadingVersion(true);
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  const handleDownloadVersionPdfById = async (versionId: number, fileName: string) => {
     try {
-      const res = await fetch(`${apiUrl}/policies/${id}/versions/${versionId}`);
-      if (!res.ok) {
-        throw new Error('Failed to fetch version data');
-      }
-      const data = await res.json();
-      // console.log('Fetched version data:', data); // Removed for production
-      const versionData = data.version;
-      // Update form state with the version data
-      setFormState((prev) => ({ ...prev, ...versionData }));
-      toast({
-        title: 'Version loaded',
-        description: `Version from ${new Date(versionData.createdAt).toLocaleString()} loaded.`,
-        variant: 'default',
-      });
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      const response = await fetch(`${apiUrl}/policies/${id}/versions/${versionId}/download`);
+      if (!response.ok) throw new Error('Failed to download PDF');
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error('Error fetching version data:', error);
-    } finally {
-      setIsLoadingVersion(false);
+      toast({
+        title: 'Failed to download PDF',
+        description: error instanceof Error ? error.message : 'Unknown error',
+        variant: 'destructive',
+      });
     }
   };
-
-  // Example component to display versions with dropdown
-  const VersionDropdown = () => (
-    <div>
-      <button onClick={handleDropdownToggle}>Toggle Versions</button>
-      {isDropdownOpen && (
-        <div id="version-dropdown">
-          {policyVersions.map((version) => (
-            <div key={version.id} onClick={() => handleVersionClick(version.id)}>
-              <span>Version ID: {version.id}</span>
-              <span>Created At: {new Date(version.createdAt).toLocaleString()}</span>
-            </div>
-          ))}
-          {isLoadingVersion && <div>Loading version data...</div>}
-        </div>
-      )}
-    </div>
-  );
 
   if (isLoading) return <EditPolicySkeleton />;
 
@@ -643,13 +613,11 @@ export default function EditPolicy() {
             >
               <Button
                 variant="outline"
-                onClick={handleDropdownToggle}
+                onClick={() => setIsDropdownOpen((v) => !v)}
                 className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 w-full justify-center sm:w-auto"
               >
                 <History size={16} />
-                <span className="hidden sm:inline">
-                  {restoredFromVersion ? 'Working with Restored Version' : 'Version History'}
-                </span>
+                <span className="hidden sm:inline">Version History</span>
                 <ChevronDown
                   size={16}
                   className={`transform transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`}
@@ -661,43 +629,35 @@ export default function EditPolicy() {
                     <h3 className="text-sm font-medium text-gray-500 px-3 py-2">Version History</h3>
                     <div className="space-y-1">
                       {policyVersions.map((version) => {
-                        // Check if data is already an object or needs parsing
                         const versionData =
                           typeof version.data === 'string'
                             ? JSON.parse(version.data)
                             : version.data;
-                        const isRestored = versionData.versionMetadata?.isRestored;
+                        const pdfFile = versionData?.pdfFile || `policy-version-${version.id}.pdf`;
                         return (
-                          <button
+                          <div
                             key={version.id}
-                            className={`w-full text-left px-3 py-2 rounded-md transition-colors ${
-                              selectedVersion?.id === version.id
-                                ? 'bg-blue-50 text-blue-700'
-                                : 'hover:bg-gray-50'
-                            }`}
-                            onClick={() => {
-                              handleRestoreVersion(version);
-                              if (!isHovering) {
-                                setIsDropdownOpen(false);
-                              }
-                            }}
+                            className="flex items-center justify-between px-3 py-2 rounded-md hover:bg-gray-50"
                           >
-                            <div className="flex flex-col">
-                              <span className="font-medium flex items-center gap-2">
+                            <div>
+                              <span className="font-medium">
                                 {new Date(version.createdAt).toLocaleDateString()}{' '}
                                 {new Date(version.createdAt).toLocaleTimeString([], {
                                   hour: 'numeric',
                                   minute: '2-digit',
                                   hour12: true,
                                 })}
-                                {isRestored && (
-                                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
-                                    Restored Version
-                                  </span>
-                                )}
                               </span>
                             </div>
-                          </button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDownloadVersionPdfById(version.id, pdfFile)}
+                              title="Download PDF"
+                            >
+                              <Download size={16} />
+                            </Button>
+                          </div>
                         );
                       })}
                     </div>
@@ -714,6 +674,14 @@ export default function EditPolicy() {
             onClick={() => router.push('/admin/policies')}
           >
             Back to Policies
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleDownloadVersionPdf}
+            className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 w-full justify-center sm:w-auto"
+          >
+            <Download size={16} />
+            <span className="hidden sm:inline">Download Current Version</span>
           </Button>
         </div>
       </div>
@@ -745,7 +713,7 @@ export default function EditPolicy() {
               showQuoteResults={showQuoteResults}
               handleCalculateQuote={() => setShowQuoteResults(true)}
               onSave={handleSave}
-              isRestored={!!restoredFromVersion}
+              // isRestored={!!restoredFromVersion}
             />
           )}
           {step === 2 && (
@@ -756,7 +724,7 @@ export default function EditPolicy() {
               onValidate={handleValidateStep2}
               onContinue={() => setStep(3)}
               onSave={handleSave}
-              isRestored={!!restoredFromVersion}
+              // isRestored={!!restoredFromVersion}
             />
           )}
           {step === 3 && (
@@ -765,7 +733,7 @@ export default function EditPolicy() {
               errors={errors}
               onChange={handleInputChange}
               onSave={handleSave}
-              isRestored={!!restoredFromVersion}
+              // isRestored={!!restoredFromVersion}
             />
           )}
           {step === 4 && (

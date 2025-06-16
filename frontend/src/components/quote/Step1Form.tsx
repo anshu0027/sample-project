@@ -85,6 +85,18 @@ export default function Step1Form({
   isRestored = false,
 }: Step1FormProps) {
   // ------------------------
+  // Date parsing and formatting functions (similar to quote-generator)
+  // ------------------------
+  // Formats a Date object into a "YYYY-MM-DD" string
+  const formatDateStringLocal = (date: Date | null): string => {
+    if (!date) return '';
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  // ------------------------
   // Date picker configurations
   // ------------------------
   const selectedDate = state.eventDate ? new Date(state.eventDate) : null;
@@ -239,7 +251,7 @@ export default function Step1Form({
           </label>
           <DatePicker
             selected={selectedDate}
-            onChange={(date) => onChange('eventDate', date ? date.toISOString().split('T')[0] : '')}
+            onChange={(date: Date | null) => onChange('eventDate', formatDateStringLocal(date))}
             minDate={minDate}
             maxDate={maxDate}
             placeholderText="Select event date"

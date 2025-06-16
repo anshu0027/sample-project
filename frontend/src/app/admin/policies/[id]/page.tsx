@@ -200,7 +200,7 @@ export default function PolicyDetail() {
   }, [id]);
 
   const handleBack = () => router.push('/admin/policies');
-  const handleEdit = () => router.push(`/admin/policies/${id}/edit`);
+  // const handleEdit = () => router.push(`/admin/policies/${id}/edit`);
   // Skeleton Component
   const PolicyDetailSkeleton = () => (
     <div className="bg-gray-50 min-h-screen animate-pulse">
@@ -338,7 +338,7 @@ export default function PolicyDetail() {
                 </div>
               </div>
             </div>
-            <div className="flex gap-3">
+            {/* <div className="flex gap-3">
               <Button
                 variant="outline"
                 onClick={handleEdit}
@@ -346,7 +346,7 @@ export default function PolicyDetail() {
               >
                 <Edit size={18} className="mr-2" /> Edit Policy
               </Button>
-            </div>
+            </div> */}
           </div>
         </div>
 
@@ -708,20 +708,22 @@ export default function PolicyDetail() {
 
         {/* Additional Information */}
         <div className="bg-white shadow-sm rounded-xl p-6 mt-6">
-          <h2 className="text-lg font-semibold mb-4 text-gray-900 border-b pb-2">
+          <h2 className="text-lg font-semibold mb-6 text-gray-900 border-b pb-2">
             Additional Information
           </h2>
-          <div>
-            <h3 className="text-sm font-medium text-gray-500">Hear About Us</h3>
-            <p className="mt-1 font-medium">{policy.hearAboutUs || '-'}</p>
-          </div>
-          <div>
-            <h3 className="text-sm font-medium text-gray-500">Legal Notices</h3>
-            <p className="mt-1 font-medium">{policy.legalNotices ? 'Yes' : 'No'}</p>
-          </div>
-          <div>
-            <h3 className="text-sm font-medium text-gray-500">Completing Form Name</h3>
-            <p className="mt-1 font-medium">{policy.completingFormName || '-'}</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="space-y-1">
+              <h3 className="text-sm font-medium text-gray-500">Hear About Us</h3>
+              <p className="mt-1 text-sm text-gray-900">{policy.hearAboutUs || '-'}</p>
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-sm font-medium text-gray-500">Legal Notices</h3>
+              <p className="mt-1 text-sm text-gray-900">{policy.legalNotices ? 'Yes' : 'No'}</p>
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-sm font-medium text-gray-500">Completing Form Name</h3>
+              <p className="mt-1 text-sm text-gray-900">{policy.completingFormName || '-'}</p>
+            </div>
           </div>
         </div>
       </div>

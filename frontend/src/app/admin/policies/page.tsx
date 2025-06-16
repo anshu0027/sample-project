@@ -7,8 +7,8 @@ import { Search, Download, Eye, PlusCircle, Edit, Mail } from 'lucide-react';
 import Card from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
-// import jsPDF from 'jspdf';
-// import autoTable from 'jspdf-autotable';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { toast } from '@/hooks/use-toast';
 // import Link from "next/link";
 
@@ -125,10 +125,111 @@ export default function Policies() {
 
   // Export and other UI functions remain largely the same
   const handleExportCSV = () => {
-    /* ... No changes needed ... */
+    if (filteredPolicies.length === 0) {
+      toast({
+        title: 'No Data',
+        description: 'No policies available to export.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    const headers = [
+      'Policy Number',
+      'Policy Holder Name',
+      'Policy Holder Email',
+      'Event Type',
+      'Event Date',
+      'Total Premium',
+      'Payment Status',
+      'Quote Number',
+      'Created At',
+    ];
+    const csvContent = [
+      headers.join(','),
+      ...filteredPolicies.map((policy) =>
+        [
+          policy.policyNumber || '',
+          `"${policy.customer || `${policy.policyHolder?.firstName || ''} ${policy.policyHolder?.lastName || ''}`.trim() || 'N/A'}"`,
+          policy.email || policy.policyHolder?.email || '',
+          policy.eventType || policy.event?.eventType || '',
+          policy.eventDate || policy.event?.eventDate ? new Date(policy.eventDate || policy.event!.eventDate!).toLocaleDateString() : '',
+          policy.totalPremium?.toFixed(2) || '0.00',
+          policy.status || policy.payments?.[0]?.status || 'N/A',
+          policy.quoteNumber || '',
+          policy.createdAt ? new Date(policy.createdAt).toLocaleDateString() : '',
+        ].join(','),
+      ),
+    ].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `policies_export_${exportType}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success('Policies exported to CSV successfully!');
   };
+
   const handleExportPDF = () => {
-    /* ... No changes needed ... */
+    if (filteredPolicies.length === 0) {
+      toast({
+        title: 'No Data',
+        description: 'No policies available to export.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const doc = new jsPDF();
+    const tableHeaders = ['Policy', 'Holder Name', 'Email', 'Event Type', 'Event Date', 'Premium', 'Status'];
+    const allTableRows = filteredPolicies.map((policy) => [
+      String(policy.policyNumber || 'N/A'),
+      String(policy.customer || `${policy.policyHolder?.firstName || ''} ${policy.policyHolder?.lastName || ''}`.trim() || 'N/A'),
+      String(policy.email || policy.policyHolder?.email || 'N/A'),
+      String(policy.eventType || policy.event?.eventType || 'N/A'),
+      String(policy.eventDate || policy.event?.eventDate ? new Date(policy.eventDate || policy.event!.eventDate!).toLocaleDateString() : 'N/A'),
+      String(policy.totalPremium !== null && policy.totalPremium !== undefined ? `$${policy.totalPremium.toFixed(2)}` : 'N/A'),
+      String(policy.status || policy.payments?.[0]?.status || 'N/A'),
+    ]);
+
+    const rowsPerPage = 25;
+    const numChunks = Math.ceil(allTableRows.length / rowsPerPage);
+    let currentPageNumForFooter = 0;
+
+    for (let i = 0; i < numChunks; i++) {
+      currentPageNumForFooter++;
+      const startRow = i * rowsPerPage;
+      const endRow = startRow + rowsPerPage;
+      const chunk = allTableRows.slice(startRow, endRow);
+
+      if (i > 0) {
+        doc.addPage();
+      }
+
+      autoTable(doc, {
+        head: [tableHeaders],
+        body: chunk,
+        startY: 25, // Start table after the title
+        didDrawPage: (data) => {
+          // Page Header
+          doc.setFontSize(18);
+          doc.setTextColor(40);
+          doc.text('Insurance Policies Report', doc.internal.pageSize.getWidth() / 2, 15, { align: 'center' });
+
+          // Page Footer
+          doc.setFontSize(10);
+          doc.text(`Page ${currentPageNumForFooter} of ${numChunks}`, doc.internal.pageSize.getWidth() / 2, doc.internal.pageSize.getHeight() - 10, { align: 'center' });
+        },
+        styles: { fontSize: 8, cellPadding: 2 },
+        headStyles: { fillColor: [41, 128, 185], textColor: 255, fontSize: 9, fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: [245, 245, 245] },
+        margin: { top: 20 },
+      });
+    }
+    doc.save(`policies_export_${exportType}.pdf`);
+    toast.success('Policies exported to PDF successfully!');
   };
   const handleView = (policyId: number) => router.push(`/admin/policies/${policyId}`);
   const handleEdit = (policyId: number) => router.push(`/admin/policies/${policyId}/edit`);
