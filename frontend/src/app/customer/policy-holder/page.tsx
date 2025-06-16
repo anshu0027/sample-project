@@ -132,6 +132,7 @@ export default function PolicyHolder() {
         const element = document.getElementById(firstErrorField);
         if (element) {
           element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          element.focus({ preventScroll: true });
         }
       }
     }
@@ -215,7 +216,10 @@ export default function PolicyHolder() {
 
   return (
     <>
-      <div className="w-full pb-12">
+      {/* Flex container for main content and sidebar */}
+      <div className="flex flex-col lg:flex-row lg:gap-x-8">
+        {/* Main content area */}
+        <div className="w-full lg:flex-1 pb-12">
         <div className="mb-10 shadow-2xl border-0 bg-white/90 p-8 sm:p-10 md:p-12 rounded-2xl w-full">
           <div className="flex items-center justify-center text-left mb-4 gap-4">
             <div className="flex-shrink-0">
@@ -288,7 +292,8 @@ export default function PolicyHolder() {
               </div>
             </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 w-full px-2 sm:px-4 md:px-2">
+          {/* Updated grid classes for responsiveness */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
             <div className="mb-4">
               <label htmlFor="phone" className="block font-medium text-gray-800 mb-1 text-left">
                 Phone Number <span className="text-red-500">*</span>
@@ -344,7 +349,8 @@ export default function PolicyHolder() {
                 <p className="text-sm text-red-500 mt-1 text-left">{errors.relationship}</p>
               )}
             </div>
-            <div className="mb-4">
+            {/* Third field now spans full width on medium screens and up */}
+            <div className="mb-4 md:col-span-2">
               <label
                 htmlFor="hearAboutUs"
                 className="block font-medium text-gray-800 mb-1 text-left"
@@ -587,9 +593,12 @@ export default function PolicyHolder() {
             Continue to Review
           </Button>
         </div>
-      </div>
-      <div className="hidden lg:block fixed right-11 mr-2 top-[260px] z-10">
-        <QuotePreview />
+        </div> {/* End of Main content area */}
+
+        {/* Sidebar for QuotePreview */}
+        <div className="hidden lg:block lg:w-80 lg:sticky lg:top-24 self-start">
+          <QuotePreview />
+        </div>
       </div>
     </>
   );

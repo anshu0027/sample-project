@@ -88,20 +88,7 @@ const calculateLiquorLiabilityPremium = (
   guestRange: GuestRange,
 ): number => {
   if (!hasLiquorLiability) return 0;
-  // =============================
-  // ===== Mapping of Guest Range to Liquor Liability Premium =====
-  // =============================
-  const premiumMap: Record<GuestRange, number> = {
-    '1-50': 65,
-    '51-100': 65,
-    '101-150': 85,
-    '151-200': 85,
-    '201-250': 100,
-    '251-300': 100,
-    '301-350': 150,
-    '351-400': 150,
-  };
-  return premiumMap[guestRange] || 0;
+  return LIQUOR_LIABILITY_PREMIUMS[guestRange] || 0;
 };
 
 // =============================
@@ -143,8 +130,12 @@ export default function QuoteGenerator() {
   // =============================
   // ===== Date Handling =====
   // =============================
-  // Format date for the date picker
-  const selectedDate = state.eventDate ? new Date(state.eventDate) : null;
+  // Helper to parse YYYY-MM-DD string as local date
+  const parseDateStringLocal = (dateString: string | null): Date | null => {
+    if (!dateString) return null;
+    const [year, month, day] = dateString.split('-').map(Number);
+    return new Date(year, month - 1, day); // month is 0-indexed
+  };
 
   const formatDateStringLocal = (date: Date | null): string => {
     if (!date) return '';
@@ -153,6 +144,9 @@ export default function QuoteGenerator() {
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   };
+
+  // Format date for the date picker using local parsing
+  const selectedDate = parseDateStringLocal(state.eventDate);
 
   // Handle date change
   const handleDateChange = (date: Date | null) => {

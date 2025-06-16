@@ -28,6 +28,17 @@ function flattenPolicy(policy: any) {
   const policyHolderSource = policy.policyHolder || policy.quote?.policyHolder;
   const venueSource = eventSource?.venue;
 
+  // Determine liabilityCoverage first
+  const liabilityCoverageValue = policy.liabilityCoverage || policy.quote?.liabilityCoverage || '';
+
+  // Determine liabilityPremium based on coverage and available data
+  let liabilityPremiumValue = policy.liabilityPremium ?? policy.quote?.liabilityPremium ?? null;
+
+  // If liability coverage is 'none', the premium should explicitly be 0.
+  if (liabilityCoverageValue === 'none') {
+    liabilityPremiumValue = 0;
+  }
+
   return {
     id: policy.id,
     policyNumber: policy.policyNumber, // Use policyNumber from the policy object
@@ -37,14 +48,14 @@ function flattenPolicy(policy: any) {
     eventType: eventSource?.eventType || '',
     eventDate: eventSource?.eventDate || '',
     maxGuests: eventSource?.maxGuests || '',
-    coverageLevel: policy.coverageLevel ?? policy.quote?.coverageLevel ?? null,
-    liabilityCoverage: policy.liabilityCoverage || policy.quote?.liabilityCoverage || '',
+    coverageLevel: policy.coverageLevel ?? policy.quote?.coverageLevel ?? null, // Existing logic for coverageLevel
+    liabilityCoverage: liabilityCoverageValue,
     liquorLiability: policy.liquorLiability ?? policy.quote?.liquorLiability ?? false,
     covidDisclosure: policy.covidDisclosure ?? policy.quote?.covidDisclosure ?? false,
     specialActivities: policy.specialActivities ?? policy.quote?.specialActivities ?? false,
     totalPremium: policy.totalPremium ?? policy.quote?.totalPremium ?? null,
-    basePremium: policy.basePremium ?? policy.quote?.basePremium ?? null,
-    liabilityPremium: policy.liabilityPremium ?? policy.quote?.liabilityPremium ?? null,
+    basePremium: policy.basePremium ?? policy.quote?.basePremium ?? null, // Existing logic for basePremium
+    liabilityPremium: liabilityPremiumValue,
     liquorLiabilityPremium:
       policy.liquorLiabilityPremium ?? policy.quote?.liquorLiabilityPremium ?? null,
 
@@ -64,7 +75,8 @@ function flattenPolicy(policy: any) {
     completingFormName: policyHolderSource?.completingFormName || '',
 
     // Venue Info (nested under event, which can be on policy or quote)
-    ceremonyLocationType: venueSource?.locationType || '',
+    ceremonyLocationType: venueSource?.ceremonyLocationType || '',
+    locationType: venueSource?.locationType || '',
     indoorOutdoor: venueSource?.indoorOutdoor || '',
     venueName: venueSource?.name || '',
     venueAddress1: venueSource?.address1 || '',
@@ -596,6 +608,8 @@ export default function PolicyDetail() {
                 {/* Reception Venue */}
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Reception Venue</h3>
+                  <p className="mt-1 font-medium">{policy.receptionLocationType || '-'}</p>
+                  <p className="mt-1 font-medium">{policy.receptionIndoorOutdoor || '-'}</p>
                   <p className="mt-1 font-medium">{policy.receptionVenueName || '-'}</p>
                   <p className="text-sm text-gray-600">{policy.receptionVenueAddress1 || '-'}</p>
                   <p className="text-sm text-gray-600">
@@ -617,6 +631,8 @@ export default function PolicyDetail() {
                 {/* Brunch Venue */}
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Brunch Venue</h3>
+                  <p className="mt-1 font-medium">{policy.brunchLocationType || '-'}</p>
+                  <p className="mt-1 font-medium">{policy.brunchIndoorOutdoor || '-'}</p>
                   <p className="mt-1 font-medium">{policy.brunchVenueName || '-'}</p>
                   <p className="text-sm text-gray-600">{policy.brunchVenueAddress1 || '-'}</p>
                   <p className="text-sm text-gray-600">
@@ -638,6 +654,8 @@ export default function PolicyDetail() {
                 {/* Rehearsal Venue */}
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Rehearsal Venue</h3>
+                  <p className="mt-1 font-medium">{policy.rehearsalLocationType || '-'}</p>
+                  <p className="mt-1 font-medium">{policy.rehearsalIndoorOutdoor || '-'}</p>
                   <p className="mt-1 font-medium">{policy.rehearsalVenueName || '-'}</p>
                   <p className="text-sm text-gray-600">{policy.rehearsalVenueAddress1 || '-'}</p>
                   <p className="text-sm text-gray-600">
@@ -659,6 +677,8 @@ export default function PolicyDetail() {
                 {/* Rehearsal Dinner Venue */}
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Rehearsal Dinner Venue</h3>
+                  <p className="mt-1 font-medium">{policy.rehearsalDinnerLocationType || '-'}</p>
+                  <p className="mt-1 font-medium">{policy.rehearsalDinnerIndoorOutdoor || '-'}</p>
                   <p className="mt-1 font-medium">{policy.rehearsalDinnerVenueName || '-'}</p>
                   <p className="text-sm text-gray-600">
                     {policy.rehearsalDinnerVenueAddress1 || '-'}

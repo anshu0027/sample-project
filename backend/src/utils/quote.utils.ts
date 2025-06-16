@@ -21,7 +21,14 @@ export type CoverageLevel = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
 // Type definition for liability options.
 // Represents different options for liability coverage, including 'none'.
 // ------------------------
-export type LiabilityOption = "none" | "option1" | "option2" | "option3";
+export type LiabilityOption =
+  | "none"
+  | "option1"
+  | "option2"
+  | "option3"
+  | "option4"
+  | "option5"
+  | "option6";
 
 // ------------------------
 // Calculates the base premium based on the selected coverage level.
@@ -56,11 +63,17 @@ export const calculateLiabilityPremium = (
   if (option === null || option === undefined) return 0;
   switch (option) {
     case "option1":
-      return 165;
+      return 195;
     case "option2":
-      return 180;
+      return 210;
     case "option3":
-      return 200;
+      return 240;
+    case "option4":
+      return 240;
+    case "option5":
+      return 255;
+    case "option6":
+      return 265;
     default:
       return 0;
   }
@@ -70,14 +83,17 @@ export const calculateLiabilityPremium = (
 // Calculates the premium for liquor liability coverage.
 // This depends on whether liquor liability is selected and the guest range.
 // Returns 0 if liquor liability is not selected or if the guest range is null, undefined, or not found.
+// Also considers if the selected liability option is one of the "new" options, which have different liquor liability premiums.
 // ------------------------
 export const calculateLiquorLiabilityPremium = (
   hasLiquorLiability: boolean | undefined,
-  guestRange: GuestRange | string | undefined | null
+  guestRange: GuestRange | string | undefined | null,
+  liabilityOption: LiabilityOption | string | undefined | null
 ): number => {
   if (!hasLiquorLiability || guestRange === null || guestRange === undefined)
     return 0;
-  const premiumMap: Record<GuestRange, number> = {
+
+  const standardPremiums: Record<GuestRange, number> = {
     "1-50": 65,
     "51-100": 65,
     "101-150": 85,
@@ -87,6 +103,22 @@ export const calculateLiquorLiabilityPremium = (
     "301-350": 150,
     "351-400": 150,
   };
+
+  const newPremiums: Record<GuestRange, number> = {
+    "1-50": 100,
+    "51-100": 100,
+    "101-150": 115,
+    "151-200": 115,
+    "201-250": 125,
+    "251-300": 125,
+    "301-350": 175,
+    "351-400": 175,
+  };
+
+  const isNewLiabilityOption = ["option4", "option5", "option6"].includes(liabilityOption as string);
+
+  const premiumMap = isNewLiabilityOption ? newPremiums : standardPremiums;
+
   return premiumMap[guestRange as GuestRange] || 0;
 };
 

@@ -311,6 +311,7 @@ export default function EventInformation() {
         const element = document.getElementById(firstErrorField);
         if (element) {
           element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          element.focus({ preventScroll: true });
         }
       }
     }
@@ -675,7 +676,10 @@ export default function EventInformation() {
 
   return (
     <>
-      <div className="w-full pb-12">
+      {/* Flex container for main content and sidebar */}
+      <div className="flex flex-col lg:flex-row lg:gap-x-8">
+        {/* Main content area */}
+        <div className="w-full lg:flex-1 pb-12">
         <div className="mb-10 shadow-2xl border-0 bg-white/90 p-8 sm:p-10 md:p-12 rounded-2xl w-full">
           <div className="flex items-center justify-center text-center mb-4 gap-4">
             <div className="flex-shrink-0">
@@ -1110,9 +1114,13 @@ export default function EventInformation() {
             Continue to Policyholder
           </Button>
         </div>
-      </div>
-      <div className="hidden lg:block fixed w-80 right-11 mr-2 top-[260px] z-10">
-        <QuotePreview />
+        </div> {/* End of Main content area */}
+
+        {/* Sidebar for QuotePreview */}
+        {/* Hidden on small screens, becomes a sticky sidebar on lg screens */}
+        <div className="hidden lg:block lg:w-80 lg:sticky lg:top-24 self-start">
+          <QuotePreview />
+        </div>
       </div>
     </>
   );

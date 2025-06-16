@@ -626,9 +626,11 @@ function ReviewClientContent() {
 
   return (
     <>
-      <div className="relative flex justify-center min-h-screen bg-white z-0">
-        <div className="w-full max-w-3xl z-0">
-          <div className="flex flex-col md:flex-row gap-8 max-w-6xl mx-auto px-2 sm:px-4 md:px-6 pb-12 w-full mt-8">
+      {/* Flex container for main content and sidebar */}
+      <div className="flex flex-col lg:flex-row lg:gap-x-8">
+        {/* Main content area */}
+        <div className="w-full lg:flex-1"> {/* Removed pb-12 as Card likely has its own bottom margin */}
+          <div className="flex flex-col gap-8 pb-12 w-full mt-8"> {/* md:flex-row removed, px removed as layout handles it */}
             <div className="flex-1 min-w-0">
               {paymentSuccess ? (
                 <Card
@@ -916,14 +918,16 @@ function ReviewClientContent() {
                   </div>
                 </>
               )}
+              {renderAdditionalVenues()} {/* Moved additional venues inside the main content flow */}
             </div>
           </div>
+        </div> {/* End of Main content area */}
+
+        {/* Sidebar for QuotePreview */}
+        <div className="hidden lg:block lg:w-80 lg:sticky lg:top-24 self-start mt-8"> {/* Added mt-8 to align with main content's top margin */}
+          <QuotePreview />
         </div>
       </div>
-      <div className="hidden lg:block fixed right-11 mr-2 top-[260px] z-10">
-        <QuotePreview />
-      </div>
-      {renderAdditionalVenues()}
     </>
   );
 }

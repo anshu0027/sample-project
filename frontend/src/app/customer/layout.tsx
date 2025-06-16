@@ -12,16 +12,15 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
   // Determine if the current page is the first step of the customer quote generation
   const isQuoteGeneratorPage = pathname === '/customer/quote-generator';
 
-  let pageContainerSpecificClasses = '';
+  let pageContainerSpecificClasses = 'max-w-5xl mx-auto';
   if (isQuoteGeneratorPage) {
-    pageContainerSpecificClasses = 'max-w-5xl mx-auto';
+    pageContainerSpecificClasses = 'max-w-[1220px] mx-auto';
   } else {
-    // For event-information, policy-holder, review pages that show QuotePreview
-    // Assumes QuotePreview is w-80 (20rem), fixed right-11 (2.75rem from viewport edge),
-    // and has mr-2 (0.5rem internal margin), for a 3.25rem total offset of its content from viewport edge.
-    // Form needs right margin: 20rem (preview width) + 3.25rem (preview offset) + 1rem (gap) = 24.25rem.
-    pageContainerSpecificClasses =
-      'max-w-6xl w-full ml-auto mr-auto lg:ml-4 lg:mr-[calc(20rem+3.25rem+1rem)]';
+  //   // For event-information, policy-holder, review pages that show QuotePreview
+  //   // Assumes QuotePreview is w-80 (20rem), fixed right-11 (2.75rem from viewport edge),
+  //   // and has mr-2 (0.5rem internal margin), for a 3.25rem total offset of its content from viewport edge.
+  //   // Form needs right margin: 20rem (preview width) + 3.25rem (preview offset) + 1rem (gap) = 24.25rem.
+    pageContainerSpecificClasses = 'max-w-[1220px] mx-auto';
   }
 
   return (

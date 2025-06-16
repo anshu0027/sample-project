@@ -44,7 +44,8 @@ const apiLoginId = process.env.AUTHORIZE_NET_API_LOGIN_ID_SANDBOX;
 const transactionKey = process.env.AUTHORIZE_NET_TRANSACTION_KEY_SANDBOX;
 
 if (!apiLoginId || !transactionKey) {
-  const errorMsg = "CRITICAL CONFIGURATION ERROR: AUTHORIZE_NET_API_LOGIN_ID_SANDBOX and/or AUTHORIZE_NET_TRANSACTION_KEY_SANDBOX environment variables are not set. Authorize.Net payments will fail.";
+  const errorMsg =
+    "CRITICAL CONFIGURATION ERROR: AUTHORIZE_NET_API_LOGIN_ID_SANDBOX and/or AUTHORIZE_NET_TRANSACTION_KEY_SANDBOX environment variables are not set. Authorize.Net payments will fail.";
   console.error(errorMsg);
   // For a production system, consider throwing an error here to halt application startup
   // to ensure this critical configuration issue is addressed immediately.
@@ -343,7 +344,7 @@ router.post(
 
     try {
       const { quoteId, amount, opaqueData } = req.body;
-    //   console.log("Received payment request:", { quoteId, amount, opaqueData });
+      //   console.log("Received payment request:", { quoteId, amount, opaqueData });
 
       // ------------------------
       // Validate required fields: quoteId, amount, and opaqueData.

@@ -120,7 +120,7 @@ router.get("/", async (req: Request, res: Response) => {
         order: { createdAt: "DESC" },
         relations,
       });
-      // console.log("Quotes from database:", JSON.stringify(quotes, null, 2));
+      console.log("Quotes from database:", JSON.stringify(quotes, null, 2));
       res.json({ quotes });
       return;
     }
@@ -151,7 +151,7 @@ router.get("/", async (req: Request, res: Response) => {
 // Applies rate limiting to prevent abuse.
 // ------------------------
 router.post("/", quoteLimiter, async (req: Request, res: Response) => {
-  // console.log("Request Body:", req.body);
+  console.log("Request Body:", req.body);
   try {
     // ------------------------
     // Extract fields from the request body.
@@ -159,18 +159,18 @@ router.post("/", quoteLimiter, async (req: Request, res: Response) => {
     // ------------------------
     const fields = req.body;
     const { source = "CUSTOMER", paymentStatus } = fields;
-    // console.log("Source:", source);
-    // console.log("Payment Status:", paymentStatus);
+    console.log("Source:", source);
+    console.log("Payment Status:", paymentStatus);
 
     const referer = req.get("referer");
-    // console.log("Referer:", referer);
+    console.log("Referer:", referer);
     const isAdminRequest =
       source === "ADMIN" || (referer && referer.includes("/admin/"));
-    // console.log("Is Admin Request:", isAdminRequest);
+    console.log("Is Admin Request:", isAdminRequest);
     const effectiveSource = isAdminRequest
       ? QuoteSource.ADMIN
       : QuoteSource.CUSTOMER;
-    // console.log("Effective Source:", effectiveSource);
+    console.log("Effective Source:", effectiveSource);
 
     // ------------------------
     // Validate that email is provided.
@@ -186,7 +186,7 @@ router.post("/", quoteLimiter, async (req: Request, res: Response) => {
     // ------------------------
     const userRepository = AppDataSource.getRepository(User);
     let user = await userRepository.findOneBy({ email: fields.email });
-    // console.log("User:", user);
+    console.log("User:", user);
     if (!user) {
       user = userRepository.create({
         email: fields.email,
@@ -216,7 +216,7 @@ router.post("/", quoteLimiter, async (req: Request, res: Response) => {
     // ------------------------
 
     const quoteRepository = AppDataSource.getRepository(Quote);
-    // console.log("Quote Repository:", quoteRepository);
+    console.log("Quote Repository:", quoteRepository);
     const newQuote = quoteRepository.create({
       ...quoteData,
       quoteNumber: generateQuoteNumber(),
@@ -225,7 +225,7 @@ router.post("/", quoteLimiter, async (req: Request, res: Response) => {
       isCustomerGenerated: effectiveSource === QuoteSource.CUSTOMER,
       user: user,
     });
-    // console.log("New Quote:", newQuote);
+    console.log("New Quote:", newQuote);
     // ------------------------
     // If event details are provided, create and associate an Event entity.
     // ------------------------
@@ -246,7 +246,7 @@ router.post("/", quoteLimiter, async (req: Request, res: Response) => {
       // ------------------------
       if (fields.venueName) {
         const venueRepository = AppDataSource.getRepository(Venue);
-        // console.log("Venue Repository:", venueRepository);
+        console.log("Venue Repository:", venueRepository);
         const venueData = {
           name: fields.venueName,
           address1: fields.venueAddress1,
@@ -297,10 +297,10 @@ router.post("/", quoteLimiter, async (req: Request, res: Response) => {
         newEvent.venue = venueRepository.create(venueData);
         // Explicitly save the venue
         await venueRepository.save(newEvent.venue);
-        // console.log("New Event:", newEvent);
+        console.log("New Event:", newEvent);
       }
       newQuote.event = newEvent;
-      // console.log("New Quote:", newQuote);
+      console.log("New Quote:", newQuote);
     }
 
     // ------------------------
@@ -308,7 +308,7 @@ router.post("/", quoteLimiter, async (req: Request, res: Response) => {
     // ------------------------
     if (fields.firstName && fields.lastName) {
       const policyHolderRepository = AppDataSource.getRepository(PolicyHolder);
-      // console.log("Policy Holder Repository:", policyHolderRepository);
+      console.log("Policy Holder Repository:", policyHolderRepository);
       const policyHolderData = {
         firstName: fields.firstName,
         lastName: fields.lastName,
@@ -326,7 +326,7 @@ router.post("/", quoteLimiter, async (req: Request, res: Response) => {
       newQuote.policyHolder = policyHolderRepository.create(policyHolderData);
       // Explicitly save the policy holder
       await policyHolderRepository.save(newQuote.policyHolder);
-      // console.log("New Policy Holder:", newQuote.policyHolder);
+      console.log("New Policy Holder:", newQuote.policyHolder);
     }
 
     // ------------------------
@@ -336,9 +336,9 @@ router.post("/", quoteLimiter, async (req: Request, res: Response) => {
     if (newQuote.event) {
       await AppDataSource.getRepository(Event).save(newQuote.event);
     }
-    // console.log("New Quote:", newQuote);
+    console.log("New Quote:", newQuote);
     const savedQuote = await quoteRepository.save(newQuote);
-    // console.log("Saved quote:", JSON.stringify(savedQuote, null, 2));
+    console.log("Saved quote:", JSON.stringify(savedQuote, null, 2));
 
     // --- START: AUTO-CONVERSION LOGIC ---
     // ------------------------
@@ -350,7 +350,7 @@ router.post("/", quoteLimiter, async (req: Request, res: Response) => {
       paymentStatus === "SUCCESS"
     ) {
       const policy = await createPolicyFromQuote(savedQuote.id);
-      // console.log("Policy:", policy);
+      console.log("Policy:", policy);
       if (policy && fields.totalPremium) {
         const paymentRepository = AppDataSource.getRepository(Payment);
         const newPayment = paymentRepository.create({
@@ -363,7 +363,7 @@ router.post("/", quoteLimiter, async (req: Request, res: Response) => {
         });
         await paymentRepository.save(newPayment);
       }
-      // console.log("New Payment:", Payment);
+      console.log("New Payment:", Payment);
       res.status(201).json({
         quoteNumber: savedQuote.quoteNumber,
         quote: savedQuote,
@@ -397,12 +397,10 @@ router.post("/", quoteLimiter, async (req: Request, res: Response) => {
       // ------------------------
       // Return 409 Conflict if a unique constraint is violated.
       // ------------------------
-      res
-        .status(409)
-        .json({
-          error:
-            "A record with this unique value already exists. Please try again.",
-        });
+      res.status(409).json({
+        error:
+          "A record with this unique value already exists. Please try again.",
+      });
     } else {
       res.status(500).json({ error: message });
     }
@@ -418,7 +416,7 @@ router.put("/:quoteNumber", async (req: Request, res: Response) => {
     const { quoteNumber } = req.params;
     const fields = req.body;
 
-    // console.log("Updating quote:", quoteNumber, "with fields:", fields);
+    console.log("Updating quote:", quoteNumber, "with fields:", fields);
 
     // ------------------------
     // Fetch the quote to be updated, including its relations.
@@ -465,7 +463,8 @@ router.put("/:quoteNumber", async (req: Request, res: Response) => {
       );
       fields.liquorLiabilityPremium = calculateLiquorLiabilityPremium(
         liquorLiability,
-        guestRange
+        guestRange,
+        liabilityCoverage as LiabilityOption // Use the correct liabilityCoverage variable
       );
       fields.totalPremium =
         fields.basePremium +
@@ -515,7 +514,7 @@ router.put("/:quoteNumber", async (req: Request, res: Response) => {
         quoteId: quoteToUpdate.id,
       };
 
-      // console.log("Creating/updating event with fields:", eventFields);
+      console.log("Creating/updating event with fields:", eventFields);
       eventRepository.merge(event, eventFields);
       await eventRepository.save(event);
     }
@@ -641,27 +640,27 @@ router.put("/:quoteNumber", async (req: Request, res: Response) => {
           fields.rehearsalDinnerVenueAsInsured || false,
       };
 
-      // console.log("Updating venue with fields:", venueFields);
+      console.log("Updating venue with fields:", venueFields);
       venueRepository.merge(venue, venueFields);
       await venueRepository.save(venue);
 
       // Ensure venue is properly associated with the event
       if (quoteToUpdate.event) {
-        // console.log("Before association - Event:", quoteToUpdate.event);
-        // console.log("Before association - Venue:", venue);
+        console.log("Before association - Event:", quoteToUpdate.event);
+        console.log("Before association - Venue:", venue);
 
         quoteToUpdate.event.venue = venue;
         await eventRepository.save(quoteToUpdate.event);
 
-        // console.log("After association - Event:", quoteToUpdate.event);
-        // console.log("After association - Venue:", venue);
+        console.log("After association - Event:", quoteToUpdate.event);
+        console.log("After association - Venue:", venue);
 
         // Verify the relationship
         const savedEvent = await eventRepository.findOne({
           where: { id: quoteToUpdate.event.id },
           relations: ["venue"],
         });
-        // console.log("Verified event-venue relationship:", savedEvent);
+        console.log("Verified event-venue relationship:", savedEvent);
       }
     }
 
@@ -680,7 +679,9 @@ router.put("/:quoteNumber", async (req: Request, res: Response) => {
       fields.zip ||
       fields.country ||
       fields.relationship ||
-      fields.completingFormName
+      fields.completingFormName ||
+      fields.hearAboutUs ||
+      fields.legalNotices
     ) {
       let policyHolder = quoteToUpdate.policyHolder;
       if (!policyHolder) {
@@ -706,6 +707,8 @@ router.put("/:quoteNumber", async (req: Request, res: Response) => {
         country: fields.country || "",
         relationship: fields.relationship || "",
         completingFormName: fields.completingFormName || "",
+        hearAboutUs: fields.hearAboutUs || "",
+        legalNotices: fields.legalNotices || false,
         quoteId: quoteToUpdate.id,
       };
 
@@ -732,7 +735,7 @@ router.put("/:quoteNumber", async (req: Request, res: Response) => {
       relations: ["event", "event.venue", "policyHolder", "user", "payments"],
     });
 
-    // console.log("Quote updated successfully:", completeQuote);
+    console.log("Quote updated successfully:", completeQuote);
 
     res.json({
       message: "Quote updated successfully",

@@ -40,6 +40,7 @@ interface Quote {
   honoree1LastName?: string | null;
   honoree2FirstName?: string | null;
   honoree2LastName?: string | null;
+  ceremonyLocationType?: string | null;
   locationType?: string | null;
   indoorOutdoor?: string | null;
   venueName?: string | null;
@@ -122,6 +123,7 @@ function flattenQuote(quote: any): Quote | null {
     honoree1LastName: quote.event?.honoree1LastName || '',
     honoree2FirstName: quote.event?.honoree2FirstName || '',
     honoree2LastName: quote.event?.honoree2LastName || '',
+    ceremonyLocationType: quote.event?.venue?.ceremonyLocationType || '',
     locationType: quote.event?.venue?.locationType || quote.locationType || '',
     indoorOutdoor: quote.event?.venue?.indoorOutdoor || quote.indoorOutdoor || '',
     venueName: quote.event?.venue?.name || '',
@@ -713,7 +715,9 @@ export default function QuoteDetail() {
             </div>
             <div>
               <h3 className="text-sm font-medium text-gray-500">Ceremony Location Type</h3>
-              <p className="mt-1 text-sm sm:text-base font-medium">{quote.locationType || '-'}</p>
+              <p className="mt-1 text-sm sm:text-base font-medium">
+                {quote.ceremonyLocationType || '-'}
+              </p>
             </div>
             <div>
               <h3 className="text-sm font-medium text-gray-500">Indoor/Outdoor</h3>

@@ -87,12 +87,7 @@ export const quoteEmailTemplate = ({
                                 ? totalPremium.toFixed(2)
                                 : "N/A"
                             }</span></p>
-                            <p>This quote outlines the coverage options available for your event. To review the full details and proceed, please click the button below:</p>
-                            <div class="button-container">
-                                <a href="${
-                                  companyDetails.website
-                                }/quote/${quoteNumber}" class="button">View Your Quote</a>
-                            </div>
+                            <p>This quote outlines the coverage options available for your event.</p>
                             <p>If you have any questions or need assistance, please don't hesitate to contact us by replying to this email or calling us at ${
                               companyDetails.phone
                             }.</p>
