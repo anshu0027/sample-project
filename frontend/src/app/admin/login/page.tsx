@@ -5,7 +5,6 @@ import { Shield, Mail, Lock } from 'lucide-react';
 import Card from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
-import FormField from '@/components/ui/FormField';
 
 // const ADMIN_EMAIL = "admin@weddingguard.com";
 // const ADMIN_PASS = "admin123";
@@ -145,10 +144,12 @@ export default function AdminLogin() {
   // ===== Main Component Render =====
   // =============================
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center">
-          <Shield size={48} className="text-blue-600" />
+          <div className="bg-white p-3 rounded-full shadow-lg">
+            <Shield size={48} className="text-blue-600" />
+          </div>
         </div>
         <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
           Admin Portal
@@ -158,11 +159,11 @@ export default function AdminLogin() {
         </p>
       </div>
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <Card>
+        <Card className="bg-white shadow-xl">
           {/* ============================= */}
           {/* ===== Login Form ===== */}
           {/* ============================= */}
-          <form onSubmit={handleLogin} className="space-y-6">
+          <form onSubmit={handleLogin} className="space-y-6 p-6">
             {/* ============================= */}
             {/* ===== Error Message Display ===== */}
             {/* ============================= */}
@@ -174,30 +175,40 @@ export default function AdminLogin() {
             {/* ============================= */}
             {/* ===== Email Input Field ===== */}
             {/* ============================= */}
-            <FormField label="Email Address" htmlFor="email" required>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                icon={<Mail size={16} />}
-                placeholder="Admin Email"
-              />
-            </FormField>
-            {/* ============================= */}
-            {/* ===== Password Input Field ===== */}
-            {/* ============================= */}
-            <FormField label="Password" htmlFor="password" required>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                icon={<Lock size={16} />}
-                placeholder="••••••••"
-              />
-            </FormField>
-            <div>
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                  Email Address <span className="text-red-500">*</span>
+                </label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  icon={<Mail size={16} />}
+                  placeholder="Admin Email"
+                  className="w-full"
+                />
+              </div>
+              {/* ============================= */}
+              {/* ===== Password Input Field ===== */}
+              {/* ============================= */}
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                  Password <span className="text-red-500">*</span>
+                </label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  icon={<Lock size={16} />}
+                  placeholder="••••••••"
+                  className="w-full"
+                />
+              </div>
+            </div>
+            <div className="pt-2">
               {/* ============================= */}
               {/* ===== Submit Button ===== */}
               {/* ============================= */}
@@ -205,6 +216,7 @@ export default function AdminLogin() {
                 type="submit"
                 variant="primary"
                 size="lg"
+                className="w-full"
                 onMouseEnter={() => router.prefetch('/admin')}
               >
                 {isSubmitting ? 'Signing In...' : 'Sign In'}
