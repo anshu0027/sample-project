@@ -25,7 +25,7 @@ export default function AdminLogin() {
   // =============================
   // ===== API Base URL =====
   // =============================
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000/api/v1';
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
   // =============================
   // ===== useEffect for Authentication Check and Page Loading =====
@@ -66,6 +66,7 @@ export default function AdminLogin() {
     // ===== API Call for Login =====
     // =============================
     try {
+      console.log('FETCHING FROM:', `${API_BASE_URL}/login`);
       const response = await fetch(`${API_BASE_URL}/login`, {
         method: 'POST',
         headers: {

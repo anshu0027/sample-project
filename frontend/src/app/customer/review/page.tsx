@@ -205,12 +205,101 @@ const ReviewPageSkeleton = () => (
   </div>
 );
 
+// Add this utility function to flatten the quote (copy from customer edit page)
+function flattenQuote(quote: any) {
+  return {
+    residentState: quote.residentState || quote.policyHolder?.state || '',
+    eventType: quote.event?.eventType || '',
+    eventDate: quote.event?.eventDate || '',
+    maxGuests: quote.event?.maxGuests || '',
+    email: quote?.email || '',
+    coverageLevel: quote.coverageLevel ?? '',
+    liabilityCoverage: quote.liabilityCoverage ?? '',
+    liquorLiability: quote.liquorLiability ?? false,
+    covidDisclosure: quote.covidDisclosure ?? false,
+    specialActivities: quote.specialActivities ?? false,
+    honoree1FirstName: quote.event?.honoree1FirstName || '',
+    honoree1LastName: quote.event?.honoree1LastName || '',
+    honoree2FirstName: quote.event?.honoree2FirstName || '',
+    honoree2LastName: quote.event?.honoree2LastName || '',
+    ceremonyLocationType: quote.event?.venue?.ceremonyLocationType || '',
+    indoorOutdoor: quote.event?.venue?.indoorOutdoor || '',
+    venueName: quote.event?.venue?.name || '',
+    venueAddress1: quote.event?.venue?.address1 || '',
+    venueAddress2: quote.event?.venue?.address2 || '',
+    venueCountry: quote.event?.venue?.country || '',
+    venueCity: quote.event?.venue?.city || '',
+    venueState: quote.event?.venue?.state || '',
+    venueZip: quote.event?.venue?.zip || '',
+    venueAsInsured: quote.event?.venue?.venueAsInsured || false,
+    receptionLocationType: quote.event?.venue?.receptionLocationType || '',
+    receptionIndoorOutdoor: quote.event?.venue?.receptionIndoorOutdoor || '',
+    receptionVenueName: quote.event?.venue?.receptionVenueName || '',
+    receptionVenueAddress1: quote.event?.venue?.receptionVenueAddress1 || '',
+    receptionVenueAddress2: quote.event?.venue?.receptionVenueAddress2 || '',
+    receptionVenueCountry: quote.event?.venue?.receptionVenueCountry || '',
+    receptionVenueCity: quote.event?.venue?.receptionVenueCity || '',
+    receptionVenueState: quote.event?.venue?.receptionVenueState || '',
+    receptionVenueZip: quote.event?.venue?.receptionVenueZip || '',
+    receptionVenueAsInsured: quote.event?.venue?.receptionVenueAsInsured || false,
+    brunchLocationType: quote.event?.venue?.brunchLocationType || '',
+    brunchIndoorOutdoor: quote.event?.venue?.brunchIndoorOutdoor || '',
+    brunchVenueName: quote.event?.venue?.brunchVenueName || '',
+    brunchVenueAddress1: quote.event?.venue?.brunchVenueAddress1 || '',
+    brunchVenueAddress2: quote.event?.venue?.brunchVenueAddress2 || '',
+    brunchVenueCountry: quote.event?.venue?.brunchVenueCountry || '',
+    brunchVenueCity: quote.event?.venue?.brunchVenueCity || '',
+    brunchVenueState: quote.event?.venue?.brunchVenueState || '',
+    brunchVenueZip: quote.event?.venue?.brunchVenueZip || '',
+    brunchVenueAsInsured: quote.event?.venue?.brunchVenueAsInsured || false,
+    rehearsalLocationType: quote.event?.venue?.rehearsalLocationType || '',
+    rehearsalIndoorOutdoor: quote.event?.venue?.rehearsalIndoorOutdoor || '',
+    rehearsalVenueName: quote.event?.venue?.rehearsalVenueName || '',
+    rehearsalVenueAddress1: quote.event?.venue?.rehearsalVenueAddress1 || '',
+    rehearsalVenueAddress2: quote.event?.venue?.rehearsalVenueAddress2 || '',
+    rehearsalVenueCountry: quote.event?.venue?.rehearsalVenueCountry || '',
+    rehearsalVenueCity: quote.event?.venue?.rehearsalVenueCity || '',
+    rehearsalVenueState: quote.event?.venue?.rehearsalVenueState || '',
+    rehearsalVenueZip: quote.event?.venue?.rehearsalVenueZip || '',
+    rehearsalVenueAsInsured: quote.event?.venue?.rehearsalVenueAsInsured || false,
+    rehearsalDinnerLocationType: quote.event?.venue?.rehearsalDinnerLocationType || '',
+    rehearsalDinnerIndoorOutdoor: quote.event?.venue?.rehearsalDinnerIndoorOutdoor || '',
+    rehearsalDinnerVenueName: quote.event?.venue?.rehearsalDinnerVenueName || '',
+    rehearsalDinnerVenueAddress1: quote.event?.venue?.rehearsalDinnerVenueAddress1 || '',
+    rehearsalDinnerVenueAddress2: quote.event?.venue?.rehearsalDinnerVenueAddress2 || '',
+    rehearsalDinnerVenueCountry: quote.event?.venue?.rehearsalDinnerCountry || '',
+    rehearsalDinnerVenueCity: quote.event?.venue?.rehearsalDinnerCity || '',
+    rehearsalDinnerVenueState: quote.event?.venue?.rehearsalDinnerState || '',
+    rehearsalDinnerVenueZip: quote.event?.venue?.rehearsalDinnerZip || '',
+    rehearsalDinnerVenueAsInsured: quote.event?.venue?.rehearsalDinnerAsInsured || false,
+    firstName: quote.policyHolder?.firstName || '',
+    lastName: quote.policyHolder?.lastName || '',
+    phone: quote.policyHolder?.phone || '',
+    relationship: quote.policyHolder?.relationship || '',
+    hearAboutUs: quote.policyHolder?.hearAboutUs || '',
+    address: quote.policyHolder?.address || '',
+    country: quote.policyHolder?.country || 'United States',
+    city: quote.policyHolder?.city || '',
+    state: quote.policyHolder?.state || '',
+    zip: quote.policyHolder?.zip || '',
+    legalNotices: quote.policyHolder?.legalNotices || false,
+    completingFormName: quote.policyHolder?.completingFormName || '',
+    quoteNumber: quote.quoteNumber,
+    totalPremium: quote.totalPremium,
+    basePremium: quote.basePremium,
+    liabilityPremium: quote.liabilityPremium,
+    liquorLiabilityPremium: quote.liquorLiabilityPremium,
+    status: quote.status,
+    step3Complete: true, // Mark as complete for review page
+  };
+}
+
 function ReviewClientContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const paymentSuccessParam = searchParams.get('payment') === 'success';
   // const paymentMethodParam = searchParams.get('method') || 'Unknown'; // Get payment method
-  const { state } = useQuote();
+  const { state, dispatch } = useQuote();
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [paymentSuccess] = useState(paymentSuccessParam); // removed setPaymentSuccess
   const [showPolicyNumber, setShowPolicyNumber] = useState(paymentSuccessParam);
@@ -218,6 +307,7 @@ function ReviewClientContent() {
   const [pageReady, setPageReady] = useState(false);
   const [policySaved, setPolicySaved] = useState(false);
   const [policyNumber, setPolicyNumber] = useState<string>('');
+  const [quoteLoaded, setQuoteLoaded] = useState(false);
 
   // Find option labels from their values
   const eventTypeLabel = EVENT_TYPES.find((t) => t.value === state.eventType)?.label || '';
@@ -559,6 +649,34 @@ function ReviewClientContent() {
     return () => clearTimeout(timer);
   }, [router, state.step3Complete, state.quoteNumber]);
 
+  // Fetch quote if qn param is present
+  useEffect(() => {
+    const qn = searchParams.get('qn');
+    if (qn) {
+      const fetchQuote = async () => {
+        try {
+          const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+          const res = await fetch(`${apiUrl}/quotes?quoteNumber=${qn}`);
+          if (res.ok) {
+            const data = await res.json();
+            const flatQuote = flattenQuote(data.quote);
+            dispatch({ type: 'SET_ENTIRE_QUOTE_STATE', payload: flatQuote });
+            setQuoteLoaded(true);
+          } else {
+            router.replace('/customer/quote-generator');
+          }
+        } catch {
+          router.replace('/customer/quote-generator');
+        }
+      };
+      fetchQuote();
+    } else {
+      setQuoteLoaded(true);
+    }
+  }, [searchParams, dispatch, router]);
+
+  if (!quoteLoaded) return <ReviewPageSkeleton />;
+
   if (!pageReady) {
     return <ReviewPageSkeleton />;
   }
@@ -629,8 +747,12 @@ function ReviewClientContent() {
       {/* Flex container for main content and sidebar */}
       <div className="flex flex-col lg:flex-row lg:gap-x-8">
         {/* Main content area */}
-        <div className="w-full lg:flex-1"> {/* Removed pb-12 as Card likely has its own bottom margin */}
-          <div className="flex flex-col gap-8 pb-12 w-full mt-8"> {/* md:flex-row removed, px removed as layout handles it */}
+        <div className="w-full lg:flex-1">
+          {' '}
+          {/* Removed pb-12 as Card likely has its own bottom margin */}
+          <div className="flex flex-col gap-8 pb-12 w-full mt-8">
+            {' '}
+            {/* md:flex-row removed, px removed as layout handles it */}
             <div className="flex-1 min-w-0">
               {paymentSuccess ? (
                 <Card
@@ -918,13 +1040,16 @@ function ReviewClientContent() {
                   </div>
                 </>
               )}
-              {renderAdditionalVenues()} {/* Moved additional venues inside the main content flow */}
+              {renderAdditionalVenues()}{' '}
+              {/* Moved additional venues inside the main content flow */}
             </div>
           </div>
-        </div> {/* End of Main content area */}
-
+        </div>{' '}
+        {/* End of Main content area */}
         {/* Sidebar for QuotePreview */}
-        <div className="hidden lg:block lg:w-80 lg:sticky lg:top-24 self-start mt-8"> {/* Added mt-8 to align with main content's top margin */}
+        <div className="hidden lg:block lg:w-80 lg:sticky lg:top-24 self-start mt-8">
+          {' '}
+          {/* Added mt-8 to align with main content's top margin */}
           <QuotePreview />
         </div>
       </div>

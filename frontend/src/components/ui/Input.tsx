@@ -4,9 +4,22 @@ import clsx from 'clsx';
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   error?: boolean;
   icon?: React.ReactNode;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-const Input: React.FC<InputProps> = ({ className = '', error = false, icon, ...props }) => {
+const Input: React.FC<InputProps> = ({
+  className = '',
+  error = false,
+  icon,
+  onChange,
+  ...props
+}) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (onChange) {
+      onChange(e);
+    }
+  };
+
   return (
     <div className="relative w-full">
       {icon && (
@@ -26,6 +39,7 @@ const Input: React.FC<InputProps> = ({ className = '', error = false, icon, ...p
           props.disabled && 'bg-gray-100 text-gray-500 cursor-not-allowed',
           className,
         )}
+        onChange={handleChange}
         {...props}
       />
     </div>

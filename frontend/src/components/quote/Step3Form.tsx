@@ -358,7 +358,6 @@ export default function Step3Form({
                 id="zip"
                 value={state.zip}
                 onChange={(e) => onChange('zip', e.target.value)}
-                placeholder="12345"
                 className={`w-full border rounded-md py-2 px-3 ${
                   errors.zip ? 'border-red-500' : 'border-gray-300'
                 } focus:outline-none focus:ring-2 focus:ring-blue-500`}

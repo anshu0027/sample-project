@@ -187,7 +187,7 @@ function flattenQuote(quote: any): QuoteFormState {
     relationship: quote.policyHolder?.relationship || '',
     hearAboutUs: quote.policyHolder?.hearAboutUs || '',
     address: quote.policyHolder?.address || '',
-    country: quote.policyHolder?.country || '',
+    country: quote.policyHolder?.country || 'United States',
     city: quote.policyHolder?.city || '',
     state: quote.policyHolder?.state || '',
     zip: quote.policyHolder?.zip || '',
@@ -265,7 +265,16 @@ export default function EditUserQuote() {
   if (isLoading || !formState) return <EditUserQuoteSkeleton />;
 
   const handleInputChange = (field: string, value: any) => {
-    setFormState((prev) => ({ ...(prev as QuoteFormState), [field]: value }));
+    // If value is an event object, extract the value from it
+    const actualValue = value?.target?.value !== undefined ? value.target.value : value;
+
+    setFormState((prev) => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        [field]: actualValue,
+      };
+    });
     if (errors[field]) {
       setErrors((prev) => {
         const newErrors = { ...prev };
@@ -414,7 +423,7 @@ export default function EditUserQuote() {
           payload: finalQuoteState as Partial<QuoteState>,
         });
         localStorage.setItem('quoteNumber', id);
-        router.push('/customer/review');
+        router.push(`/customer/review?qn=${finalQuoteState.quoteNumber}&retrieved=true`);
       } else {
         const data = await res.json();
         throw new Error(data.error || 'Failed to finalize quote for review.');

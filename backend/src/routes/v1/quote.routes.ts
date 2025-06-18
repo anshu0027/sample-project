@@ -588,54 +588,159 @@ router.put("/:quoteNumber", async (req: Request, res: Response) => {
       }
 
       const venueFields = {
-        name: fields.venueName,
-        address1: fields.venueAddress1,
-        address2: fields.venueAddress2 || "",
-        city: fields.venueCity || "",
-        state: fields.venueState || "",
-        zip: fields.venueZip || "",
-        country: fields.venueCountry || "",
+        name:
+          typeof fields.venueName === "object"
+            ? fields.venueName.target.value
+            : fields.venueName,
+        address1:
+          typeof fields.venueAddress1 === "object"
+            ? fields.venueAddress1.target.value
+            : fields.venueAddress1,
+        address2:
+          typeof fields.venueAddress2 === "object"
+            ? fields.venueAddress2.target.value
+            : fields.venueAddress2 || "",
+        city:
+          typeof fields.venueCity === "object"
+            ? fields.venueCity.target.value
+            : fields.venueCity || "",
+        state:
+          typeof fields.venueState === "object"
+            ? fields.venueState.target.value
+            : fields.venueState || "",
+        zip:
+          typeof fields.venueZip === "object"
+            ? fields.venueZip.target.value
+            : fields.venueZip || "",
+        country:
+          typeof fields.venueCountry === "object"
+            ? fields.venueCountry.target.value
+            : fields.venueCountry || "",
         ceremonyLocationType: fields.ceremonyLocationType || "",
         indoorOutdoor: fields.indoorOutdoor || "",
         receptionLocationType: fields.receptionLocationType || "",
         receptionIndoorOutdoor: fields.receptionIndoorOutdoor || "",
-        receptionVenueName: fields.receptionVenueName || "",
-        receptionVenueAddress1: fields.receptionVenueAddress1 || "",
-        receptionVenueAddress2: fields.receptionVenueAddress2 || "",
-        receptionVenueCountry: fields.receptionVenueCountry || "",
-        receptionVenueCity: fields.receptionVenueCity || "",
-        receptionVenueState: fields.receptionVenueState || "",
-        receptionVenueZip: fields.receptionVenueZip || "",
+        receptionVenueName:
+          typeof fields.receptionVenueName === "object"
+            ? fields.receptionVenueName.target.value
+            : fields.receptionVenueName || "",
+        receptionVenueAddress1:
+          typeof fields.receptionVenueAddress1 === "object"
+            ? fields.receptionVenueAddress1.target.value
+            : fields.receptionVenueAddress1 || "",
+        receptionVenueAddress2:
+          typeof fields.receptionVenueAddress2 === "object"
+            ? fields.receptionVenueAddress2.target.value
+            : fields.receptionVenueAddress2 || "",
+        receptionVenueCountry:
+          typeof fields.receptionVenueCountry === "object"
+            ? fields.receptionVenueCountry.target.value
+            : fields.receptionVenueCountry || "",
+        receptionVenueCity:
+          typeof fields.receptionVenueCity === "object"
+            ? fields.receptionVenueCity.target.value
+            : fields.receptionVenueCity || "",
+        receptionVenueState:
+          typeof fields.receptionVenueState === "object"
+            ? fields.receptionVenueState.target.value
+            : fields.receptionVenueState || "",
+        receptionVenueZip:
+          typeof fields.receptionVenueZip === "object"
+            ? fields.receptionVenueZip.target.value
+            : fields.receptionVenueZip || "",
         receptionVenueAsInsured: fields.receptionVenueAsInsured || false,
         brunchLocationType: fields.brunchLocationType || "",
         brunchIndoorOutdoor: fields.brunchIndoorOutdoor || "",
-        brunchVenueName: fields.brunchVenueName || "",
-        brunchVenueAddress1: fields.brunchVenueAddress1 || "",
-        brunchVenueAddress2: fields.brunchVenueAddress2 || "",
-        brunchVenueCountry: fields.brunchVenueCountry || "",
-        brunchVenueCity: fields.brunchVenueCity || "",
-        brunchVenueState: fields.brunchVenueState || "",
-        brunchVenueZip: fields.brunchVenueZip || "",
+        brunchVenueName:
+          typeof fields.brunchVenueName === "object"
+            ? fields.brunchVenueName.target.value
+            : fields.brunchVenueName || "",
+        brunchVenueAddress1:
+          typeof fields.brunchVenueAddress1 === "object"
+            ? fields.brunchVenueAddress1.target.value
+            : fields.brunchVenueAddress1 || "",
+        brunchVenueAddress2:
+          typeof fields.brunchVenueAddress2 === "object"
+            ? fields.brunchVenueAddress2.target.value
+            : fields.brunchVenueAddress2 || "",
+        brunchVenueCountry:
+          typeof fields.brunchVenueCountry === "object"
+            ? fields.brunchVenueCountry.target.value
+            : fields.brunchVenueCountry || "",
+        brunchVenueCity:
+          typeof fields.brunchVenueCity === "object"
+            ? fields.brunchVenueCity.target.value
+            : fields.brunchVenueCity || "",
+        brunchVenueState:
+          typeof fields.brunchVenueState === "object"
+            ? fields.brunchVenueState.target.value
+            : fields.brunchVenueState || "",
+        brunchVenueZip:
+          typeof fields.brunchVenueZip === "object"
+            ? fields.brunchVenueZip.target.value
+            : fields.brunchVenueZip || "",
         brunchVenueAsInsured: fields.brunchVenueAsInsured || false,
         rehearsalLocationType: fields.rehearsalLocationType || "",
         rehearsalIndoorOutdoor: fields.rehearsalIndoorOutdoor || "",
-        rehearsalVenueName: fields.rehearsalVenueName || "",
-        rehearsalVenueAddress1: fields.rehearsalVenueAddress1 || "",
-        rehearsalVenueAddress2: fields.rehearsalVenueAddress2 || "",
-        rehearsalVenueCountry: fields.rehearsalVenueCountry || "",
-        rehearsalVenueCity: fields.rehearsalVenueCity || "",
-        rehearsalVenueState: fields.rehearsalVenueState || "",
-        rehearsalVenueZip: fields.rehearsalVenueZip || "",
+        rehearsalVenueName:
+          typeof fields.rehearsalVenueName === "object"
+            ? fields.rehearsalVenueName.target.value
+            : fields.rehearsalVenueName || "",
+        rehearsalVenueAddress1:
+          typeof fields.rehearsalVenueAddress1 === "object"
+            ? fields.rehearsalVenueAddress1.target.value
+            : fields.rehearsalVenueAddress1 || "",
+        rehearsalVenueAddress2:
+          typeof fields.rehearsalVenueAddress2 === "object"
+            ? fields.rehearsalVenueAddress2.target.value
+            : fields.rehearsalVenueAddress2 || "",
+        rehearsalVenueCountry:
+          typeof fields.rehearsalVenueCountry === "object"
+            ? fields.rehearsalVenueCountry.target.value
+            : fields.rehearsalVenueCountry || "",
+        rehearsalVenueCity:
+          typeof fields.rehearsalVenueCity === "object"
+            ? fields.rehearsalVenueCity.target.value
+            : fields.rehearsalVenueCity || "",
+        rehearsalVenueState:
+          typeof fields.rehearsalVenueState === "object"
+            ? fields.rehearsalVenueState.target.value
+            : fields.rehearsalVenueState || "",
+        rehearsalVenueZip:
+          typeof fields.rehearsalVenueZip === "object"
+            ? fields.rehearsalVenueZip.target.value
+            : fields.rehearsalVenueZip || "",
         rehearsalVenueAsInsured: fields.rehearsalVenueAsInsured || false,
         rehearsalDinnerLocationType: fields.rehearsalDinnerLocationType || "",
         rehearsalDinnerIndoorOutdoor: fields.rehearsalDinnerIndoorOutdoor || "",
-        rehearsalDinnerVenueName: fields.rehearsalDinnerVenueName || "",
-        rehearsalDinnerVenueAddress1: fields.rehearsalDinnerVenueAddress1 || "",
-        rehearsalDinnerVenueAddress2: fields.rehearsalDinnerVenueAddress2 || "",
-        rehearsalDinnerVenueCountry: fields.rehearsalDinnerVenueCountry || "",
-        rehearsalDinnerVenueCity: fields.rehearsalDinnerVenueCity || "",
-        rehearsalDinnerVenueState: fields.rehearsalDinnerVenueState || "",
-        rehearsalDinnerVenueZip: fields.rehearsalDinnerVenueZip || "",
+        rehearsalDinnerVenueName:
+          typeof fields.rehearsalDinnerVenueName === "object"
+            ? fields.rehearsalDinnerVenueName.target.value
+            : fields.rehearsalDinnerVenueName || "",
+        rehearsalDinnerVenueAddress1:
+          typeof fields.rehearsalDinnerVenueAddress1 === "object"
+            ? fields.rehearsalDinnerVenueAddress1.target.value
+            : fields.rehearsalDinnerVenueAddress1 || "",
+        rehearsalDinnerVenueAddress2:
+          typeof fields.rehearsalDinnerVenueAddress2 === "object"
+            ? fields.rehearsalDinnerVenueAddress2.target.value
+            : fields.rehearsalDinnerVenueAddress2 || "",
+        rehearsalDinnerVenueCountry:
+          typeof fields.rehearsalDinnerVenueCountry === "object"
+            ? fields.rehearsalDinnerVenueCountry.target.value
+            : fields.rehearsalDinnerVenueCountry || "",
+        rehearsalDinnerVenueCity:
+          typeof fields.rehearsalDinnerVenueCity === "object"
+            ? fields.rehearsalDinnerVenueCity.target.value
+            : fields.rehearsalDinnerVenueCity || "",
+        rehearsalDinnerVenueState:
+          typeof fields.rehearsalDinnerVenueState === "object"
+            ? fields.rehearsalDinnerVenueState.target.value
+            : fields.rehearsalDinnerVenueState || "",
+        rehearsalDinnerVenueZip:
+          typeof fields.rehearsalDinnerVenueZip === "object"
+            ? fields.rehearsalDinnerVenueZip.target.value
+            : fields.rehearsalDinnerVenueZip || "",
         rehearsalDinnerVenueAsInsured:
           fields.rehearsalDinnerVenueAsInsured || false,
       };
@@ -704,7 +809,7 @@ router.put("/:quoteNumber", async (req: Request, res: Response) => {
         city: fields.city || "",
         state: fields.state || "",
         zip: fields.zip || "",
-        country: fields.country || "",
+        country: fields.country || "United States",
         relationship: fields.relationship || "",
         completingFormName: fields.completingFormName || "",
         hearAboutUs: fields.hearAboutUs || "",

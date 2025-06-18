@@ -114,6 +114,24 @@ export default function Step2Form({
   // ------------------------
   const isWedding = state.eventType === 'wedding';
 
+  const handleInputChange = (
+    field: keyof Step2FormData,
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    onChange(field, e.target.value);
+  };
+
+  const handleSelectChange = (
+    field: keyof Step2FormData,
+    e: React.ChangeEvent<HTMLSelectElement>,
+  ) => {
+    onChange(field, e.target.value);
+  };
+
+  const handleCheckboxChange = (field: keyof Step2FormData, checked: boolean) => {
+    onChange(field, checked);
+  };
+
   // ------------------------
   // Reusable function to render a venue information section.
   // This helps to avoid repetitive code for different venue types (ceremony, reception, etc.).
@@ -133,13 +151,7 @@ export default function Step2Form({
     zipField: keyof Step2FormData,
     asInsuredField: keyof Step2FormData,
   ) => (
-    // ------------------------
-    // Main container for a venue section
-    // ------------------------
     <div className="mb-8 shadow-lg border-0 text-left bg-white p-8 sm:p-10 md:p-12 rounded-2xl w-full max-w-4xl mx-auto">
-      {/* ------------------------ */}
-      {/* Venue Section Header (Icon and Title) */}
-      {/* ------------------------ */}
       <div className="flex mb-4 gap-4">
         <div className="flex-shrink-0">
           <MapPin size={28} className="text-blue-600" />
@@ -151,13 +163,7 @@ export default function Step2Form({
           </div>
         </div>
       </div>
-      {/* ------------------------ */}
-      {/* Form fields for the venue section */}
-      {/* ------------------------ */}
       <div className="space-y-8 w-full px-2 sm:px-4 md:px-2">
-        {/* ------------------------ */}
-        {/* Venue Name Field */}
-        {/* ------------------------ */}
         <div className="space-y-2">
           <label htmlFor={String(nameField)} className="block text-sm font-medium text-gray-700">
             Venue Name
@@ -165,16 +171,13 @@ export default function Step2Form({
           <Input
             id={String(nameField)}
             value={state[nameField] as string}
-            onChange={(e) => onChange(nameField, e.target.value)}
+            onChange={(e) => handleInputChange(nameField, e)}
             placeholder="Venue Name"
             className={`w-full ${errors[nameField] ? 'border-red-500' : ''}`}
           />
           {errors[nameField] && <p className="text-sm text-red-500">{errors[nameField]}</p>}
         </div>
 
-        {/* ------------------------ */}
-        {/* Address Line 1 Field */}
-        {/* ------------------------ */}
         <div className="space-y-2">
           <label
             htmlFor={String(address1Field)}
@@ -185,16 +188,13 @@ export default function Step2Form({
           <Input
             id={String(address1Field)}
             value={state[address1Field] as string}
-            onChange={(e) => onChange(address1Field, e.target.value)}
+            onChange={(e) => handleInputChange(address1Field, e)}
             placeholder="Street Address"
             className={`w-full ${errors[address1Field] ? 'border-red-500' : ''}`}
           />
           {errors[address1Field] && <p className="text-sm text-red-500">{errors[address1Field]}</p>}
         </div>
 
-        {/* ------------------------ */}
-        {/* Address Line 2 Field (Optional) */}
-        {/* ------------------------ */}
         <div className="space-y-2">
           <label
             htmlFor={String(address2Field)}
@@ -205,19 +205,13 @@ export default function Step2Form({
           <Input
             id={String(address2Field)}
             value={state[address2Field] as string}
-            onChange={(e) => onChange(address2Field, e.target.value)}
+            onChange={(e) => handleInputChange(address2Field, e)}
             placeholder="Apt, Suite, Building (optional)"
             className="w-full"
           />
         </div>
 
-        {/* ------------------------ */}
-        {/* Grid for Country and City fields */}
-        {/* ------------------------ */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
-          {/* ------------------------ */}
-          {/* Country Field */}
-          {/* ------------------------ */}
           <div className="space-y-2">
             <label
               htmlFor={String(countryField)}
@@ -229,7 +223,7 @@ export default function Step2Form({
               <select
                 id={String(countryField)}
                 value={state[countryField] as string}
-                onChange={(e) => onChange(countryField, e.target.value)}
+                onChange={(e) => handleSelectChange(countryField, e)}
                 className={`w-full px-3 py-2 border rounded-xl appearance-none pr-10 ${
                   errors[countryField] ? 'border-red-500' : 'border-gray-300'
                 } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
@@ -248,9 +242,6 @@ export default function Step2Form({
             {errors[countryField] && <p className="text-sm text-red-500">{errors[countryField]}</p>}
           </div>
 
-          {/* ------------------------ */}
-          {/* City Field */}
-          {/* ------------------------ */}
           <div className="space-y-2">
             <label htmlFor={String(cityField)} className="block text-sm font-medium text-gray-700">
               City
@@ -258,20 +249,14 @@ export default function Step2Form({
             <Input
               id={String(cityField)}
               value={state[cityField] as string}
-              onChange={(e) => onChange(cityField, e.target.value)}
+              onChange={(e) => handleInputChange(cityField, e)}
               className={errors[cityField] ? 'border-red-500' : ''}
             />
             {errors[cityField] && <p className="text-sm text-red-500">{errors[cityField]}</p>}
           </div>
         </div>
 
-        {/* ------------------------ */}
-        {/* Grid for State and ZIP Code fields */}
-        {/* ------------------------ */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
-          {/* ------------------------ */}
-          {/* State Field */}
-          {/* ------------------------ */}
           <div className="space-y-2">
             <label htmlFor={String(stateField)} className="block text-sm font-medium text-gray-700">
               State
@@ -280,7 +265,7 @@ export default function Step2Form({
               <select
                 id={String(stateField)}
                 value={state[stateField] as string}
-                onChange={(e) => onChange(stateField, e.target.value)}
+                onChange={(e) => handleSelectChange(stateField, e)}
                 className={`w-full px-3 py-2 border rounded-xl appearance-none pr-10 ${
                   errors[stateField] ? 'border-red-500' : 'border-gray-300'
                 } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
@@ -299,9 +284,6 @@ export default function Step2Form({
             {errors[stateField] && <p className="text-sm text-red-500">{errors[stateField]}</p>}
           </div>
 
-          {/* ------------------------ */}
-          {/* ZIP Code Field */}
-          {/* ------------------------ */}
           <div className="space-y-2">
             <label htmlFor={String(zipField)} className="block text-sm font-medium text-gray-700">
               ZIP Code
@@ -309,22 +291,19 @@ export default function Step2Form({
             <Input
               id={String(zipField)}
               value={state[zipField] as string}
-              onChange={(e) => onChange(zipField, e.target.value)}
+              onChange={(e) => handleInputChange(zipField, e)}
               className={errors[zipField] ? 'border-red-500' : ''}
             />
             {errors[zipField] && <p className="text-sm text-red-500">{errors[zipField]}</p>}
           </div>
         </div>
 
-        {/* ------------------------ */}
-        {/* Add venue as Additional Insured Checkbox */}
-        {/* ------------------------ */}
         <div className="mb-4 text-left">
           <Checkbox
             id={String(asInsuredField)}
             label="Add this venue as an Additional Insured on my policy"
             checked={state[asInsuredField] as boolean}
-            onChange={(checked) => onChange(asInsuredField, checked)}
+            onChange={(checked) => handleCheckboxChange(asInsuredField, checked)}
           />
         </div>
       </div>
@@ -566,7 +545,7 @@ export default function Step2Form({
             <Input
               id="venueName"
               value={state.venueName}
-              onChange={(value) => onChange('venueName', value)}
+              onChange={(e) => onChange('venueName', e.target.value)}
               placeholder={isCruiseShip ? 'Cruise Ship Name' : 'Venue Name'}
               className={`w-full ${errors.venueName ? 'border-red-500' : ''}`}
             />
@@ -589,7 +568,7 @@ export default function Step2Form({
                 <Input
                   id="venueAddress1"
                   value={state.venueAddress1} // Note: Reusing venueAddress1 for Cruise Line Name
-                  onChange={(value) => onChange('venueAddress1', value)}
+                  onChange={(e) => onChange('venueAddress1', e.target.value)}
                   placeholder="e.g., Royal Caribbean"
                   className={`w-full ${errors.venueAddress1 ? 'border-red-500' : ''}`}
                 />
@@ -605,7 +584,7 @@ export default function Step2Form({
                 <Input
                   id="venueCity"
                   value={state.venueCity} // Note: Reusing venueCity for Departure Port
-                  onChange={(value) => onChange('venueCity', value)}
+                  onChange={(e) => onChange('venueCity', e.target.value)}
                   placeholder="e.g., Miami, Florida"
                   className={`w-full ${errors.venueCity ? 'border-red-500' : ''}`}
                 />
@@ -625,7 +604,7 @@ export default function Step2Form({
                 <Input
                   id="venueAddress1"
                   value={state.venueAddress1}
-                  onChange={(value) => onChange('venueAddress1', value)}
+                  onChange={(e) => onChange('venueAddress1', e.target.value)}
                   placeholder="Street Address"
                   className={`w-full ${errors.venueAddress1 ? 'border-red-500' : ''}`}
                 />
@@ -641,7 +620,7 @@ export default function Step2Form({
                 <Input
                   id="venueAddress2"
                   value={state.venueAddress2}
-                  onChange={(value) => onChange('venueAddress2', value)}
+                  onChange={(e) => onChange('venueAddress2', e.target.value)}
                   placeholder="Apt, Suite, Building (optional)"
                   className="w-full"
                 />
@@ -692,7 +671,7 @@ export default function Step2Form({
                   <Input
                     id="venueCity"
                     value={state.venueCity}
-                    onChange={(value) => onChange('venueCity', value)}
+                    onChange={(e) => onChange('venueCity', e.target.value)}
                     className={`w-full ${errors.venueCity ? 'border-red-500' : ''}`}
                   />
                   {errors.venueCity && <p className="text-sm text-red-500">{errors.venueCity}</p>}
@@ -734,7 +713,7 @@ export default function Step2Form({
                   <Input
                     id="venueZip"
                     value={state.venueZip}
-                    onChange={(value) => onChange('venueZip', value)}
+                    onChange={(e) => onChange('venueZip', e.target.value)}
                     className={`w-full ${errors.venueZip ? 'border-red-500' : ''}`}
                   />
                   {errors.venueZip && <p className="text-sm text-red-500">{errors.venueZip}</p>}

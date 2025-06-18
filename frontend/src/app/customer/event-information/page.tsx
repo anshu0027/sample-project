@@ -841,7 +841,7 @@ export default function EventInformation() {
                     id="indoorOutdoor"
                     value={state.indoorOutdoor}
                     onChange={(e) => handleInputChange('indoorOutdoor', e.target.value)}
-                    className={`block w-full rounded-md shadow-sm border pl-3 pr-10 py-2 text-base appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                    className={`block w-full rounded-xl shadow-sm border pl-3 pr-10 py-2 text-base appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                       errors.indoorOutdoor
                         ? 'border-red-500 text-red-900'
                         : 'border-gray-300 text-gray-900'
@@ -893,7 +893,7 @@ export default function EventInformation() {
                       onChange={(e) => handleInputChange('venueAddress1', e.target.value)}
                       error={!!errors.venueAddress1}
                       placeholder="e.g., Royal Caribbean"
-                      className="text-left w-full rounded-md shadow-sm border pl-3 pr-10 py-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="text-left w-full rounded-xl shadow-sm border pl-3 pr-10 py-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
                   {errors.venueAddress1 && (
@@ -911,7 +911,7 @@ export default function EventInformation() {
                       onChange={(e) => handleInputChange('venueCity', e.target.value)}
                       error={!!errors.venueCity}
                       placeholder="e.g., Miami, Florida"
-                      className="text-left w-full rounded-md shadow-sm border pl-3 pr-10 py-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="text-left w-full rounded-xl shadow-sm border pl-3 pr-10 py-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
                   {errors.venueCity && (
@@ -932,7 +932,7 @@ export default function EventInformation() {
                       onChange={(e) => handleInputChange('venueAddress1', e.target.value)}
                       error={!!errors.venueAddress1}
                       placeholder="Street Address"
-                      className="text-left w-full rounded-md shadow-sm border pl-3 pr-10 py-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="text-left w-full rounded-xl shadow-sm border pl-3 pr-10 py-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
                   {errors.venueAddress1 && (
@@ -949,7 +949,7 @@ export default function EventInformation() {
                       value={state.venueAddress2}
                       onChange={(e) => handleInputChange('venueAddress2', e.target.value)}
                       placeholder="Apt, Suite, Building (optional)"
-                      className="text-left w-full rounded-md shadow-sm border pl-3 pr-10 py-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="text-left w-full rounded-xl shadow-sm border pl-3 pr-10 py-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
                 </div>
@@ -967,7 +967,7 @@ export default function EventInformation() {
                         id="venueCountry"
                         value={state.venueCountry}
                         onChange={(e) => handleInputChange('venueCountry', e.target.value)}
-                        className={`block w-full rounded-md shadow-sm border pl-3 pr-10 py-2 text-base appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                        className={`block w-full rounded-xl shadow-sm border pl-3 pr-10 py-2 text-base appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                           errors.venueCountry
                             ? 'border-red-500 text-red-900'
                             : 'border-gray-300 text-gray-900'

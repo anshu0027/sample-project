@@ -7,13 +7,13 @@ import { Button } from '@/components/ui/Button';
 import Checkbox from '@/components/ui/Checkbox';
 import { US_STATES, RELATIONSHIP_OPTIONS, REFERRAL_OPTIONS } from '@/utils/constants';
 import { isEmpty, isValidPhone, isValidZip, formatPhoneNumber } from '@/utils/validators';
-import dynamic from 'next/dynamic';
+// import dynamic from 'next/dynamic';
 // import { Toaster } from "@/components/ui/toaster";
 import { toast } from '@/hooks/use-toast';
 
-const QuotePreview = dynamic(() => import('@/components/ui/QuotePreview'), {
-  ssr: false,
-});
+// const QuotePreview = dynamic(() => import('@/components/ui/QuotePreview'), {
+//   ssr: false,
+// });
 
 // =============================
 // ===== PolicyHolder Component: Step 3 of Admin Quote Creation =====
@@ -691,10 +691,10 @@ export default function PolicyHolder() {
       {/* =============================
       // ===== Quote Preview Sidebar =====
       // ============================= */}
-      <div className="hidden lg:block fixed w-80 right-11 mr-2 top-[260px] z-10">
+      {/* <div className="hidden lg:block fixed w-80 right-11 mr-2 top-[260px] z-10">
         {' '}
         <QuotePreview />
-      </div>
+      </div> */}
     </>
   );
 }

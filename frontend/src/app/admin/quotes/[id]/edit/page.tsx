@@ -278,8 +278,15 @@ export default function EditQuote() {
   );
   if (isLoading || !formState) return <EditQuoteSkeleton />;
 
-  const handleInputChange = (field: string, value: string | number | boolean) => {
-    setFormState((prev: FormState | null) => ({ ...prev!, [field]: value }));
+  const handleInputChange = (field: string, value: any) => {
+    setFormState((prev) => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        [field]: value,
+      };
+    });
+    // Clear error for this field when it's updated
     if (errors[field]) {
       setErrors((prev) => {
         const newErrors = { ...prev };

@@ -9,20 +9,20 @@ import Input from '@/components/ui/Input';
 import Checkbox from '@/components/ui/Checkbox';
 import { VENUE_TYPES, INDOOR_OUTDOOR_OPTIONS, COUNTRIES, US_STATES } from '@/utils/constants';
 import { isEmpty, isValidZip } from '@/utils/validators';
-import dynamic from 'next/dynamic';
+// import dynamic from 'next/dynamic';
 import { toast } from '@/hooks/use-toast';
 
 // =============================
 // ===== Dynamic Import for QuotePreview =====
 // =============================
-const QuotePreview = dynamic(() => import('@/components/ui/QuotePreview'), {
-  ssr: false,
-  loading: () => (
-    <div className="w-full h-96 flex items-center justify-center bg-gray-100 rounded-lg shadow">
-      <p className="text-gray-500">Loading Preview...</p>
-    </div>
-  ),
-});
+// const QuotePreview = dynamic(() => import('@/components/ui/QuotePreview'), {
+//   ssr: false,
+//   loading: () => (
+//     <div className="w-full h-96 flex items-center justify-center bg-gray-100 rounded-lg shadow">
+//       <p className="text-gray-500">Loading Preview...</p>
+//     </div>
+//   ),
+// });
 
 // =============================
 // ===== Skeleton Component for Step 2 =====
@@ -1747,9 +1747,9 @@ export default function EventInformation() {
       {/* ============================= */}
       {/* ===== Quote Preview (Sticky Sidebar) ===== */}
       {/* ============================= */}
-      <div className="hidden lg:block fixed w-80 right-11 mr-2 top-[260px] z-10">
+      {/* <div className="hidden lg:block fixed w-80 right-11 mr-2 top-[260px] z-10">
         <QuotePreview />
-      </div>
+      </div> */}
     </>
   );
 }
