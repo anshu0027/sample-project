@@ -19,7 +19,7 @@ const basePdfPath = path_1.default.join(process.cwd(), "public", "base.pdf");
 // Stores the base64 encoded logo image to avoid reading and converting it multiple times.
 // ------------------------
 let logoImageDataBase64Cache = null;
-const logoImagePath = path_1.default.join(process.cwd(), "public", "logo.png");
+const logoImagePath = path_1.default.join(process.cwd(), "public", "logo_black.png");
 // ------------------------
 // IMPORTANT: Create a 'public' folder in the root of 'my-backend'
 // and place your 'base.pdf' and 'logo.png' files inside it.
@@ -885,3 +885,4 @@ async function generatePolicyPdf(quoteData) {
     // ------------------------
     return Buffer.from(mergedPdfBytes);
 }
+//# sourceMappingURL=pdf.service.js.map

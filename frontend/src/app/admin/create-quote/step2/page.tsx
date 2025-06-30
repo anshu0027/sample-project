@@ -7,8 +7,14 @@ import type { QuoteState } from '@/context/QuoteContext';
 import { Button } from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Checkbox from '@/components/ui/Checkbox';
-import { VENUE_TYPES, INDOOR_OUTDOOR_OPTIONS, COUNTRIES, US_STATES } from '@/utils/constants';
-import { isEmpty, isValidZip } from '@/utils/validators';
+import {
+  VENUE_TYPES,
+  INDOOR_OUTDOOR_OPTIONS,
+  COUNTRIES,
+  STATES_BY_COUNTRY,
+} from '@/utils/constants';
+import { isEmpty, isValidZip, isValidName } from '@/utils/validators';
+import { useAuth } from '@clerk/nextjs';
 // import dynamic from 'next/dynamic';
 import { toast } from '@/hooks/use-toast';
 
@@ -108,22 +114,31 @@ const EventInformationSkeleton = () => (
 export default function EventInformation() {
   const router = useRouter();
   const { state, dispatch } = useQuote();
+  const { isSignedIn, isLoaded, getToken } = useAuth();
   // =============================
   // ===== Component State =====
   // =============================
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [pageReady, setPageReady] = useState(false);
+  // 1. Add new state for each checkbox at the top of the component
+  const [receptionUseMainVenueAddress, setReceptionUseMainVenueAddress] = useState(false);
+  const [brunchUseMainVenueAddress, setBrunchUseMainVenueAddress] = useState(false);
+  const [rehearsalUseMainVenueAddress, setRehearsalUseMainVenueAddress] = useState(false);
+  const [rehearsalDinnerUseMainVenueAddress, setRehearsalDinnerUseMainVenueAddress] =
+    useState(false);
+
+  // =============================
+  // ===== Conditional Rendering Check for Cruise Ship Venue Type =====
+  // =============================
+  const isCruiseShip = state.ceremonyLocationType === 'cruise_ship';
+
   // =============================
   // ===== useEffect for Authentication and Step Completion Check =====
   // =============================
   useEffect(() => {
-    const isAdminAuthenticated = () => {
-      return typeof window !== 'undefined' && localStorage.getItem('admin_logged_in') === 'true';
-    };
-
     // Simulate page readiness and perform checks
     const timer = setTimeout(() => {
-      if (!isAdminAuthenticated()) {
+      if (isLoaded && !isSignedIn) {
         router.replace('/admin/login');
         return; // Stop further execution if redirecting
       }
@@ -135,7 +150,240 @@ export default function EventInformation() {
     }, 300); // Short delay to make skeleton visible for demo purposes
 
     return () => clearTimeout(timer);
-  }, [router, state.step1Complete]); // state.step1Complete is a dependency
+  }, [router, state.step1Complete, isLoaded, isSignedIn]); // state.step1Complete is a dependency
+
+  // 2. Add useEffect for each to sync fields when checked
+  useEffect(() => {
+    if (receptionUseMainVenueAddress) {
+      // Copy all relevant fields from main venue to reception
+      dispatch({
+        type: 'UPDATE_FIELD',
+        field: 'receptionLocationType',
+        value: state.ceremonyLocationType,
+      });
+      dispatch({
+        type: 'UPDATE_FIELD',
+        field: 'receptionIndoorOutdoor',
+        value: state.indoorOutdoor,
+      });
+      dispatch({ type: 'UPDATE_FIELD', field: 'receptionVenueName', value: state.venueName });
+      dispatch({
+        type: 'UPDATE_FIELD',
+        field: 'receptionVenueAddress1',
+        value: state.venueAddress1,
+      });
+      dispatch({
+        type: 'UPDATE_FIELD',
+        field: 'receptionVenueAddress2',
+        value: state.venueAddress2,
+      });
+      dispatch({ type: 'UPDATE_FIELD', field: 'receptionVenueCountry', value: state.venueCountry });
+      dispatch({ type: 'UPDATE_FIELD', field: 'receptionVenueCity', value: state.venueCity });
+      dispatch({ type: 'UPDATE_FIELD', field: 'receptionVenueState', value: state.venueState });
+      dispatch({ type: 'UPDATE_FIELD', field: 'receptionVenueZip', value: state.venueZip });
+      dispatch({
+        type: 'UPDATE_FIELD',
+        field: 'receptionVenueAsInsured',
+        value: state.venueAsInsured,
+      });
+      // For cruise ship
+      if (isCruiseShip) {
+        dispatch({
+          type: 'UPDATE_FIELD',
+          field: 'receptionVenueAddress1',
+          value: state.venueAddress1,
+        });
+        dispatch({ type: 'UPDATE_FIELD', field: 'receptionVenueCity', value: state.venueCity });
+      }
+    }
+  }, [
+    receptionUseMainVenueAddress,
+    state.ceremonyLocationType,
+    state.indoorOutdoor,
+    state.venueName,
+    state.venueAddress1,
+    state.venueAddress2,
+    state.venueCountry,
+    state.venueCity,
+    state.venueState,
+    state.venueZip,
+    state.venueAsInsured,
+    isCruiseShip,
+    dispatch,
+  ]);
+  // Repeat for brunch, rehearsal, rehearsal dinner
+  useEffect(() => {
+    if (brunchUseMainVenueAddress) {
+      dispatch({
+        type: 'UPDATE_FIELD',
+        field: 'brunchLocationType',
+        value: state.ceremonyLocationType,
+      });
+      dispatch({
+        type: 'UPDATE_FIELD',
+        field: 'brunchIndoorOutdoor',
+        value: state.indoorOutdoor,
+      });
+      dispatch({ type: 'UPDATE_FIELD', field: 'brunchVenueName', value: state.venueName });
+      dispatch({ type: 'UPDATE_FIELD', field: 'brunchVenueAddress1', value: state.venueAddress1 });
+      dispatch({ type: 'UPDATE_FIELD', field: 'brunchVenueAddress2', value: state.venueAddress2 });
+      dispatch({ type: 'UPDATE_FIELD', field: 'brunchVenueCountry', value: state.venueCountry });
+      dispatch({ type: 'UPDATE_FIELD', field: 'brunchVenueCity', value: state.venueCity });
+      dispatch({ type: 'UPDATE_FIELD', field: 'brunchVenueState', value: state.venueState });
+      dispatch({ type: 'UPDATE_FIELD', field: 'brunchVenueZip', value: state.venueZip });
+      dispatch({
+        type: 'UPDATE_FIELD',
+        field: 'brunchVenueAsInsured',
+        value: state.venueAsInsured,
+      });
+      if (isCruiseShip) {
+        dispatch({
+          type: 'UPDATE_FIELD',
+          field: 'brunchVenueAddress1',
+          value: state.venueAddress1,
+        });
+        dispatch({ type: 'UPDATE_FIELD', field: 'brunchVenueCity', value: state.venueCity });
+      }
+    }
+  }, [
+    brunchUseMainVenueAddress,
+    state.ceremonyLocationType,
+    state.indoorOutdoor,
+    state.venueName,
+    state.venueAddress1,
+    state.venueAddress2,
+    state.venueCountry,
+    state.venueCity,
+    state.venueState,
+    state.venueZip,
+    state.venueAsInsured,
+    isCruiseShip,
+    dispatch,
+  ]);
+  useEffect(() => {
+    if (rehearsalUseMainVenueAddress) {
+      dispatch({
+        type: 'UPDATE_FIELD',
+        field: 'rehearsalLocationType',
+        value: state.ceremonyLocationType,
+      });
+      dispatch({
+        type: 'UPDATE_FIELD',
+        field: 'rehearsalIndoorOutdoor',
+        value: state.indoorOutdoor,
+      });
+      dispatch({ type: 'UPDATE_FIELD', field: 'rehearsalVenueName', value: state.venueName });
+      dispatch({
+        type: 'UPDATE_FIELD',
+        field: 'rehearsalVenueAddress1',
+        value: state.venueAddress1,
+      });
+      dispatch({
+        type: 'UPDATE_FIELD',
+        field: 'rehearsalVenueAddress2',
+        value: state.venueAddress2,
+      });
+      dispatch({ type: 'UPDATE_FIELD', field: 'rehearsalVenueCountry', value: state.venueCountry });
+      dispatch({ type: 'UPDATE_FIELD', field: 'rehearsalVenueCity', value: state.venueCity });
+      dispatch({ type: 'UPDATE_FIELD', field: 'rehearsalVenueState', value: state.venueState });
+      dispatch({ type: 'UPDATE_FIELD', field: 'rehearsalVenueZip', value: state.venueZip });
+      dispatch({
+        type: 'UPDATE_FIELD',
+        field: 'rehearsalVenueAsInsured',
+        value: state.venueAsInsured,
+      });
+      if (isCruiseShip) {
+        dispatch({
+          type: 'UPDATE_FIELD',
+          field: 'rehearsalVenueAddress1',
+          value: state.venueAddress1,
+        });
+        dispatch({ type: 'UPDATE_FIELD', field: 'rehearsalVenueCity', value: state.venueCity });
+      }
+    }
+  }, [
+    rehearsalUseMainVenueAddress,
+    state.ceremonyLocationType,
+    state.indoorOutdoor,
+    state.venueName,
+    state.venueAddress1,
+    state.venueAddress2,
+    state.venueCountry,
+    state.venueCity,
+    state.venueState,
+    state.venueZip,
+    state.venueAsInsured,
+    isCruiseShip,
+    dispatch,
+  ]);
+  useEffect(() => {
+    if (rehearsalDinnerUseMainVenueAddress) {
+      dispatch({
+        type: 'UPDATE_FIELD',
+        field: 'rehearsalDinnerLocationType',
+        value: state.ceremonyLocationType,
+      });
+      dispatch({
+        type: 'UPDATE_FIELD',
+        field: 'rehearsalDinnerIndoorOutdoor',
+        value: state.indoorOutdoor,
+      });
+      dispatch({ type: 'UPDATE_FIELD', field: 'rehearsalDinnerVenueName', value: state.venueName });
+      dispatch({
+        type: 'UPDATE_FIELD',
+        field: 'rehearsalDinnerVenueAddress1',
+        value: state.venueAddress1,
+      });
+      dispatch({
+        type: 'UPDATE_FIELD',
+        field: 'rehearsalDinnerVenueAddress2',
+        value: state.venueAddress2,
+      });
+      dispatch({
+        type: 'UPDATE_FIELD',
+        field: 'rehearsalDinnerVenueCountry',
+        value: state.venueCountry,
+      });
+      dispatch({ type: 'UPDATE_FIELD', field: 'rehearsalDinnerVenueCity', value: state.venueCity });
+      dispatch({
+        type: 'UPDATE_FIELD',
+        field: 'rehearsalDinnerVenueState',
+        value: state.venueState,
+      });
+      dispatch({ type: 'UPDATE_FIELD', field: 'rehearsalDinnerVenueZip', value: state.venueZip });
+      dispatch({
+        type: 'UPDATE_FIELD',
+        field: 'rehearsalDinnerVenueAsInsured',
+        value: state.venueAsInsured,
+      });
+      if (isCruiseShip) {
+        dispatch({
+          type: 'UPDATE_FIELD',
+          field: 'rehearsalDinnerVenueAddress1',
+          value: state.venueAddress1,
+        });
+        dispatch({
+          type: 'UPDATE_FIELD',
+          field: 'rehearsalDinnerVenueCity',
+          value: state.venueCity,
+        });
+      }
+    }
+  }, [
+    rehearsalDinnerUseMainVenueAddress,
+    state.ceremonyLocationType,
+    state.indoorOutdoor,
+    state.venueName,
+    state.venueAddress1,
+    state.venueAddress2,
+    state.venueCountry,
+    state.venueCity,
+    state.venueState,
+    state.venueZip,
+    state.venueAsInsured,
+    isCruiseShip,
+    dispatch,
+  ]);
 
   // =============================
   // ===== Input Change Handler =====
@@ -152,6 +400,13 @@ export default function EventInformation() {
         return newErrors;
       });
     }
+
+    // Reset state if country is changed
+    if (field.endsWith('Country')) {
+      const prefix = field.replace('Country', '');
+      const stateField = `${prefix}State` as keyof QuoteState;
+      dispatch({ type: 'UPDATE_FIELD', field: stateField, value: '' });
+    }
   };
 
   // =============================
@@ -161,7 +416,17 @@ export default function EventInformation() {
     const newErrors: Record<string, string> = {};
     if (isEmpty(state.honoree1FirstName))
       newErrors.honoree1FirstName = 'Please enter the first name';
+    else if (!isValidName(state.honoree1FirstName))
+      newErrors.honoree1FirstName = 'First name must contain only letters and spaces';
     if (isEmpty(state.honoree1LastName)) newErrors.honoree1LastName = 'Please enter the last name';
+    else if (!isValidName(state.honoree1LastName))
+      newErrors.honoree1LastName = 'Last name must contain only letters and spaces';
+
+    if (!isValidName(state.honoree2FirstName))
+      newErrors.honoree2FirstName = 'First name contains invalid characters';
+    if (!isValidName(state.honoree2LastName))
+      newErrors.honoree2LastName = 'Last name contains invalid characters';
+
     if (isEmpty(state.ceremonyLocationType))
       newErrors.ceremonyLocationType = 'Please select a venue type';
     if (isEmpty(state.indoorOutdoor))
@@ -169,79 +434,72 @@ export default function EventInformation() {
     if (isEmpty(state.venueName)) newErrors.venueName = 'Please enter the venue name';
     if (isEmpty(state.venueAddress1)) newErrors.venueAddress1 = 'Please enter the venue address';
     if (isEmpty(state.venueCity)) newErrors.venueCity = 'Please enter the city';
-    if (isEmpty(state.venueState)) newErrors.venueState = 'Please select a state';
-    if (isEmpty(state.venueZip)) newErrors.venueZip = 'Please enter the ZIP code';
-    else if (!isValidZip(state.venueZip)) newErrors.venueZip = 'Please enter a valid ZIP code';
-    setErrors(newErrors);
+
+    // Only validate state and zip for ceremony venue if it's not a cruise ship
+    if (!isCruiseShip) {
+      if (isEmpty(state.venueState)) newErrors.venueState = 'Please select a state';
+      if (isEmpty(state.venueZip)) newErrors.venueZip = 'Please enter the ZIP code';
+      else if (!isValidZip(state.venueZip)) newErrors.venueZip = 'Please enter a valid ZIP code';
+    }
+
+    // Helper function to validate venue fields based on venue type
+    const validateVenueFields = (prefix: string) => {
+      const isCruiseShipVenue =
+        state[`${prefix}LocationType` as keyof QuoteState] === 'cruise_ship';
+
+      if (isEmpty(state[`${prefix}VenueName` as keyof QuoteState] as string))
+        newErrors[`${prefix}VenueName`] = 'Please enter the venue name';
+      if (isEmpty(state[`${prefix}VenueAddress1` as keyof QuoteState] as string))
+        newErrors[`${prefix}VenueAddress1`] = 'Please enter the venue address';
+      if (isEmpty(state[`${prefix}VenueCity` as keyof QuoteState] as string))
+        newErrors[`${prefix}VenueCity`] = 'Please enter the venue city';
+
+      // Only validate country, state, zip if it's not a cruise ship
+      if (!isCruiseShipVenue) {
+        if (isEmpty(state[`${prefix}VenueCountry` as keyof QuoteState] as string))
+          newErrors[`${prefix}VenueCountry`] = 'Please select the venue country';
+        if (isEmpty(state[`${prefix}VenueState` as keyof QuoteState] as string))
+          newErrors[`${prefix}VenueState`] = 'Please select the venue state';
+        if (isEmpty(state[`${prefix}VenueZip` as keyof QuoteState] as string))
+          newErrors[`${prefix}VenueZip`] = 'Please enter the venue ZIP code';
+        else if (!isValidZip(state[`${prefix}VenueZip` as keyof QuoteState] as string))
+          newErrors[`${prefix}VenueZip`] = 'Please enter a valid venue ZIP code';
+      }
+    };
 
     if (state.eventType === 'wedding') {
-      // Validate Reception Venue if name is provided
-      if (!isEmpty(state.receptionVenueName)) {
-        if (isEmpty(state.receptionVenueAddress1))
-          newErrors.receptionVenueAddress1 = 'Please enter the reception venue address';
-        if (isEmpty(state.receptionVenueCountry))
-          newErrors.receptionVenueCountry = 'Please select the reception venue country';
-        if (isEmpty(state.receptionVenueCity))
-          newErrors.receptionVenueCity = 'Please enter the reception venue city';
-        if (isEmpty(state.receptionVenueState))
-          newErrors.receptionVenueState = 'Please select the reception venue state';
-        if (isEmpty(state.receptionVenueZip))
-          newErrors.receptionVenueZip = 'Please enter the reception venue ZIP code';
-        else if (!isValidZip(state.receptionVenueZip))
-          newErrors.receptionVenueZip = 'Please enter a valid reception venue ZIP code';
-      }
+      // For weddings, all additional venue sections are required
 
-      // Validate Brunch Venue if name is provided
-      if (!isEmpty(state.brunchVenueName)) {
-        if (isEmpty(state.brunchVenueAddress1))
-          newErrors.brunchVenueAddress1 = 'Please enter the brunch venue address';
-        if (isEmpty(state.brunchVenueCountry))
-          newErrors.brunchVenueCountry = 'Please select the brunch venue country';
-        if (isEmpty(state.brunchVenueCity))
-          newErrors.brunchVenueCity = 'Please enter the brunch venue city';
-        if (isEmpty(state.brunchVenueState))
-          newErrors.brunchVenueState = 'Please select the brunch venue state';
-        if (isEmpty(state.brunchVenueZip))
-          newErrors.brunchVenueZip = 'Please enter the brunch venue ZIP code';
-        else if (!isValidZip(state.brunchVenueZip))
-          newErrors.brunchVenueZip = 'Please enter a valid brunch venue ZIP code';
-      }
+      // Reception Venue - Required for weddings
+      if (isEmpty(state.receptionLocationType))
+        newErrors.receptionLocationType = 'Please select a venue type';
+      if (isEmpty(state.receptionIndoorOutdoor))
+        newErrors.receptionIndoorOutdoor = 'Please select indoor/outdoor option';
+      validateVenueFields('reception');
 
-      // Validate Rehearsal Venue if name is provided
-      if (!isEmpty(state.rehearsalVenueName)) {
-        if (isEmpty(state.rehearsalVenueAddress1))
-          newErrors.rehearsalVenueAddress1 = 'Please enter the rehearsal venue address';
-        if (isEmpty(state.rehearsalVenueCountry))
-          newErrors.rehearsalVenueCountry = 'Please select the rehearsal venue country';
-        if (isEmpty(state.rehearsalVenueCity))
-          newErrors.rehearsalVenueCity = 'Please enter the rehearsal venue city';
-        if (isEmpty(state.rehearsalVenueState))
-          newErrors.rehearsalVenueState = 'Please select the rehearsal venue state';
-        if (isEmpty(state.rehearsalVenueZip))
-          newErrors.rehearsalVenueZip = 'Please enter the rehearsal venue ZIP code';
-        else if (!isValidZip(state.rehearsalVenueZip))
-          newErrors.rehearsalVenueZip = 'Please enter a valid rehearsal venue ZIP code';
-      }
+      // Brunch Venue - Required for weddings
+      if (isEmpty(state.brunchLocationType))
+        newErrors.brunchLocationType = 'Please select a venue type';
+      if (isEmpty(state.brunchIndoorOutdoor))
+        newErrors.brunchIndoorOutdoor = 'Please select indoor/outdoor option';
+      validateVenueFields('brunch');
 
-      // Validate Rehearsal Dinner Venue if name is provided
-      if (!isEmpty(state.rehearsalDinnerVenueName)) {
-        if (isEmpty(state.rehearsalDinnerVenueAddress1))
-          newErrors.rehearsalDinnerVenueAddress1 =
-            'Please enter the rehearsal dinner venue address';
-        if (isEmpty(state.rehearsalDinnerVenueCountry))
-          newErrors.rehearsalDinnerVenueCountry =
-            'Please select the rehearsal dinner venue country';
-        if (isEmpty(state.rehearsalDinnerVenueCity))
-          newErrors.rehearsalDinnerVenueCity = 'Please enter the rehearsal dinner venue city';
-        if (isEmpty(state.rehearsalDinnerVenueState))
-          newErrors.rehearsalDinnerVenueState = 'Please select the rehearsal dinner venue state';
-        if (isEmpty(state.rehearsalDinnerVenueZip))
-          newErrors.rehearsalDinnerVenueZip = 'Please enter the rehearsal dinner venue ZIP code';
-        else if (!isValidZip(state.rehearsalDinnerVenueZip))
-          newErrors.rehearsalDinnerVenueZip =
-            'Please enter a valid rehearsal dinner venue ZIP code';
-      }
+      // Rehearsal Venue - Required for weddings
+      if (isEmpty(state.rehearsalLocationType))
+        newErrors.rehearsalLocationType = 'Please select a venue type';
+      if (isEmpty(state.rehearsalIndoorOutdoor))
+        newErrors.rehearsalIndoorOutdoor = 'Please select indoor/outdoor option';
+      validateVenueFields('rehearsal');
+
+      // Rehearsal Dinner Venue - Required for weddings
+      if (isEmpty(state.rehearsalDinnerLocationType))
+        newErrors.rehearsalDinnerLocationType = 'Please select a venue type';
+      if (isEmpty(state.rehearsalDinnerIndoorOutdoor))
+        newErrors.rehearsalDinnerIndoorOutdoor = 'Please select indoor/outdoor option';
+      validateVenueFields('rehearsalDinner');
     }
+
+    setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
@@ -267,91 +525,106 @@ export default function EventInformation() {
       }
 
       try {
+        // Helper function to conditionally include venue fields based on venue type
+        const getVenueFields = (prefix: string) => {
+          const isCruiseShipVenue =
+            state[`${prefix}LocationType` as keyof QuoteState] === 'cruise_ship';
+
+          const baseFields = {
+            [`${prefix}LocationType`]: state[`${prefix}LocationType` as keyof QuoteState],
+            [`${prefix}IndoorOutdoor`]: state[`${prefix}IndoorOutdoor` as keyof QuoteState],
+            [`${prefix}VenueName`]: state[`${prefix}VenueName` as keyof QuoteState],
+            [`${prefix}VenueAddress1`]: state[`${prefix}VenueAddress1` as keyof QuoteState],
+            [`${prefix}VenueAddress2`]: state[`${prefix}VenueAddress2` as keyof QuoteState],
+            [`${prefix}VenueAsInsured`]: state[`${prefix}VenueAsInsured` as keyof QuoteState],
+            [`${prefix}VenueCity`]: state[`${prefix}VenueCity` as keyof QuoteState] || '',
+          };
+
+          if (!isCruiseShipVenue) {
+            return {
+              ...baseFields,
+              [`${prefix}VenueCountry`]: state[`${prefix}VenueCountry` as keyof QuoteState] || '',
+              [`${prefix}VenueState`]: state[`${prefix}VenueState` as keyof QuoteState] || '',
+              [`${prefix}VenueZip`]: state[`${prefix}VenueZip` as keyof QuoteState] || '',
+            };
+          }
+
+          return baseFields;
+        };
+
+        // Define payload type
+        interface QuoteUpdatePayload {
+          eventType: string;
+          eventDate: string;
+          maxGuests: string;
+          honoree1FirstName: string;
+          honoree1LastName: string;
+          honoree2FirstName: string;
+          honoree2LastName: string;
+          venueName: string;
+          venueAddress1: string;
+          venueAddress2: string;
+          venueCity: string;
+          ceremonyLocationType: string;
+          indoorOutdoor: string;
+          venueAsInsured: boolean;
+          venueCountry?: string;
+          venueState?: string;
+          venueZip?: string;
+          status: string;
+          [key: string]: string | boolean | undefined;
+        }
+
+        // Base payload with ceremony venue fields
+        const payload: QuoteUpdatePayload = {
+          eventType: state.eventType,
+          eventDate: state.eventDate,
+          maxGuests: state.maxGuests,
+          honoree1FirstName: state.honoree1FirstName,
+          honoree1LastName: state.honoree1LastName,
+          honoree2FirstName: state.honoree2FirstName,
+          honoree2LastName: state.honoree2LastName,
+          venueName: state.venueName,
+          venueAddress1: state.venueAddress1,
+          venueAddress2: state.venueAddress2,
+          venueCity: state.venueCity,
+          ceremonyLocationType: state.ceremonyLocationType,
+          indoorOutdoor: state.indoorOutdoor,
+          venueAsInsured: state.venueAsInsured,
+          status: 'STEP2',
+        };
+
+        // Only include country, state, zip for ceremony venue if it's not a cruise ship
+        if (!isCruiseShip) {
+          payload.venueCountry = state.venueCountry;
+          payload.venueState = state.venueState;
+          payload.venueZip = state.venueZip;
+        }
+        // For cruise ships, do not include these fields in the payload
+
+        // Add additional venue fields for weddings
+        if (state.eventType === 'wedding') {
+          Object.assign(payload, getVenueFields('reception'));
+          Object.assign(payload, getVenueFields('brunch'));
+          Object.assign(payload, getVenueFields('rehearsal'));
+          Object.assign(payload, getVenueFields('rehearsalDinner'));
+        }
+
         // Update quote with event information
+        const token = await getToken();
         const res = await fetch(`${apiUrl}/quotes/${quoteNumber}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            // Event fields
-            eventType: state.eventType,
-            eventDate: state.eventDate,
-            maxGuests: state.maxGuests,
-            honoree1FirstName: state.honoree1FirstName,
-            honoree1LastName: state.honoree1LastName,
-            honoree2FirstName: state.honoree2FirstName,
-            honoree2LastName: state.honoree2LastName,
-
-            // Venue fields
-            venueName: state.venueName,
-            venueAddress1: state.venueAddress1,
-            venueAddress2: state.venueAddress2,
-            venueCity: state.venueCity,
-            venueState: state.venueState,
-            venueZip: state.venueZip,
-            venueCountry: state.venueCountry,
-            ceremonyLocationType: state.ceremonyLocationType,
-            indoorOutdoor: state.indoorOutdoor,
-            venueAsInsured: state.venueAsInsured,
-
-            // Reception venue data
-            receptionLocationType: state.receptionLocationType,
-            receptionIndoorOutdoor: state.receptionIndoorOutdoor,
-            receptionVenueName: state.receptionVenueName,
-            receptionAddress1: state.receptionVenueAddress1,
-            receptionAddress2: state.receptionVenueAddress2,
-            receptionCity: state.receptionVenueCity,
-            receptionState: state.receptionVenueState,
-            receptionZip: state.receptionVenueZip,
-            receptionCountry: state.receptionVenueCountry,
-            receptionVenueAsInsured: state.receptionVenueAsInsured,
-
-            // Brunch venue data
-            brunchLocationType: state.brunchLocationType,
-            brunchIndoorOutdoor: state.brunchIndoorOutdoor,
-            brunchVenueName: state.brunchVenueName,
-            brunchAddress1: state.brunchVenueAddress1,
-            brunchAddress2: state.brunchVenueAddress2,
-            brunchCity: state.brunchVenueCity,
-            brunchState: state.brunchVenueState,
-            brunchZip: state.brunchVenueZip,
-            brunchCountry: state.brunchVenueCountry,
-            brunchVenueAsInsured: state.brunchVenueAsInsured,
-
-            // Rehearsal venue data
-            rehearsalLocationType: state.rehearsalLocationType,
-            rehearsalIndoorOutdoor: state.rehearsalIndoorOutdoor,
-            rehearsalVenueName: state.rehearsalVenueName,
-            rehearsalAddress1: state.rehearsalVenueAddress1,
-            rehearsalAddress2: state.rehearsalVenueAddress2,
-            rehearsalCity: state.rehearsalVenueCity,
-            rehearsalState: state.rehearsalVenueState,
-            rehearsalZip: state.rehearsalVenueZip,
-            rehearsalCountry: state.rehearsalVenueCountry,
-            rehearsalVenueAsInsured: state.rehearsalVenueAsInsured,
-
-            // Rehearsal dinner venue data
-            rehearsalDinnerLocationType: state.rehearsalDinnerLocationType,
-            rehearsalDinnerIndoorOutdoor: state.rehearsalDinnerIndoorOutdoor,
-            rehearsalDinnerVenueName: state.rehearsalDinnerVenueName,
-            rehearsalDinnerAddress1: state.rehearsalDinnerVenueAddress1,
-            rehearsalDinnerAddress2: state.rehearsalDinnerVenueAddress2,
-            rehearsalDinnerCity: state.rehearsalDinnerVenueCity,
-            rehearsalDinnerState: state.rehearsalDinnerVenueState,
-            rehearsalDinnerZip: state.rehearsalDinnerVenueZip,
-            rehearsalDinnerCountry: state.rehearsalDinnerVenueCountry,
-            rehearsalDinnerVenueAsInsured: state.rehearsalDinnerVenueAsInsured,
-
-            status: 'STEP2',
-          }),
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
         });
 
         if (!res.ok) {
           const errorData = await res.json();
           throw new Error(errorData.error || 'Failed to update quote');
         }
-
-        // const updatedQuote = await res.json();
-        // console.log('Updated quote:', updatedQuote); // Add this for debugging
 
         dispatch({ type: 'COMPLETE_STEP', step: 2 });
         router.push('/admin/create-quote/step3');
@@ -363,11 +636,6 @@ export default function EventInformation() {
       Object.entries(errors).forEach(([, msg]) => toast.error(msg));
     }
   };
-
-  // =============================
-  // ===== Conditional Rendering Check for Cruise Ship Venue Type =====
-  // =============================
-  const isCruiseShip = state.ceremonyLocationType === 'cruise_ship';
 
   // =============================
   // ===== Render Skeleton if Page is Not Ready =====
@@ -419,6 +687,7 @@ export default function EventInformation() {
                     id="honoree1FirstName"
                     value={state.honoree1FirstName}
                     onChange={(e) => handleInputChange('honoree1FirstName', e.target.value)}
+                    onKeyDown={handleNameKeyDown}
                     error={!!errors.honoree1FirstName}
                     placeholder="John"
                     className="text-left w-full"
@@ -442,6 +711,7 @@ export default function EventInformation() {
                     id="honoree1LastName"
                     value={state.honoree1LastName}
                     onChange={(e) => handleInputChange('honoree1LastName', e.target.value)}
+                    onKeyDown={handleNameKeyDown}
                     error={!!errors.honoree1LastName}
                     placeholder="Doe"
                     className="text-left w-full"
@@ -470,7 +740,8 @@ export default function EventInformation() {
                     id="honoree2FirstName"
                     value={state.honoree2FirstName}
                     onChange={(e) => handleInputChange('honoree2FirstName', e.target.value)}
-                    placeholder="Jane"
+                    onKeyDown={handleNameKeyDown}
+                    placeholder="John"
                     className="text-left w-full"
                   />
                 </div>
@@ -490,6 +761,7 @@ export default function EventInformation() {
                     id="honoree2LastName"
                     value={state.honoree2LastName}
                     onChange={(e) => handleInputChange('honoree2LastName', e.target.value)}
+                    onKeyDown={handleNameKeyDown}
                     placeholder="Doe"
                     className="text-left w-full"
                   />
@@ -780,6 +1052,7 @@ export default function EventInformation() {
                         id="venueState"
                         value={state.venueState}
                         onChange={(e) => handleInputChange('venueState', e.target.value)}
+                        disabled={!state.venueCountry}
                         className={`block w-full rounded-md shadow-sm pl-3 pr-10 py-2 text-base border appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                           errors.venueState
                             ? 'border-red-500 text-red-900'
@@ -787,7 +1060,7 @@ export default function EventInformation() {
                         } text-left`}
                       >
                         <option value="">Select state</option>
-                        {US_STATES.map((option) => (
+                        {(STATES_BY_COUNTRY[state.venueCountry] || []).map((option) => (
                           <option key={option.value} value={option.value}>
                             {option.label}
                           </option>
@@ -892,6 +1165,73 @@ export default function EventInformation() {
                   {errors.receptionVenueName && (
                     <p className="text-sm text-red-500 mt-1">{errors.receptionVenueName}</p>
                   )}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+                  {/* Venue Type */}
+                  <div className="mb-4 text-left">
+                    <label
+                      htmlFor="receptionLocationType"
+                      className="block mb-1 font-medium text-gray-800"
+                    >
+                      Venue Type
+                    </label>
+                    <div className="relative w-full">
+                      <select
+                        id="receptionLocationType"
+                        value={state.receptionLocationType}
+                        onChange={(e) => handleInputChange('receptionLocationType', e.target.value)}
+                        className={`block w-full rounded-md shadow-sm border pl-3 pr-10 py-2 text-base appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.receptionLocationType ? 'border-red-500 text-red-900' : 'border-gray-300 text-gray-900'} text-left`}
+                      >
+                        <option value="">Select venue type</option>
+                        {VENUE_TYPES.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"
+                        size={16}
+                      />
+                    </div>
+                    {errors.receptionLocationType && (
+                      <p className="text-sm text-red-500 mt-1">{errors.receptionLocationType}</p>
+                    )}
+                  </div>
+                  {/* Indoor/Outdoor */}
+                  <div className="mb-4 text-left">
+                    <label
+                      htmlFor="receptionIndoorOutdoor"
+                      className="block mb-1 font-medium text-gray-800"
+                    >
+                      Indoor/Outdoor
+                    </label>
+                    <div className="relative w-full">
+                      <select
+                        id="receptionIndoorOutdoor"
+                        value={state.receptionIndoorOutdoor}
+                        onChange={(e) =>
+                          handleInputChange('receptionIndoorOutdoor', e.target.value)
+                        }
+                        className={`block w-full rounded-md shadow-sm border pl-3 pr-10 py-2 text-base appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.receptionIndoorOutdoor ? 'border-red-500 text-red-900' : 'border-gray-300 text-gray-900'} text-left`}
+                      >
+                        <option value="">Select option</option>
+                        {INDOOR_OUTDOOR_OPTIONS.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"
+                        size={16}
+                      />
+                    </div>
+                    {errors.receptionIndoorOutdoor && (
+                      <p className="text-sm text-red-500 mt-1">{errors.receptionIndoorOutdoor}</p>
+                    )}
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
@@ -1007,6 +1347,7 @@ export default function EventInformation() {
                         id="receptionVenueState"
                         value={state.receptionVenueState}
                         onChange={(e) => handleInputChange('receptionVenueState', e.target.value)}
+                        disabled={!state.receptionVenueCountry}
                         className={`block w-full rounded-md shadow-sm pl-3 pr-10 py-2 text-base border appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                           errors.receptionVenueState
                             ? 'border-red-500 text-red-900'
@@ -1014,7 +1355,7 @@ export default function EventInformation() {
                         } text-left`}
                       >
                         <option value="">Select state</option>
-                        {US_STATES.map((option) => (
+                        {(STATES_BY_COUNTRY[state.receptionVenueCountry] || []).map((option) => (
                           <option key={option.value} value={option.value}>
                             {option.label}
                           </option>
@@ -1065,6 +1406,18 @@ export default function EventInformation() {
                     />
                   </div>
                 </div>
+
+                {/* 3. In each additional venue section, add the checkbox and disable address fields if checked */}
+                {/* (Reception example shown, repeat for others) */}
+                <Checkbox
+                  id="receptionUseMainVenueAddress"
+                  label="Use main venue address for this venue"
+                  checked={receptionUseMainVenueAddress}
+                  onChange={setReceptionUseMainVenueAddress}
+                  className="mb-4"
+                />
+                {/* Reception address fields: add disabled={receptionUseMainVenueAddress} to each */}
+                {/* ...repeat for brunch, rehearsal, rehearsal dinner... */}
               </div>
             </div>
 
@@ -1103,6 +1456,71 @@ export default function EventInformation() {
                   {errors.brunchVenueName && (
                     <p className="text-sm text-red-500 mt-1">{errors.brunchVenueName}</p>
                   )}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+                  {/* Venue Type */}
+                  <div className="mb-4 text-left">
+                    <label
+                      htmlFor="brunchLocationType"
+                      className="block mb-1 font-medium text-gray-800"
+                    >
+                      Venue Type
+                    </label>
+                    <div className="relative w-full">
+                      <select
+                        id="brunchLocationType"
+                        value={state.brunchLocationType}
+                        onChange={(e) => handleInputChange('brunchLocationType', e.target.value)}
+                        className={`block w-full rounded-md shadow-sm border pl-3 pr-10 py-2 text-base appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.brunchLocationType ? 'border-red-500 text-red-900' : 'border-gray-300 text-gray-900'} text-left`}
+                      >
+                        <option value="">Select venue type</option>
+                        {VENUE_TYPES.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"
+                        size={16}
+                      />
+                    </div>
+                    {errors.brunchLocationType && (
+                      <p className="text-sm text-red-500 mt-1">{errors.brunchLocationType}</p>
+                    )}
+                  </div>
+                  {/* Indoor/Outdoor */}
+                  <div className="mb-4 text-left">
+                    <label
+                      htmlFor="brunchIndoorOutdoor"
+                      className="block mb-1 font-medium text-gray-800"
+                    >
+                      Indoor/Outdoor
+                    </label>
+                    <div className="relative w-full">
+                      <select
+                        id="brunchIndoorOutdoor"
+                        value={state.brunchIndoorOutdoor}
+                        onChange={(e) => handleInputChange('brunchIndoorOutdoor', e.target.value)}
+                        className={`block w-full rounded-md shadow-sm border pl-3 pr-10 py-2 text-base appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.brunchIndoorOutdoor ? 'border-red-500 text-red-900' : 'border-gray-300 text-gray-900'} text-left`}
+                      >
+                        <option value="">Select option</option>
+                        {INDOOR_OUTDOOR_OPTIONS.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"
+                        size={16}
+                      />
+                    </div>
+                    {errors.brunchIndoorOutdoor && (
+                      <p className="text-sm text-red-500 mt-1">{errors.brunchIndoorOutdoor}</p>
+                    )}
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
@@ -1214,6 +1632,7 @@ export default function EventInformation() {
                         id="brunchVenueState"
                         value={state.brunchVenueState}
                         onChange={(e) => handleInputChange('brunchVenueState', e.target.value)}
+                        disabled={!state.brunchVenueCountry}
                         className={`block w-full rounded-md shadow-sm pl-3 pr-10 py-2 text-base border appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                           errors.brunchVenueState
                             ? 'border-red-500 text-red-900'
@@ -1221,7 +1640,7 @@ export default function EventInformation() {
                         } text-left`}
                       >
                         <option value="">Select state</option>
-                        {US_STATES.map((option) => (
+                        {(STATES_BY_COUNTRY[state.brunchVenueCountry] || []).map((option) => (
                           <option key={option.value} value={option.value}>
                             {option.label}
                           </option>
@@ -1272,6 +1691,18 @@ export default function EventInformation() {
                     />
                   </div>
                 </div>
+
+                {/* 3. In each additional venue section, add the checkbox and disable address fields if checked */}
+                {/* (Reception example shown, repeat for others) */}
+                <Checkbox
+                  id="brunchUseMainVenueAddress"
+                  label="Use main venue address for this venue"
+                  checked={brunchUseMainVenueAddress}
+                  onChange={setBrunchUseMainVenueAddress}
+                  className="mb-4"
+                />
+                {/* Reception address fields: add disabled={receptionUseMainVenueAddress} to each */}
+                {/* ...repeat for brunch, rehearsal, rehearsal dinner... */}
               </div>
             </div>
 
@@ -1313,6 +1744,73 @@ export default function EventInformation() {
                   {errors.rehearsalVenueName && (
                     <p className="text-sm text-red-500 mt-1">{errors.rehearsalVenueName}</p>
                   )}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+                  {/* Venue Type */}
+                  <div className="mb-4 text-left">
+                    <label
+                      htmlFor="rehearsalLocationType"
+                      className="block mb-1 font-medium text-gray-800"
+                    >
+                      Venue Type
+                    </label>
+                    <div className="relative w-full">
+                      <select
+                        id="rehearsalLocationType"
+                        value={state.rehearsalLocationType}
+                        onChange={(e) => handleInputChange('rehearsalLocationType', e.target.value)}
+                        className={`block w-full rounded-md shadow-sm border pl-3 pr-10 py-2 text-base appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.rehearsalLocationType ? 'border-red-500 text-red-900' : 'border-gray-300 text-gray-900'} text-left`}
+                      >
+                        <option value="">Select venue type</option>
+                        {VENUE_TYPES.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"
+                        size={16}
+                      />
+                    </div>
+                    {errors.rehearsalLocationType && (
+                      <p className="text-sm text-red-500 mt-1">{errors.rehearsalLocationType}</p>
+                    )}
+                  </div>
+                  {/* Indoor/Outdoor */}
+                  <div className="mb-4 text-left">
+                    <label
+                      htmlFor="rehearsalIndoorOutdoor"
+                      className="block mb-1 font-medium text-gray-800"
+                    >
+                      Indoor/Outdoor
+                    </label>
+                    <div className="relative w-full">
+                      <select
+                        id="rehearsalIndoorOutdoor"
+                        value={state.rehearsalIndoorOutdoor}
+                        onChange={(e) =>
+                          handleInputChange('rehearsalIndoorOutdoor', e.target.value)
+                        }
+                        className={`block w-full rounded-md shadow-sm border pl-3 pr-10 py-2 text-base appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.rehearsalIndoorOutdoor ? 'border-red-500 text-red-900' : 'border-gray-300 text-gray-900'} text-left`}
+                      >
+                        <option value="">Select option</option>
+                        {INDOOR_OUTDOOR_OPTIONS.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"
+                        size={16}
+                      />
+                    </div>
+                    {errors.rehearsalIndoorOutdoor && (
+                      <p className="text-sm text-red-500 mt-1">{errors.rehearsalIndoorOutdoor}</p>
+                    )}
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
@@ -1428,6 +1926,7 @@ export default function EventInformation() {
                         id="rehearsalVenueState"
                         value={state.rehearsalVenueState}
                         onChange={(e) => handleInputChange('rehearsalVenueState', e.target.value)}
+                        disabled={!state.rehearsalVenueCountry}
                         className={`block w-full rounded-md shadow-sm pl-3 pr-10 py-2 text-base border appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                           errors.rehearsalVenueState
                             ? 'border-red-500 text-red-900'
@@ -1435,7 +1934,7 @@ export default function EventInformation() {
                         } text-left`}
                       >
                         <option value="">Select state</option>
-                        {US_STATES.map((option) => (
+                        {(STATES_BY_COUNTRY[state.rehearsalVenueCountry] || []).map((option) => (
                           <option key={option.value} value={option.value}>
                             {option.label}
                           </option>
@@ -1486,6 +1985,18 @@ export default function EventInformation() {
                     />
                   </div>
                 </div>
+
+                {/* 3. In each additional venue section, add the checkbox and disable address fields if checked */}
+                {/* (Rehearsal example shown, repeat for others) */}
+                <Checkbox
+                  id="rehearsalUseMainVenueAddress"
+                  label="Use main venue address for this venue"
+                  checked={rehearsalUseMainVenueAddress}
+                  onChange={setRehearsalUseMainVenueAddress}
+                  className="mb-4"
+                />
+                {/* Reception address fields: add disabled={receptionUseMainVenueAddress} to each */}
+                {/* ...repeat for brunch, rehearsal, rehearsal dinner... */}
               </div>
             </div>
 
@@ -1529,6 +2040,79 @@ export default function EventInformation() {
                   {errors.rehearsalDinnerVenueName && (
                     <p className="text-sm text-red-500 mt-1">{errors.rehearsalDinnerVenueName}</p>
                   )}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+                  {/* Venue Type */}
+                  <div className="mb-4 text-left">
+                    <label
+                      htmlFor="rehearsalDinnerLocationType"
+                      className="block mb-1 font-medium text-gray-800"
+                    >
+                      Venue Type
+                    </label>
+                    <div className="relative w-full">
+                      <select
+                        id="rehearsalDinnerLocationType"
+                        value={state.rehearsalDinnerLocationType}
+                        onChange={(e) =>
+                          handleInputChange('rehearsalDinnerLocationType', e.target.value)
+                        }
+                        className={`block w-full rounded-md shadow-sm border pl-3 pr-10 py-2 text-base appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.rehearsalDinnerLocationType ? 'border-red-500 text-red-900' : 'border-gray-300 text-gray-900'} text-left`}
+                      >
+                        <option value="">Select venue type</option>
+                        {VENUE_TYPES.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"
+                        size={16}
+                      />
+                    </div>
+                    {errors.rehearsalDinnerLocationType && (
+                      <p className="text-sm text-red-500 mt-1">
+                        {errors.rehearsalDinnerLocationType}
+                      </p>
+                    )}
+                  </div>
+                  {/* Indoor/Outdoor */}
+                  <div className="mb-4 text-left">
+                    <label
+                      htmlFor="rehearsalDinnerIndoorOutdoor"
+                      className="block mb-1 font-medium text-gray-800"
+                    >
+                      Indoor/Outdoor
+                    </label>
+                    <div className="relative w-full">
+                      <select
+                        id="rehearsalDinnerIndoorOutdoor"
+                        value={state.rehearsalDinnerIndoorOutdoor}
+                        onChange={(e) =>
+                          handleInputChange('rehearsalDinnerIndoorOutdoor', e.target.value)
+                        }
+                        className={`block w-full rounded-md shadow-sm border pl-3 pr-10 py-2 text-base appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.rehearsalDinnerIndoorOutdoor ? 'border-red-500 text-red-900' : 'border-gray-300 text-gray-900'} text-left`}
+                      >
+                        <option value="">Select option</option>
+                        {INDOOR_OUTDOOR_OPTIONS.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"
+                        size={16}
+                      />
+                    </div>
+                    {errors.rehearsalDinnerIndoorOutdoor && (
+                      <p className="text-sm text-red-500 mt-1">
+                        {errors.rehearsalDinnerIndoorOutdoor}
+                      </p>
+                    )}
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
@@ -1654,6 +2238,7 @@ export default function EventInformation() {
                         onChange={(e) =>
                           handleInputChange('rehearsalDinnerVenueState', e.target.value)
                         }
+                        disabled={!state.rehearsalDinnerVenueCountry}
                         className={`block w-full rounded-md shadow-sm pl-3 pr-10 py-2 text-base border appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                           errors.rehearsalDinnerVenueState
                             ? 'border-red-500 text-red-900'
@@ -1661,11 +2246,13 @@ export default function EventInformation() {
                         } text-left`}
                       >
                         <option value="">Select state</option>
-                        {US_STATES.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
+                        {(STATES_BY_COUNTRY[state.rehearsalDinnerVenueCountry] || []).map(
+                          (option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ),
+                        )}
                       </select>
                       <ChevronDown
                         className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"
@@ -1718,6 +2305,18 @@ export default function EventInformation() {
                     />
                   </div>
                 </div>
+
+                {/* 3. In each additional venue section, add the checkbox and disable address fields if checked */}
+                {/* (Rehearsal example shown, repeat for others) */}
+                <Checkbox
+                  id="rehearsalDinnerUseMainVenueAddress"
+                  label="Use main venue address for this venue"
+                  checked={rehearsalDinnerUseMainVenueAddress}
+                  onChange={setRehearsalDinnerUseMainVenueAddress}
+                  className="mb-4"
+                />
+                {/* Reception address fields: add disabled={receptionUseMainVenueAddress} to each */}
+                {/* ...repeat for brunch, rehearsal, rehearsal dinner... */}
               </div>
             </div>
           </>
@@ -1752,4 +2351,33 @@ export default function EventInformation() {
       </div> */}
     </>
   );
+}
+
+// =============================
+// ===== Helper Function =====
+// =============================
+function handleNameKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+  // Allow: backspace, delete, tab, escape, enter, arrows, home, end
+  if (
+    [
+      'Backspace',
+      'Delete',
+      'Tab',
+      'Escape',
+      'Enter',
+      'ArrowLeft',
+      'ArrowRight',
+      'Home',
+      'End',
+    ].includes(e.key) ||
+    // Allow: Ctrl+A, Command+A, Ctrl+C, Ctrl+V, Ctrl+X
+    ((e.ctrlKey || e.metaKey) && ['a', 'c', 'v', 'x'].includes(e.key.toLowerCase()))
+  ) {
+    return; // Let it happen
+  }
+
+  // Allow only letters and spaces
+  if (!/^[a-zA-Z\s]$/.test(e.key)) {
+    e.preventDefault();
+  }
 }

@@ -1,0 +1,173 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Database Schema Guide
+
+## Oracle Database Configuration
+
+### Connection Setup
+Configured in [backend/src/data-source.ts](mdc:backend/src/data-source.ts):
+- **Type**: Oracle
+- **Host**: Environment variable `DB_HOST`
+- **Port**: Environment variable `DB_PORT`
+- **Username**: Environment variable `DB_USER`
+- **Password**: Environment variable `DB_PASSWORD`
+- **SID**: Environment variable `DB_SID`
+
+### Entity Registration
+All entities are registered in the TypeORM DataSource:
+```typescript
+entities: [
+  User, Quote, Event, Venue, PolicyHolder, 
+  Policy, Payment, PolicyVersion, EventLog, 
+  SentryError, BackupLog
+]
+```
+
+## Entity Models
+
+### Core Business Entities
+
+#### User Entity
+**File**: [backend/src/entities/user.entity.ts](mdc:backend/src/entities/user.entity.ts)
+- **Purpose**: User authentication and management
+- **Key Fields**: id, email, role, created_at, updated_at
+- **Relationships**: One-to-many with Quotes, Policies
+
+#### Quote Entity
+**File**: [backend/src/entities/quote.entity.ts](mdc:backend/src/entities/quote.entity.ts)
+- **Purpose**: Quote generation and storage
+- **Key Fields**: id, quote_number, amount, status, user_id
+- **Relationships**: Many-to-one with User, One-to-one with Event
+
+#### Event Entity
+**File**: [backend/src/entities/event.entity.ts](mdc:backend/src/entities/event.entity.ts)
+- **Purpose**: Wedding event details
+- **Key Fields**: id, event_date, event_type, guest_count, venue_id
+- **Relationships**: Many-to-one with Venue, One-to-one with Quote
+
+#### Venue Entity
+**File**: [backend/src/entities/venue.entity.ts](mdc:backend/src/entities/venue.entity.ts)
+- **Purpose**: Venue information
+- **Key Fields**: id, name, address, city, state, zip_code
+- **Relationships**: One-to-many with Events
+
+#### PolicyHolder Entity
+**File**: [backend/src/entities/policy-holder.entity.ts](mdc:backend/src/entities/policy-holder.entity.ts)
+- **Purpose**: Policy holder information
+- **Key Fields**: id, first_name, last_name, email, phone, address
+- **Relationships**: One-to-many with Policies
+
+#### Policy Entity
+**File**: [backend/src/entities/policy.entity.ts](mdc:backend/src/entities/policy.entity.ts)
+- **Purpose**: Insurance policy data
+- **Key Fields**: id, policy_number, premium_amount, status, effective_date
+- **Relationships**: Many-to-one with PolicyHolder, One-to-many with PolicyVersions
+
+### Supporting Entities
+
+#### Payment Entity
+**File**: [backend/src/entities/payment.entity.ts](mdc:backend/src/entities/payment.entity.ts)
+- **Purpose**: Payment transaction records
+- **Key Fields**: id, amount, payment_method, status, transaction_id
+- **Relationships**: Many-to-one with Policy
+
+#### PolicyVersion Entity
+**File**: [backend/src/entities/policy-version.entity.ts](mdc:backend/src/entities/policy-version.entity.ts)
+- **Purpose**: Policy versioning system
+- **Key Fields**: id, version_number, pdf_path, created_at, policy_id
+- **Relationships**: Many-to-one with Policy
+
+#### EventLog Entity
+**File**: [backend/src/entities/event-log.entity.ts](mdc:backend/src/entities/event-log.entity.ts)
+- **Purpose**: System event logging
+- **Key Fields**: id, event_type, description, user_id, created_at
+- **Relationships**: Many-to-one with User
+
+#### SentryError Entity
+**File**: [backend/src/entities/sentry-error.entity.ts](mdc:backend/src/entities/sentry-error.entity.ts)
+- **Purpose**: Error tracking and monitoring
+- **Key Fields**: id, error_message, stack_trace, user_id, created_at
+
+#### BackupLog Entity
+**File**: [backend/src/entities/backup-log.entity.ts](mdc:backend/src/entities/backup-log.entity.ts)
+- **Purpose**: Database backup operation logs
+- **Key Fields**: id, backup_type, status, file_path, created_at
+
+## Database Migrations
+
+### Migration Files
+Located in [backend/src/migrations/](mdc:backend/src/migrations)
+- **Initial Schema**: [backend/src/migrations/1749447378539-InitialSchema.ts](mdc:backend/src/migrations/1749447378539-InitialSchema.ts)
+- **Entity Updates**: Various migration files for schema changes
+- **Sample Data**: [backend/src/migrations/1749630529290-sample-updates.ts](mdc:backend/src/migrations/1749630529290-sample-updates.ts)
+
+### Migration Commands
+```bash
+# Generate new migration
+npm run typeorm:generate -- -n MigrationName
+
+# Run migrations
+npm run typeorm:migrate
+
+# Revert last migration
+npm run typeorm:revert
+```
+
+## Database Relationships
+
+### Primary Relationships
+1. **User → Quote**: One-to-many (User can have multiple quotes)
+2. **Quote → Event**: One-to-one (Each quote has one event)
+3. **Event → Venue**: Many-to-one (Events can share venues)
+4. **PolicyHolder → Policy**: One-to-many (PolicyHolder can have multiple policies)
+5. **Policy → PolicyVersion**: One-to-many (Policy can have multiple versions)
+6. **Policy → Payment**: One-to-many (Policy can have multiple payments)
+
+### Foreign Key Constraints
+- All relationships use proper foreign key constraints
+- Cascade options configured for data integrity
+- Indexes on frequently queried fields
+
+## Data Integrity
+
+### Constraints
+- **Primary Keys**: Auto-incrementing IDs
+- **Foreign Keys**: Referential integrity
+- **Unique Constraints**: Email addresses, policy numbers
+- **Check Constraints**: Status values, date validations
+
+### Validation Rules
+- Email format validation
+- Date range validations
+- Amount validations (positive numbers)
+- Status enum validations
+
+## Backup & Recovery
+
+### Backup Strategy
+- **Automated Backups**: Scheduled via [backend/src/services/backup.service.ts](mdc:backend/src/services/backup.service.ts)
+- **Backup Logging**: Tracked in BackupLog entity
+- **File Storage**: Backups stored in designated directory
+
+### Recovery Procedures
+- Point-in-time recovery capabilities
+- Migration rollback procedures
+- Data restoration from backups
+
+## Performance Considerations
+
+### Indexing Strategy
+- Primary key indexes (automatic)
+- Foreign key indexes
+- Composite indexes for common queries
+- Full-text search indexes where needed
+
+### Query Optimization
+- Use TypeORM query builder for complex queries
+- Implement pagination for large datasets
+- Use eager loading for related data
+- Cache frequently accessed data
+

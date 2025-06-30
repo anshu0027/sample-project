@@ -5,7 +5,8 @@ import { useQuote, QuoteState } from '@/context/QuoteContext';
 import { Button } from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import { formatCurrency } from '@/utils/validators';
-import { Mail } from 'lucide-react';
+import { Mail, ChevronDown } from 'lucide-react';
+import { useAuth } from '@clerk/nextjs';
 import { toast } from '@/hooks/use-toast';
 
 // ------------------------
@@ -16,25 +17,28 @@ import { toast } from '@/hooks/use-toast';
 export default function Step4() {
   const { state } = useQuote();
   const router = useRouter();
+  const { isSignedIn, isLoaded, getToken } = useAuth();
   // State to track if the email has been successfully sent, for UI feedback.
   const [emailSent, setEmailSent] = useState(false);
   // State to manage page readiness, primarily for showing a skeleton loader.
   const [pageReady, setPageReady] = useState(false);
   // State to hold any validation errors.
   const [errors, setErrors] = useState({});
+  // State to track the selected action (submit or payment link)
+  const [selectedAction, setSelectedAction] = useState('submit');
+  // State to track if payment link is being generated
+  const [generatingPaymentLink, setGeneratingPaymentLink] = useState(false);
+  // State to track dropdown open/close
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   // ------------------------
   // useEffect hook to handle page initialization, authentication, and step completion checks.
   // Redirects to login if not authenticated or to previous steps if they are not complete.
   // ------------------------
   useEffect(() => {
-    const isAdminAuthenticated = () => {
-      return typeof window !== 'undefined' && localStorage.getItem('admin_logged_in') === 'true';
-    };
-
     const timer = setTimeout(() => {
       // Check if admin is authenticated
-      if (!isAdminAuthenticated()) {
+      if (isLoaded && !isSignedIn) {
         router.replace('/admin/login');
         return;
       }
@@ -46,7 +50,24 @@ export default function Step4() {
       setPageReady(true);
     }, 200);
     return () => clearTimeout(timer);
-  }, [router, state.step3Complete]);
+  }, [router, state.step3Complete, isLoaded, isSignedIn]);
+
+  // ------------------------
+  // useEffect to handle clicking outside dropdown to close it
+  // ------------------------
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (dropdownOpen && !target.closest('.dropdown-container')) {
+        setDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [dropdownOpen]);
 
   // ------------------------
   // Navigates back to Step 3 (Policyholder Information).
@@ -67,14 +88,20 @@ export default function Step4() {
       'liabilityCoverage',
       'venueName',
       'venueAddress1',
-      'venueCountry',
       'venueCity',
-      'venueState',
-      'venueZip',
       'firstName',
       'lastName',
       'email',
     ];
+
+    // Check if it's a cruise ship venue
+    const isCruiseShip = state.ceremonyLocationType === 'cruise_ship';
+
+    // Only require country, state, zip if it's not a cruise ship
+    if (!isCruiseShip) {
+      requiredFields.push('venueCountry', 'venueState', 'venueZip');
+    }
+
     for (const field of requiredFields) {
       if (!state[field]) {
         toast.error(`${field} is missing`);
@@ -116,21 +143,18 @@ export default function Step4() {
       }
 
       try {
+        console.log('Saving quote with state:', state);
         // Update quote with final information
+        const token = await getToken();
         const res = await fetch(`${apiUrl}/quotes/${quoteNumber}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
           body: JSON.stringify({
-            coverageLevel: state.coverageLevel,
-            liabilityCoverage: state.liabilityCoverage,
-            liquorLiability: state.liquorLiability,
-            covidDisclosure: state.covidDisclosure,
-            specialActivities: state.specialActivities,
-            totalPremium: state.totalPremium,
-            basePremium: state.basePremium,
-            liabilityPremium: state.liabilityPremium,
-            liquorLiabilityPremium: state.liquorLiabilityPremium,
-            status: 'COMPLETE',
+            ...state, // Send all fields from state
+            status: 'COMPLETE', // Ensure status is set to COMPLETE
           }),
         });
 
@@ -167,10 +191,14 @@ export default function Step4() {
     }
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
     try {
+      const token = await getToken();
       const res = await fetch(`${apiUrl}/email/send`, {
         // UPDATED PATH
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({
           to: state.email,
           type: 'quote',
@@ -190,6 +218,87 @@ export default function Step4() {
     } catch (err) {
       const message = err instanceof Error ? err.message : 'An unknown error occurred.';
       toast.error(message);
+    }
+  };
+
+  // ------------------------
+  // Handles generating a payment link for the quote.
+  // First saves the quote, then generates a payment link.
+  // ------------------------
+  const handleGetPaymentLink = async () => {
+    if (!validateForm()) {
+      return;
+    }
+
+    setGeneratingPaymentLink(true);
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    const quoteNumber = localStorage.getItem('quoteNumber');
+
+    // Ensure quoteNumber is available from localStorage
+    if (!quoteNumber) {
+      toast.error('Quote number not found. Please start over.');
+      router.push('/admin/create-quote/step1');
+      return;
+    }
+
+    try {
+      console.log('Saving quote and generating payment link with state:', state);
+      // Update quote with final information
+      const token = await getToken();
+      const res = await fetch(`${apiUrl}/quotes/${quoteNumber}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          ...state, // Send all fields from state
+          status: 'PENDING_PAYMENT', // Set status to PENDING_PAYMENT
+        }),
+      });
+
+      // Handle API response
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Failed to update quote');
+      }
+
+      // Generate payment link
+      const paymentLink = `${window.location.origin}/checkout?quoteNumber=${quoteNumber}`;
+
+      toast.success('Payment link generated successfully!');
+
+      // Copy payment link to clipboard
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(paymentLink);
+        } else {
+          // Fallback for environments where clipboard API is not available
+          const textArea = document.createElement('textarea');
+          textArea.value = paymentLink;
+          textArea.style.position = 'fixed';
+          textArea.style.left = '-999999px';
+          textArea.style.top = '-999999px';
+          document.body.appendChild(textArea);
+          textArea.focus();
+          textArea.select();
+          document.execCommand('copy');
+          textArea.remove();
+        }
+        toast.success('Payment link copied to clipboard!');
+      } catch (clipboardError) {
+        console.error('Failed to copy to clipboard:', clipboardError);
+        // Show the link in a toast if clipboard fails
+        toast.success(`Payment link: ${paymentLink}`);
+      }
+
+      // Navigate to quotes list
+      router.push('/admin/quotes');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'An unknown error occurred.';
+      toast.error(message);
+    } finally {
+      setGeneratingPaymentLink(false);
     }
   };
 
@@ -261,13 +370,61 @@ export default function Step4() {
                 <Mail size={18} />
                 {emailSent ? 'Email Sent!' : 'Email Quote'}
               </Button>
+
+              {/* Action Dropdown */}
+              <div className="relative dropdown-container">
+                <button
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
+                  className="flex items-center justify-between w-48 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <span>{selectedAction === 'submit' ? 'Submit' : 'Pay Later'}</span>
+                  <ChevronDown
+                    size={16}
+                    className={`transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`}
+                  />
+                </button>
+
+                {dropdownOpen && (
+                  <div className="absolute right-0 z-10 w-48 mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                    <div className="py-1">
+                      <button
+                        onClick={() => {
+                          setSelectedAction('submit');
+                          setDropdownOpen(false);
+                        }}
+                        className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
+                          selectedAction === 'submit' ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
+                        }`}
+                      >
+                        Submit
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSelectedAction('payment-link');
+                          setDropdownOpen(false);
+                        }}
+                        className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
+                          selectedAction === 'payment-link'
+                            ? 'bg-blue-50 text-blue-700'
+                            : 'text-gray-700'
+                        }`}
+                      >
+                        Pay Later
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <Button
-                variant="primary"
+                // variant="primary"
+                className="px-7 py-2 rounded-full font-bold bg-blue-500 text-white shadow-sm hover:bg-green-600 transition-all"
                 size="lg"
-                onClick={handleSave}
+                onClick={selectedAction === 'submit' ? handleSave : handleGetPaymentLink}
+                disabled={generatingPaymentLink}
                 onMouseEnter={() => router.prefetch('/admin/quotes')}
               >
-                Save Quote
+                {generatingPaymentLink ? 'Generating...' : 'Proceed'}
               </Button>
             </div>
           }

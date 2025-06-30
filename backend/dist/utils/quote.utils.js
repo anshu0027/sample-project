@@ -12,14 +12,14 @@ const calculateBasePremium = (level) => {
         return 0;
     const premiumMap = {
         1: 160,
-        2: 200,
-        3: 250,
+        2: 210,
+        3: 255,
         4: 300,
         5: 355,
-        6: 450,
-        7: 600,
-        8: 750,
-        9: 900,
+        6: 500,
+        7: 615,
+        8: 735,
+        9: 870,
         10: 1025,
     };
     return premiumMap[level] || 0;
@@ -125,3 +125,4 @@ function mapMaxGuestsToGuestRange(maxGuests) {
         return "351-400";
     return undefined;
 }
+//# sourceMappingURL=quote.utils.js.map

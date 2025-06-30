@@ -10,6 +10,7 @@
     "format": "prettier --write \"**/*.{js,ts,tsx,json,md}\""
   },
   "dependencies": {
+    "@clerk/nextjs": "^6.23.0",
     "@radix-ui/themes": "^3.2.1",
     "axios": "^1.9.0",
     "class-variance-authority": "^0.7.1",

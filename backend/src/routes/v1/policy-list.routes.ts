@@ -3,6 +3,12 @@ import { Router, Request, Response } from "express";
 import { AppDataSource } from "../../data-source";
 import { Policy } from "../../entities/policy.entity";
 import { QuoteSource, PaymentStatus } from "../../entities/enums";
+import { SentryService } from "../../services/sentry.service";
+import { SentryErrorService } from "../../services/sentry-error.service";
+import { createClerkClient, verifyToken } from "@clerk/backend";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 // ------------------------
 // Router for handling policy list related API endpoints.
@@ -11,9 +17,12 @@ import { QuoteSource, PaymentStatus } from "../../entities/enums";
 // formatted for display in a list or table in the frontend.
 // ------------------------
 const router = Router();
+const sentryService = SentryService.getInstance();
+const sentryErrorService = SentryErrorService.getInstance();
 
 // --- GET /api/v1/policy-list --- Handles fetching a paginated list of policies.
 router.get("/", async (req: Request, res: Response) => {
+  const startTime = Date.now();
   try {
     // 1. Parse pagination parameters from the query string
     const page = parseInt((req.query.page as string) || "1", 10);
@@ -91,9 +100,7 @@ router.get("/", async (req: Request, res: Response) => {
       // Get the total premium from either the quote or the first payment
       // For admin quotes, prioritize the quote's total premium
       // ------------------------
-      const totalPremium = policy.quote?.source === QuoteSource.ADMIN
-        ? policy.quote?.totalPremium
-        : (payment?.amount || policy.quote?.totalPremium || 0);
+      const totalPremium = policy.quote?.totalPremium || 0;
 
       // ------------------------
       // Construct the formatted policy object.
@@ -156,8 +163,22 @@ router.get("/", async (req: Request, res: Response) => {
     // Log the final response for debugging.
     // ------------------------
     // console.log("Final response:", JSON.stringify(response, null, 2));
+    await sentryService.logApiCall(req, res, startTime, response);
     res.json(response);
   } catch (error) {
+    await sentryErrorService.captureRequestError(
+      req,
+      res,
+      error as Error,
+      res.statusCode || 500
+    );
+    await sentryService.logApiCall(
+      req,
+      res,
+      startTime,
+      undefined,
+      error as Error
+    );
     // ------------------------
     // Error handling for GET /api/v1/policy-list.
     // ------------------------

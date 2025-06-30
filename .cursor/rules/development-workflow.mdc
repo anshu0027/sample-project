@@ -1,0 +1,126 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Development Workflow Guide
+
+## Project Setup
+
+### Prerequisites
+- Node.js (v18+)
+- Oracle Database
+- Environment variables configured
+
+### Installation
+```bash
+# Backend setup
+cd backend
+npm install
+npm run dev  # Runs on port 8000 with HTTPS
+
+# Frontend setup  
+cd frontend
+npm install
+npm run dev  # Runs on port 3000 with HTTPS
+```
+
+## Development Commands
+
+### Backend Commands
+Located in [backend/package.json](mdc:backend/package.json)
+- `npm run dev` - Development server with hot reload
+- `npm run build` - TypeScript compilation
+- `npm run typeorm:migrate` - Run database migrations
+- `npm run typeorm:generate` - Generate new migration
+- `npm run typeorm:revert` - Revert last migration
+
+### Frontend Commands
+Located in [frontend/package.json](mdc:frontend/package.json)
+- `npm run dev` - Development server with HTTPS
+- `npm run build` - Production build
+- `npm run lint` - ESLint checking
+- `npm run format` - Prettier formatting
+
+## Database Management
+
+### Migrations
+- **Location**: [backend/src/migrations/](mdc:backend/src/migrations)
+- **Generate**: `npm run typeorm:generate -- -n MigrationName`
+- **Run**: `npm run typeorm:migrate`
+- **Revert**: `npm run typeorm:revert`
+
+### Entity Changes
+- Modify entities in [backend/src/entities/](mdc:backend/src/entities)
+- Generate migration for schema changes
+- Update [backend/src/data-source.ts](mdc:backend/src/data-source.ts) if adding new entities
+
+## API Development
+
+### Adding New Routes
+1. Create route file in [backend/src/routes/v1/](mdc:backend/src/routes/v1)
+2. Import and mount in [backend/src/index.ts](mdc:backend/src/index.ts)
+3. Follow existing patterns for middleware and error handling
+
+### Adding New Services
+1. Create service file in [backend/src/services/](mdc:backend/src/services)
+2. Follow dependency injection patterns
+3. Add to appropriate route handlers
+
+## Frontend Development
+
+### Adding New Pages
+1. Create page file in [frontend/src/app/](mdc:frontend/src/app)
+2. Follow App Router conventions
+3. Use existing layout components
+
+### Adding New Components
+1. Create component in [frontend/src/components/](mdc:frontend/src/components)
+2. Use existing UI components from [frontend/src/components/ui/](mdc:frontend/src/components/ui)
+3. Follow TypeScript patterns
+
+### State Management
+- Use [frontend/src/context/QuoteContext.tsx](mdc:frontend/src/context/QuoteContext.tsx) for global quote state
+- Create new contexts for other global state as needed
+- Use React hooks for local component state
+
+## Common Development Tasks
+
+### Adding New Entity
+1. Create entity in [backend/src/entities/](mdc:backend/src/entities)
+2. Add to [backend/src/data-source.ts](mdc:backend/src/data-source.ts)
+3. Generate and run migration
+4. Create corresponding service and routes
+
+### Adding New API Endpoint
+1. Add route handler in appropriate route file
+2. Add service method if needed
+3. Update TypeScript types
+4. Test with frontend integration
+
+### PDF Generation
+- **Backend**: Use [backend/src/services/pdf.service.ts](mdc:backend/src/services/pdf.service.ts)
+- **Frontend**: Use jsPDF in components
+- **Templates**: Store in [backend/public/](mdc:backend/public)
+
+### Email Integration
+- Configure in [backend/src/services/email.service.ts](mdc:backend/src/services/email.service.ts)
+- Templates in [backend/src/utils/emailTemplates.ts](mdc:backend/src/utils/emailTemplates.ts)
+
+## Testing & Debugging
+
+### Backend Debugging
+- Check logs in console output
+- Use Winston logger for structured logging
+- Check database connection in [backend/src/data-source.ts](mdc:backend/src/data-source.ts)
+
+### Frontend Debugging
+- Use browser dev tools
+- Check Clerk authentication status
+- Verify API calls to backend
+
+### Database Debugging
+- Check migration status
+- Verify entity relationships
+- Use TypeORM logging for SQL queries
+

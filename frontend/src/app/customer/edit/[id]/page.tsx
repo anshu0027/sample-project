@@ -57,6 +57,7 @@ interface QuoteFormState {
   receptionVenueState: string;
   receptionVenueZip: string;
   receptionVenueAsInsured: boolean;
+  receptionUseMainVenueAddress: boolean;
   // Brunch venue fields
   brunchLocationType: string;
   brunchIndoorOutdoor: string;
@@ -68,6 +69,7 @@ interface QuoteFormState {
   brunchVenueState: string;
   brunchVenueZip: string;
   brunchVenueAsInsured: boolean;
+  brunchUseMainVenueAddress: boolean;
   // Rehearsal venue fields
   rehearsalLocationType: string;
   rehearsalIndoorOutdoor: string;
@@ -79,6 +81,7 @@ interface QuoteFormState {
   rehearsalVenueState: string;
   rehearsalVenueZip: string;
   rehearsalVenueAsInsured: boolean;
+  rehearsalUseMainVenueAddress: boolean;
   // Rehearsal dinner venue fields
   rehearsalDinnerLocationType: string;
   rehearsalDinnerIndoorOutdoor: string;
@@ -90,6 +93,7 @@ interface QuoteFormState {
   rehearsalDinnerVenueState: string;
   rehearsalDinnerVenueZip: string;
   rehearsalDinnerVenueAsInsured: boolean;
+  rehearsalDinnerUseMainVenueAddress: boolean;
   firstName: string;
   lastName: string;
   phone: string;
@@ -148,6 +152,7 @@ function flattenQuote(quote: any): QuoteFormState {
     receptionVenueState: quote.event?.venue?.receptionVenueState || '',
     receptionVenueZip: quote.event?.venue?.receptionVenueZip || '',
     receptionVenueAsInsured: quote.event?.venue?.receptionVenueAsInsured || false,
+    receptionUseMainVenueAddress: quote.event?.venue?.receptionUseMainVenueAddress || false,
     // Brunch venue fields
     brunchLocationType: quote.event?.venue?.brunchLocationType || '',
     brunchIndoorOutdoor: quote.event?.venue?.brunchIndoorOutdoor || '',
@@ -159,6 +164,7 @@ function flattenQuote(quote: any): QuoteFormState {
     brunchVenueState: quote.event?.venue?.brunchVenueState || '',
     brunchVenueZip: quote.event?.venue?.brunchVenueZip || '',
     brunchVenueAsInsured: quote.event?.venue?.brunchVenueAsInsured || false,
+    brunchUseMainVenueAddress: quote.event?.venue?.brunchUseMainVenueAddress || false,
     // Rehearsal venue fields
     rehearsalLocationType: quote.event?.venue?.rehearsalLocationType || '',
     rehearsalIndoorOutdoor: quote.event?.venue?.rehearsalIndoorOutdoor || '',
@@ -170,6 +176,7 @@ function flattenQuote(quote: any): QuoteFormState {
     rehearsalVenueState: quote.event?.venue?.rehearsalVenueState || '',
     rehearsalVenueZip: quote.event?.venue?.rehearsalVenueZip || '',
     rehearsalVenueAsInsured: quote.event?.venue?.rehearsalVenueAsInsured || false,
+    rehearsalUseMainVenueAddress: quote.event?.venue?.rehearsalUseMainVenueAddress || false,
     // Rehearsal dinner venue fields
     rehearsalDinnerLocationType: quote.event?.venue?.rehearsalDinnerLocationType || '',
     rehearsalDinnerIndoorOutdoor: quote.event?.venue?.rehearsalDinnerIndoorOutdoor || '',
@@ -181,6 +188,8 @@ function flattenQuote(quote: any): QuoteFormState {
     rehearsalDinnerVenueState: quote.event?.venue?.rehearsalDinnerVenueState || '',
     rehearsalDinnerVenueZip: quote.event?.venue?.rehearsalDinnerVenueZip || '',
     rehearsalDinnerVenueAsInsured: quote.event?.venue?.rehearsalDinnerVenueAsInsured || false,
+    rehearsalDinnerUseMainVenueAddress:
+      quote.event?.venue?.rehearsalDinnerUseMainVenueAddress || false,
     firstName: quote.policyHolder?.firstName || '',
     lastName: quote.policyHolder?.lastName || '',
     phone: quote.policyHolder?.phone || '',
@@ -309,6 +318,54 @@ export default function EditUserQuote() {
     if (!formState.venueCity) newErrors.venueCity = 'Required';
     if (!formState.venueState) newErrors.venueState = 'Required';
     if (!formState.venueZip) newErrors.venueZip = 'Required';
+
+    // For weddings, all additional venue sections are required
+    if (formState.eventType === 'wedding') {
+      // Reception Venue - Required for weddings
+      if (!formState.receptionLocationType) newErrors.receptionLocationType = 'Required';
+      if (!formState.receptionIndoorOutdoor) newErrors.receptionIndoorOutdoor = 'Required';
+      if (!formState.receptionVenueName) newErrors.receptionVenueName = 'Required';
+      if (!formState.receptionVenueAddress1) newErrors.receptionVenueAddress1 = 'Required';
+      if (!formState.receptionVenueCountry) newErrors.receptionVenueCountry = 'Required';
+      if (!formState.receptionVenueCity) newErrors.receptionVenueCity = 'Required';
+      if (!formState.receptionVenueState) newErrors.receptionVenueState = 'Required';
+      if (!formState.receptionVenueZip) newErrors.receptionVenueZip = 'Required';
+
+      // Brunch Venue - Required for weddings
+      if (!formState.brunchLocationType) newErrors.brunchLocationType = 'Required';
+      if (!formState.brunchIndoorOutdoor) newErrors.brunchIndoorOutdoor = 'Required';
+      if (!formState.brunchVenueName) newErrors.brunchVenueName = 'Required';
+      if (!formState.brunchVenueAddress1) newErrors.brunchVenueAddress1 = 'Required';
+      if (!formState.brunchVenueCountry) newErrors.brunchVenueCountry = 'Required';
+      if (!formState.brunchVenueCity) newErrors.brunchVenueCity = 'Required';
+      if (!formState.brunchVenueState) newErrors.brunchVenueState = 'Required';
+      if (!formState.brunchVenueZip) newErrors.brunchVenueZip = 'Required';
+
+      // Rehearsal Venue - Required for weddings
+      if (!formState.rehearsalLocationType) newErrors.rehearsalLocationType = 'Required';
+      if (!formState.rehearsalIndoorOutdoor) newErrors.rehearsalIndoorOutdoor = 'Required';
+      if (!formState.rehearsalVenueName) newErrors.rehearsalVenueName = 'Required';
+      if (!formState.rehearsalVenueAddress1) newErrors.rehearsalVenueAddress1 = 'Required';
+      if (!formState.rehearsalVenueCountry) newErrors.rehearsalVenueCountry = 'Required';
+      if (!formState.rehearsalVenueCity) newErrors.rehearsalVenueCity = 'Required';
+      if (!formState.rehearsalVenueState) newErrors.rehearsalVenueState = 'Required';
+      if (!formState.rehearsalVenueZip) newErrors.rehearsalVenueZip = 'Required';
+
+      // Rehearsal Dinner Venue - Required for weddings
+      if (!formState.rehearsalDinnerLocationType)
+        newErrors.rehearsalDinnerLocationType = 'Required';
+      if (!formState.rehearsalDinnerIndoorOutdoor)
+        newErrors.rehearsalDinnerIndoorOutdoor = 'Required';
+      if (!formState.rehearsalDinnerVenueName) newErrors.rehearsalDinnerVenueName = 'Required';
+      if (!formState.rehearsalDinnerVenueAddress1)
+        newErrors.rehearsalDinnerVenueAddress1 = 'Required';
+      if (!formState.rehearsalDinnerVenueCountry)
+        newErrors.rehearsalDinnerVenueCountry = 'Required';
+      if (!formState.rehearsalDinnerVenueCity) newErrors.rehearsalDinnerVenueCity = 'Required';
+      if (!formState.rehearsalDinnerVenueState) newErrors.rehearsalDinnerVenueState = 'Required';
+      if (!formState.rehearsalDinnerVenueZip) newErrors.rehearsalDinnerVenueZip = 'Required';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -403,8 +460,8 @@ export default function EditUserQuote() {
     }
 
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-    // The payload now just needs to mark the status as complete.
-    const payload = { ...formState, status: 'COMPLETE' };
+    // Mark the quote as having completed up to Step 3 when proceeding to review
+    const payload = { ...formState, status: 'STEP3' };
 
     try {
       const res = await fetch(`${apiUrl}/quotes/${id}`, {
@@ -426,7 +483,7 @@ export default function EditUserQuote() {
         router.push(`/customer/review?qn=${finalQuoteState.quoteNumber}&retrieved=true`);
       } else {
         const data = await res.json();
-        throw new Error(data.error || 'Failed to finalize quote for review.');
+        throw new Error(data.error || 'Failed to save quote for review.');
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'An unknown error occurred.';
@@ -450,8 +507,142 @@ export default function EditUserQuote() {
 
   const handleStep2Continue = async () => {
     if (validateStep2()) {
-      const saved = await saveCurrentStepData(2);
+      const saved = await saveStep2Data();
       if (saved) setStep(3);
+    }
+  };
+
+  // Save only Step 2 data to backend
+  const saveStep2Data = async () => {
+    if (!validateStep2()) {
+      toast({ title: 'Please fix errors before saving.', variant: 'destructive' });
+      return false;
+    }
+
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+    // Check if it's a cruise ship venue
+    const isCruiseShip = formState?.ceremonyLocationType === 'cruise_ship';
+
+    // Only include Step 2 fields in the payload
+    const step2Payload = {
+      // Include eventType as it's required by backend for processing
+      eventType: formState?.eventType,
+      // Include maxGuests to prevent it from being reset
+      maxGuests: formState?.maxGuests,
+
+      // Honoree information
+      honoree1FirstName: formState?.honoree1FirstName,
+      honoree1LastName: formState?.honoree1LastName,
+      honoree2FirstName: formState?.honoree2FirstName,
+      honoree2LastName: formState?.honoree2LastName,
+
+      // Main venue fields
+      ceremonyLocationType: formState?.ceremonyLocationType,
+      indoorOutdoor: formState?.indoorOutdoor,
+      venueName: formState?.venueName,
+      venueAddress1: formState?.venueAddress1,
+      venueAddress2: formState?.venueAddress2,
+
+      // Only include country, state, zip if it's not a cruise ship
+      ...(isCruiseShip
+        ? {}
+        : {
+            venueCountry: formState?.venueCountry,
+            venueCity: formState?.venueCity,
+            venueState: formState?.venueState,
+            venueZip: formState?.venueZip,
+          }),
+
+      venueAsInsured: formState?.venueAsInsured,
+
+      // Reception venue fields (only for weddings)
+      ...(formState?.eventType === 'wedding' && {
+        receptionLocationType: formState?.receptionLocationType,
+        receptionIndoorOutdoor: formState?.receptionIndoorOutdoor,
+        receptionVenueName: formState?.receptionVenueName,
+        receptionVenueAddress1: formState?.receptionVenueAddress1,
+        receptionVenueAddress2: formState?.receptionVenueAddress2,
+        receptionVenueCountry: formState?.receptionVenueCountry,
+        receptionVenueCity: formState?.receptionVenueCity,
+        receptionVenueState: formState?.receptionVenueState,
+        receptionVenueZip: formState?.receptionVenueZip,
+        receptionVenueAsInsured: formState?.receptionVenueAsInsured,
+        receptionUseMainVenueAddress: formState?.receptionUseMainVenueAddress,
+      }),
+
+      // Brunch venue fields (only for weddings)
+      ...(formState?.eventType === 'wedding' && {
+        brunchLocationType: formState?.brunchLocationType,
+        brunchIndoorOutdoor: formState?.brunchIndoorOutdoor,
+        brunchVenueName: formState?.brunchVenueName,
+        brunchVenueAddress1: formState?.brunchVenueAddress1,
+        brunchVenueAddress2: formState?.brunchVenueAddress2,
+        brunchVenueCountry: formState?.brunchVenueCountry,
+        brunchVenueCity: formState?.brunchVenueCity,
+        brunchVenueState: formState?.brunchVenueState,
+        brunchVenueZip: formState?.brunchVenueZip,
+        brunchVenueAsInsured: formState?.brunchVenueAsInsured,
+        brunchUseMainVenueAddress: formState?.brunchUseMainVenueAddress,
+      }),
+
+      // Rehearsal venue fields (only for weddings)
+      ...(formState?.eventType === 'wedding' && {
+        rehearsalLocationType: formState?.rehearsalLocationType,
+        rehearsalIndoorOutdoor: formState?.rehearsalIndoorOutdoor,
+        rehearsalVenueName: formState?.rehearsalVenueName,
+        rehearsalVenueAddress1: formState?.rehearsalVenueAddress1,
+        rehearsalVenueAddress2: formState?.rehearsalVenueAddress2,
+        rehearsalVenueCountry: formState?.rehearsalVenueCountry,
+        rehearsalVenueCity: formState?.rehearsalVenueCity,
+        rehearsalVenueState: formState?.rehearsalVenueState,
+        rehearsalVenueZip: formState?.rehearsalVenueZip,
+        rehearsalVenueAsInsured: formState?.rehearsalVenueAsInsured,
+        rehearsalUseMainVenueAddress: formState?.rehearsalUseMainVenueAddress,
+      }),
+
+      // Rehearsal dinner venue fields (only for weddings)
+      ...(formState?.eventType === 'wedding' && {
+        rehearsalDinnerLocationType: formState?.rehearsalDinnerLocationType,
+        rehearsalDinnerIndoorOutdoor: formState?.rehearsalDinnerIndoorOutdoor,
+        rehearsalDinnerVenueName: formState?.rehearsalDinnerVenueName,
+        rehearsalDinnerVenueAddress1: formState?.rehearsalDinnerVenueAddress1,
+        rehearsalDinnerVenueAddress2: formState?.rehearsalDinnerVenueAddress2,
+        rehearsalDinnerVenueCountry: formState?.rehearsalDinnerVenueCountry,
+        rehearsalDinnerVenueCity: formState?.rehearsalDinnerVenueCity,
+        rehearsalDinnerVenueState: formState?.rehearsalDinnerVenueState,
+        rehearsalDinnerVenueZip: formState?.rehearsalDinnerVenueZip,
+        rehearsalDinnerVenueAsInsured: formState?.rehearsalDinnerVenueAsInsured,
+        rehearsalDinnerUseMainVenueAddress: formState?.rehearsalDinnerUseMainVenueAddress,
+      }),
+    };
+
+    try {
+      const res = await fetch(`${apiUrl}/quotes/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(step2Payload),
+      });
+
+      const responseData = await res.json();
+
+      if (res.ok) {
+        toast({ title: 'Step 2 data saved!', variant: 'default' });
+        const updatedStateFromSave = flattenQuote(responseData.quote);
+        setFormState(updatedStateFromSave);
+        dispatch({
+          type: 'SET_ENTIRE_QUOTE_STATE',
+          payload: updatedStateFromSave as Partial<QuoteState>,
+        });
+        return true;
+      } else {
+        throw new Error(responseData.error || 'Failed to update Step 2 data.');
+      }
+    } catch (error) {
+      console.error('Save Step 2 error:', error);
+      const message = error instanceof Error ? error.message : 'An unknown error occurred.';
+      toast({ title: message, variant: 'destructive' });
+      return false;
     }
   };
 
@@ -507,18 +698,16 @@ export default function EditUserQuote() {
           onContinue={handleStep1Continue}
           showQuoteResults={showQuoteResults}
           handleCalculateQuote={handleStep1QuoteCalculated}
-          onSave={() => saveCurrentStepData(1)}
           isCustomerEdit={true}
         />
       )}
       {step === 2 && (
         <Step2Form
-          state={formState}
+          state={formState as any}
           errors={errors}
           onChange={handleInputChange}
           onValidate={validateStep2}
           onContinue={handleStep2Continue}
-          onSave={() => saveCurrentStepData(2)}
         />
       )}
       {step === 3 && (
@@ -526,7 +715,7 @@ export default function EditUserQuote() {
           state={formState}
           errors={errors}
           onChange={handleInputChange}
-          onSave={() => saveCurrentStepData(3)}
+          onValidate={validateStep3}
         />
       )}
     </div>

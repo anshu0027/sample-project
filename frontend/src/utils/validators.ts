@@ -44,12 +44,32 @@ export const doEmailsMatch = (email1: string, email2: string): boolean => {
 /**
  * Validates US phone number format.
  * Accepts (123) 456-7890, 123-456-7890, 1234567890, and similar.
+ * Must contain exactly 10 digits (excluding country code).
  * @param phone - The phone number string.
  * @returns True if valid, false otherwise.
  */
 export const isValidPhone = (phone: string): boolean => {
+  // Remove all non-digits to count actual digits
+  const digitsOnly = phone.replace(/\D/g, '');
+
+  // Must have exactly 10 digits (excluding country code)
+  if (digitsOnly.length !== 10) {
+    return false;
+  }
+
+  // Check format with regex (allows country code + 10 digits)
   const phoneRegex = /^(\+\d{1,2}\s?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$/;
   return phoneRegex.test(phone);
+};
+
+/**
+ * Validates a name string to ensure it contains only letters and spaces.
+ * @param name - The name string to validate.
+ * @returns True if the name is valid, false otherwise.
+ */
+export const isValidName = (name: string): boolean => {
+  const nameRegex = /^[a-zA-Z\s]+$/;
+  return nameRegex.test(name);
 };
 
 // ------------------------

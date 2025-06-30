@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import {
   CreditCard,
@@ -26,6 +26,7 @@ const paymentOptions = [
 
 export default function Payment() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [selected, setSelected] = useState('card');
   const [processing, setProcessing] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
@@ -41,7 +42,21 @@ export default function Payment() {
     const fetchQuoteDetails = async () => {
       try {
         const quoteNumber = localStorage.getItem('quoteNumber');
+        const isRetrieved = searchParams.get('retrieved') === 'true';
+
         if (!quoteNumber) {
+          // For retrieved quotes, don't redirect - just show an error
+          if (isRetrieved) {
+            toast({
+              title: 'No quote found',
+              description: 'Please retrieve your quote again to proceed with payment.',
+              variant: 'destructive',
+            });
+            console.log('No quote found');
+            setPageLoading(false);
+            return;
+          }
+
           toast({
             title: 'No quote found',
             description: 'Please start a new quote to proceed with payment.',
@@ -53,17 +68,34 @@ export default function Payment() {
 
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/quotes?quoteNumber=${quoteNumber}`,
+          { cache: 'no-store' },
         );
         const data = await response.json();
 
         if (response.ok && data.quote) {
           setQuoteDetails(data.quote);
-          localStorage.setItem('retrievedQuote', 'true');
+          // Only set retrievedQuote=true if this is actually a retrieved quote
+          if (isRetrieved) {
+            localStorage.setItem('retrievedQuote', 'true');
+          }
         } else {
           throw new Error(data.error || 'Failed to fetch quote details');
         }
       } catch (error) {
         console.error('Failed to fetch quote details:', error);
+        const isRetrieved = searchParams.get('retrieved') === 'true';
+
+        // For retrieved quotes, don't redirect - just show an error
+        if (isRetrieved) {
+          toast({
+            title: 'Error',
+            description: 'Failed to load quote details. Please try again or contact support.',
+            variant: 'destructive',
+          });
+          setPageLoading(false);
+          return;
+        }
+
         toast({
           title: 'Error',
           description: 'Failed to load quote details. Please try again.',
@@ -92,7 +124,7 @@ export default function Payment() {
     document.body.appendChild(script);
 
     fetchQuoteDetails();
-  }, [router]);
+  }, [router, searchParams]);
 
   const handlePay = async () => {
     if (processing) return; // Prevent double submission
@@ -223,12 +255,12 @@ export default function Payment() {
           variant: 'default',
         });
 
+        // Check if this is a retrieved quote BEFORE clearing localStorage
+        const isRetrieved = localStorage.getItem('retrievedQuote') === 'true';
+
         // Clear quote data from localStorage
         localStorage.removeItem('quoteNumber');
         localStorage.removeItem('retrievedQuote');
-
-        // Check if this is a retrieved quote
-        const isRetrieved = localStorage.getItem('retrievedQuote') === 'true';
 
         // Redirect to review page with payment success parameters
         router.push(
@@ -323,8 +355,11 @@ export default function Payment() {
                       value={cardData.expiryMonth}
                       onChange={(e) => {
                         const value = e.target.value.replace(/\D/g, '');
-                        if (value.length <= 2 && parseInt(value) <= 12) {
-                          setCardData({ ...cardData, expiryMonth: value });
+                        if (value.length <= 2) {
+                          const numValue = parseInt(value);
+                          if (value === '' || (numValue >= 1 && numValue <= 12)) {
+                            setCardData({ ...cardData, expiryMonth: value });
+                          }
                         }
                       }}
                       placeholder="MM"

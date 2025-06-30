@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { AlertCircle, ChevronDown, DollarSign } from 'lucide-react';
 import { useQuote } from '@/context/QuoteContext';
@@ -7,6 +7,7 @@ import type { QuoteState } from '@/context/QuoteContext'; // Keep this if it's u
 import { Button } from '@/components/ui/Button';
 import Checkbox from '@/components/ui/Checkbox';
 import DatePicker from '@/components/ui/DatePicker';
+import { useAuth } from '@clerk/nextjs';
 import {
   US_STATES,
   EVENT_TYPES,
@@ -86,8 +87,17 @@ const calculateLiabilityPremium = (option: LiabilityOption): number => {
 const calculateLiquorLiabilityPremium = (
   hasLiquorLiability: boolean,
   guestRange: GuestRange,
+  liabilityOption: LiabilityOption,
 ): number => {
   if (!hasLiquorLiability) return 0;
+
+  // Check if this is a new liability option (option4, option5, option6)
+  const isNewLiabilityOption = ['option4', 'option5', 'option6'].includes(liabilityOption);
+
+  if (isNewLiabilityOption) {
+    return LIQUOR_LIABILITY_PREMIUMS_NEW[guestRange] || 0;
+  }
+
   return LIQUOR_LIABILITY_PREMIUMS[guestRange] || 0;
 };
 
@@ -97,6 +107,24 @@ const calculateLiquorLiabilityPremium = (
 export default function QuoteGenerator() {
   const router = useRouter();
   const { state, dispatch } = useQuote();
+  const { isSignedIn, isLoaded, getToken } = useAuth();
+
+  // Function to create a hash of the current form data for comparison
+  const createFormDataHash = useCallback(() => {
+    const formData = {
+      residentState: state.residentState,
+      eventType: state.eventType,
+      maxGuests: state.maxGuests,
+      eventDate: state.eventDate,
+      coverageLevel: state.coverageLevel,
+      liabilityCoverage: state.liabilityCoverage,
+      liquorLiability: state.liquorLiability,
+      covidDisclosure: state.covidDisclosure,
+      specialActivities: state.specialActivities,
+      email: state.email,
+    };
+    return JSON.stringify(formData);
+  }, [state]);
 
   // =============================
   // ===== Component State =====
@@ -105,7 +133,10 @@ export default function QuoteGenerator() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showQuoteResults, setShowQuoteResults] = useState(false);
   const [showSpecialActivitiesModal, setShowSpecialActivitiesModal] = useState(false);
+  const [showContactModal, setShowContactModal] = useState(false);
   const [isLoading] = useState(false); // removed setIsLoading as it was never used
+  const [lastCalculatedData, setLastCalculatedData] = useState<string>('');
+  const [isCalculating, setIsCalculating] = useState(false);
 
   // =============================
   // ===== Input Change Handler =====
@@ -120,6 +151,10 @@ export default function QuoteGenerator() {
         delete newErrors[field];
         return newErrors;
       });
+    }
+    // Reset last calculated data when form changes
+    if (lastCalculatedData) {
+      setLastCalculatedData('');
     }
     // Reset quote results when key fields change
     if (['coverageLevel', 'liabilityCoverage', 'liquorLiability', 'maxGuests'].includes(field)) {
@@ -212,6 +247,24 @@ export default function QuoteGenerator() {
   // Handle calculate quote
   const handleCalculateQuote = async () => {
     if (validateForm()) {
+      // Check if form data has changed since last calculation
+      const currentFormDataHash = createFormDataHash();
+
+      if (lastCalculatedData === currentFormDataHash && state.quoteNumber) {
+        // No changes detected, just show existing results
+        setShowQuoteResults(true);
+        // toast.info('No changes detected. Showing previous quote results.');
+        return;
+      }
+
+      // Prevent multiple simultaneous calculations
+      if (isCalculating) {
+        // toast.info('Quote calculation in progress...');
+        return;
+      }
+
+      setIsCalculating(true);
+
       try {
         // Calculate premiums
         const basePremium = calculateBasePremium(state.coverageLevel);
@@ -219,6 +272,7 @@ export default function QuoteGenerator() {
         const liquorLiabilityPremium = calculateLiquorLiabilityPremium(
           state.liquorLiability,
           state.maxGuests as GuestRange,
+          state.liabilityCoverage as LiabilityOption,
         );
         const totalPremium = basePremium + liabilityPremium + liquorLiabilityPremium;
         // Update state with calculated values
@@ -232,10 +286,16 @@ export default function QuoteGenerator() {
           },
         });
         const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+        // Get the authentication token - use session token for backend verification
+        const token = await getToken();
+
         // Create initial quote with step 1 data
         const res = await fetch(`${apiUrl}/quotes`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
           body: JSON.stringify({
             // Base quote data
             residentState: state.residentState,
@@ -337,6 +397,10 @@ export default function QuoteGenerator() {
           throw new Error(errorData.error || 'Failed to create quote');
         }
         const data = await res.json();
+
+        // Store the form data hash to track changes
+        setLastCalculatedData(currentFormDataHash);
+
         localStorage.setItem('quoteNumber', data.quote.quoteNumber);
         dispatch({
           type: 'UPDATE_FIELD',
@@ -345,10 +409,41 @@ export default function QuoteGenerator() {
         });
         setShowQuoteResults(true);
         dispatch({ type: 'COMPLETE_STEP', step: 1 });
+
+        // Show appropriate message based on whether it's a duplicate
+        if (data.isDuplicate) {
+          // toast.info(data.message || 'Duplicate quote detected. Showing existing quote.');
+        } else {
+          toast.success('Quote calculated successfully!');
+        }
+
+        // === Send email to client ===
+        try {
+          const emailRes = await fetch(`${apiUrl}/email/send`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              to: state.email,
+              type: 'quote',
+              data: data.quote,
+            }),
+          });
+          if (emailRes.ok) {
+            toast.success('Quotation email sent!');
+          } else {
+            const emailData = await emailRes.json();
+            toast.error(`Failed to send email: ${emailData.error || 'Unknown error'}`);
+          }
+        } catch {
+          toast.error('Failed to send email.');
+        }
+
         // router.prefetch('/admin/create-quote/step2'); // Prefetch can be moved to button's onMouseEnter
       } catch (error) {
         const message = error instanceof Error ? error.message : 'An unknown error occurred.';
         toast.error(message);
+      } finally {
+        setIsCalculating(false);
       }
     } else {
       Object.entries(errors).forEach(([, msg]) => toast.error(msg));
@@ -397,16 +492,14 @@ export default function QuoteGenerator() {
     }
   };
 
+  // =============================
+  // ===== Authentication Check =====
+  // =============================
   useEffect(() => {
-    // Replace with real admin auth check
-    const isAdminAuthenticated = () => {
-      // Use the same key as AdminLayout
-      return typeof window !== 'undefined' && localStorage.getItem('admin_logged_in') === 'true';
-    };
-    if (!isAdminAuthenticated()) {
+    if (isLoaded && !isSignedIn) {
       router.replace('/admin/login');
     }
-  }, [router]);
+  }, [isLoaded, isSignedIn, router]);
 
   // =============================
   // ===== Main Component Render =====
@@ -869,11 +962,11 @@ export default function QuoteGenerator() {
               variant="primary"
               size="lg"
               onClick={handleCalculateQuote}
-              //
-              className="transition-transform duration-150"
+              disabled={isCalculating}
+              className="transition-transform duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <DollarSign size={18} />
-              Calculate Quote
+              {isCalculating ? 'Calculating...' : 'Calculate Quote'}
             </Button>
             {/* onSave button is not part of this page's logic, so it's omitted */}
           </div>
@@ -1091,12 +1184,86 @@ export default function QuoteGenerator() {
                   onClick={() => {
                     // Retain existing logic for admin: just close modal, admin will contact separately if needed.
                     setShowSpecialActivitiesModal(false);
+                    setShowContactModal(true);
                     // Optionally, you could set specialActivities to true here if that's the desired admin flow.
                     // handleInputChange("specialActivities", true);
                   }}
                 >
                   Contact me for special coverage
                 </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Contact Modal */}
+      {showContactModal && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center px-4 py-6 sm:px-6">
+          <div className="bg-white rounded-2xl shadow-xl w-full min-w-[300px] sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl max-h-[90vh] overflow-y-auto transition-transform duration-300 ease-out animate-fade-in">
+            <div className="p-6 sm:p-8">
+              <h3 className="text-xl sm:text-2xl font-semibold text-blue-600 mb-4">
+                Contact Our Support Team
+              </h3>
+              <p className="text-gray-700 mb-5 text-sm sm:text-base leading-relaxed">
+                For special activities coverage, please contact our support team directly.
+                We&apos;ll work with you to provide the appropriate coverage for your event.
+              </p>
+
+              <div className="space-y-4 mb-6">
+                <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                  <h4 className="font-semibold text-blue-800 mb-2">Contact Information</h4>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center">
+                      <span className="font-medium text-gray-700 w-20">Email:</span>
+                      <span className="text-blue-600">support@weddinginsurance.com</span>
+                    </div>
+                    <div className="flex items-center">
+                      <span className="font-medium text-gray-700 w-20">Phone:</span>
+                      <span className="text-blue-600">1-800-WEDDING</span>
+                    </div>
+                    <div className="flex items-center">
+                      <span className="font-medium text-gray-700 w-20">Hours:</span>
+                      <span className="text-gray-600">Mon-Fri 9AM-6PM EST</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
+                  <h4 className="font-semibold text-yellow-800 mb-2">What to Include</h4>
+                  <ul className="text-sm text-gray-700 space-y-1">
+                    <li>• Description of your special activities</li>
+                    <li>• Event date and location</li>
+                    <li>• Number of guests</li>
+                    <li>• Any existing quote number</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row sm:justify-end gap-3">
+                <Button
+                  variant="outline"
+                  className="w-full sm:w-auto"
+                  onClick={() => {
+                    setShowContactModal(false);
+                    handleInputChange('specialActivities', false);
+                  }}
+                >
+                  Close
+                </Button>
+                {/* <Button
+                  variant="primary"
+                  className="w-full sm:w-auto"
+                  onClick={() => {
+                    setShowContactModal(false);
+                    window.open(
+                      'mailto:support@weddinginsurance.com?subject=Special Activities Coverage Request',
+                      '_blank',
+                    );
+                  }}
+                >
+                  Send Email
+                </Button> */}
               </div>
             </div>
           </div>

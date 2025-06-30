@@ -28,14 +28,19 @@ const policy_service_1 = require("../../services/policy.service");
 const versionPdf_service_1 = require("../../services/versionPdf.service");
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
+const event_logger_service_1 = require("../../services/event-logger.service");
+const sentry_error_service_1 = require("../../services/sentry-error.service");
 // Router for handling policy-related API endpoints.
 // Base path: /api/v1/policies
 const router = (0, express_1.Router)();
+const eventLogger = event_logger_service_1.EventLoggerService.getInstance();
+const sentryErrorService = sentry_error_service_1.SentryErrorService.getInstance();
 // --- GET /api/v1/policies ---
 // --- GET /api/v1/policies/:id ---
 // Handles fetching a single policy by its ID.
 // Can optionally fetch only the versions of a policy.
 router.get("/:id", async (req, res) => {
+    const startTime = Date.now();
     try {
         const { id } = req.params;
         // const { versionsOnly } = req.query;
@@ -68,22 +73,26 @@ router.get("/:id", async (req, res) => {
         // If policy not found, return 404.
         if (!policy) {
             res.status(404).json({ error: "Policy not found" });
+            await eventLogger.logApiCall(req, res, startTime, undefined);
             return;
         }
         // Log the policy data for debugging
         // Log the policy data being sent for debugging purposes.
         // console.log("Policy data being sent:", JSON.stringify(policy, null, 2));
         res.json({ policy });
+        await eventLogger.logApiCall(req, res, startTime, { policy });
     }
     catch (error) {
+        await sentryErrorService.captureRequestError(req, res, error, res.statusCode || 500);
+        await eventLogger.logApiCall(req, res, startTime, undefined, error);
         // Error handling for GET /api/v1/policies/:id.
-        console.error("GET /api/policies/:id error:", error);
         res.status(500).json({ error: "Failed to fetch policy" });
     }
 });
 // --- GET /api/v1/policies ---
 // Handles fetching ALL policies.
 router.get("/", async (req, res) => {
+    const startTime = Date.now();
     try {
         const policyRepository = data_source_1.AppDataSource.getRepository(policy_entity_1.Policy);
         const policies = await policyRepository.find({
@@ -101,9 +110,12 @@ router.get("/", async (req, res) => {
             ],
         });
         res.json({ policies });
-        console.log("Policies from database:", JSON.stringify(policies, null, 2));
+        await eventLogger.logApiCall(req, res, startTime, { policies });
+        // console.log("Policies from database:", JSON.stringify(policies, null, 2));
     }
     catch (error) {
+        await sentryErrorService.captureRequestError(req, res, error, res.statusCode || 500);
+        await eventLogger.logApiCall(req, res, startTime, undefined, error);
         // Error handling for GET /api/v1/policies.
         console.error("GET /api/policies error:", error);
         res.status(500).json({ error: "Failed to fetch policies" });
@@ -114,6 +126,7 @@ router.get("/", async (req, res) => {
 // Handles the creation of a new policy directly (typically for customer-initiated flows where no prior quote exists or is being bypassed).
 // This is distinct from creating a policy from an existing quote.
 router.post("/", async (req, res) => {
+    const startTime = Date.now();
     try {
         const fields = req.body;
         // Validate required fields for policy creation.
@@ -122,6 +135,7 @@ router.post("/", async (req, res) => {
             !fields.firstName ||
             !fields.paymentAmount) {
             res.status(400).json({ error: "Incomplete data for policy creation." });
+            await eventLogger.logApiCall(req, res, startTime, undefined);
             return;
         }
         const policyRepository = data_source_1.AppDataSource.getRepository(policy_entity_1.Policy);
@@ -137,6 +151,7 @@ router.post("/", async (req, res) => {
             res
                 .status(400)
                 .json({ error: "Policy with this number already exists." });
+            await eventLogger.logApiCall(req, res, startTime, undefined);
             return;
         }
         // Create and save the related Event entity.
@@ -188,8 +203,13 @@ router.post("/", async (req, res) => {
             relations: ["event", "policyHolder", "payments"],
         });
         res.status(201).json({ policy: completePolicy });
+        await eventLogger.logApiCall(req, res, startTime, {
+            policy: completePolicy,
+        });
     }
     catch (error) {
+        await sentryErrorService.captureRequestError(req, res, error, res.statusCode || 500);
+        await eventLogger.logApiCall(req, res, startTime, undefined, error);
         // Error handling for POST /api/v1/policies.
         console.error("POST /api/policies error:", error);
         res.status(500).json({ error: "Server error during policy creation" });
@@ -202,6 +222,7 @@ router.post("/", async (req, res) => {
 // Manages and cleans up old versions if the number of versions exceeds a limit (10).
 router.put("/:id", async (req, res) => {
     var _a, _b, _c, _d, _e;
+    const startTime = Date.now();
     try {
         const { id } = req.params;
         const _f = req.body, { versionMetadata } = _f, fields = __rest(_f, ["versionMetadata"]);
@@ -214,6 +235,7 @@ router.put("/:id", async (req, res) => {
         });
         if (!policyRecord) {
             res.status(404).json({ error: "Policy not found" });
+            await eventLogger.logApiCall(req, res, startTime, undefined);
             return;
         }
         // --- PDF Versioning Logic ---
@@ -908,3 +930,4 @@ router.get("/:id/version-pdf", async (req, res) => {
     }
 });
 exports.default = router;
+//# sourceMappingURL=policy.routes.js.map

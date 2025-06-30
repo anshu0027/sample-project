@@ -45,6 +45,9 @@ const policy_holder_entity_1 = require("./entities/policy-holder.entity");
 const policy_entity_1 = require("./entities/policy.entity");
 const payment_entity_1 = require("./entities/payment.entity");
 const policy_version_entity_1 = require("./entities/policy-version.entity");
+const event_log_entity_1 = require("./entities/event-log.entity");
+const sentry_error_entity_1 = require("./entities/sentry-error.entity");
+const backup_log_entity_1 = require("./entities/backup-log.entity");
 // ------------------------
 // Load environment variables from the .env file in the root of the project.
 // ------------------------
@@ -82,6 +85,9 @@ exports.AppDataSource = new typeorm_1.DataSource({
         policy_entity_1.Policy,
         payment_entity_1.Payment,
         policy_version_entity_1.PolicyVersion,
+        event_log_entity_1.EventLog,
+        sentry_error_entity_1.SentryError,
+        backup_log_entity_1.BackupLog,
     ],
     // ------------------------
     // synchronize: (Default: false) If true, automatically creates or updates database schema
@@ -96,3 +102,4 @@ exports.AppDataSource = new typeorm_1.DataSource({
     dropSchema: false,
     logging: ["error", "info", "log"], // Configure logging levels. Can include 'query' to see executed SQL.
 });
+//# sourceMappingURL=data-source.js.map

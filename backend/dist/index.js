@@ -27,6 +27,7 @@ const policy_list_routes_1 = __importDefault(require("./routes/v1/policy-list.ro
 const admin_routes_1 = __importDefault(require("./routes/v1/admin.routes"));
 const payment_routes_1 = __importDefault(require("./routes/v1/payment.routes"));
 const login_route_1 = __importDefault(require("./routes/v1/login.route"));
+const scheduled_tasks_service_1 = require("./services/scheduled-tasks.service");
 // ------------------------
 // Initialize the Express application.
 // ------------------------
@@ -40,6 +41,7 @@ app.use((0, cors_1.default)({
     origin: [
         "http://localhost:3000",
         "https://localhost:3000",
+        "https://localhost:3001",
         "http://192.168.1.8:3000",
         "https://192.168.1.8:3000",
         "http://localhost:8000",
@@ -67,7 +69,7 @@ app.use((0, cors_1.default)({
 // ------------------------
 const globalLimiter = (0, express_rate_limit_1.default)({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 300, // Limit each IP to 100 requests per windowMs
+    max: 500, // Limit each IP to 100 requests per windowMs
     standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
     legacyHeaders: false, // Disable the `X-RateLimit-*` headers
 });
@@ -90,11 +92,70 @@ app.use(express_1.default.static(path_1.default.join(process.cwd(), "public")));
 app.use(globalLimiter);
 // Health check route
 // ------------------------
-// A simple health check endpoint to verify if the API is running.
-// Returns a JSON response with status 'ok'.
+// A comprehensive health check endpoint to verify if the API is running.
+// Returns detailed information about the system status.
 // ------------------------
-app.get("/api/health", (_req, res) => {
-    res.json({ status: "ok" });
+app.get("/api/health", async (_req, res) => {
+    try {
+        const startTime = Date.now();
+        // Check database connection
+        const dbStatus = data_source_1.AppDataSource.isInitialized ? "connected" : "disconnected";
+        // Get system information
+        const uptime = process.uptime();
+        const memoryUsage = process.memoryUsage();
+        const nodeVersion = process.version;
+        const platform = process.platform;
+        // Test database query if connected
+        let dbTest = "not tested";
+        if (data_source_1.AppDataSource.isInitialized) {
+            try {
+                await data_source_1.AppDataSource.query("SELECT 1");
+                dbTest = "success";
+            }
+            catch (error) {
+                dbTest = "failed";
+            }
+        }
+        const healthData = {
+            status: "ok",
+            timestamp: new Date().toISOString(),
+            uptime: {
+                seconds: Math.floor(uptime),
+                formatted: `${Math.floor(uptime / 3600)}h ${Math.floor((uptime % 3600) / 60)}m ${Math.floor(uptime % 60)}s`,
+            },
+            database: {
+                status: dbStatus,
+                test: dbTest,
+            },
+            system: {
+                nodeVersion,
+                platform,
+                memory: {
+                    rss: `${Math.round(memoryUsage.rss / 1024 / 1024)}MB`,
+                    heapTotal: `${Math.round(memoryUsage.heapTotal / 1024 / 1024)}MB`,
+                    heapUsed: `${Math.round(memoryUsage.heapUsed / 1024 / 1024)}MB`,
+                    external: `${Math.round(memoryUsage.external / 1024 / 1024)}MB`,
+                },
+            },
+            environment: {
+                nodeEnv: process.env.NODE_ENV || "development",
+                port: process.env.PORT || 8000,
+            },
+            responseTime: `${Date.now() - startTime}ms`,
+        };
+        res.status(200).json(healthData);
+    }
+    catch (error) {
+        res.status(500).json({
+            status: "error",
+            timestamp: new Date().toISOString(),
+            error: error instanceof Error ? error.message : "Unknown error",
+            uptime: {
+                seconds: Math.floor(process.uptime()),
+                formatted: `${Math.floor(process.uptime() / 3600)}h ${Math.floor((process.uptime() % 3600) / 60)}m ${Math.floor(process.uptime() % 60)}s`,
+            },
+        });
+    }
 });
 // Root route
 // ------------------------
@@ -116,38 +177,24 @@ app.use("/api/v1/policy-list", policy_list_routes_1.default);
 app.use("/api/v1/admin", admin_routes_1.default);
 app.use("/api/v1/payment", payment_routes_1.default);
 app.use("/api/v1/login", login_route_1.default);
-// Error handling middleware
-// ------------------------
-// A generic error handling middleware.
-// Catches any unhandled errors that occur during request processing.
-// Logs the error and returns a 500 Internal Server Error response.
-// ------------------------
-app.use((err, _req, res, _next) => {
-    console.error("Unhandled error:", err);
-    res.status(500).json({ error: "Internal Server Error" });
-});
-// Initialize database connection
-// ------------------------
-// Initialize the TypeORM data source to connect to the database.
-// Once the connection is established, start the Express server.
-// ------------------------
-data_source_1.AppDataSource.initialize()
-    .then(() => {
-    console.log("Data Source has been initialized!");
-    // Start server
-    const PORT = process.env.PORT ? parseInt(process.env.PORT) : 8000;
-    // const LINK = "http://localhost:" + PORT;
-    // const HOST = LINK || process.env.NEXT_PUBLIC_FRONTEND_URL;
-    // ------------------------
-    // Start the Express server and listen on the configured port.
-    // ------------------------
-    app.listen(PORT, "0.0.0.0", () => {
-        console.log(`Backend running on http://192.168.1.8:${PORT}`);
-    });
-})
-    .catch((error) => {
-    // ------------------------
-    // Log an error message if database initialization fails.
-    // ------------------------
-    console.error("Error during Data Source initialization:", error);
-});
+// --- APP INITIALIZATION ---
+const startServer = async () => {
+    try {
+        // 1. Initialize Database
+        await data_source_1.AppDataSource.initialize();
+        console.log("✅ Data Source has been initialized!");
+        // 2. Initialize Services (like scheduled tasks)
+        await scheduled_tasks_service_1.ScheduledTasksService.getInstance().initializeScheduledTasks();
+        // 3. Start the Express Server
+        const PORT = process.env.PORT ? parseInt(process.env.PORT) : 8000;
+        app.listen(PORT, "0.0.0.0", () => {
+            console.log(`🚀 Backend running on http://localhost:${PORT}`);
+        });
+    }
+    catch (error) {
+        console.error("❌ Error during server initialization:", error);
+        process.exit(1); // Exit with failure
+    }
+};
+startServer();
+//# sourceMappingURL=index.js.map

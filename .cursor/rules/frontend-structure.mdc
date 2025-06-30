@@ -1,0 +1,86 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Frontend Structure Guide
+
+## Next.js 15 App Router Architecture
+
+### Core Configuration
+- **Root Layout**: [frontend/src/app/layout.tsx](mdc:frontend/src/app/layout.tsx) - ClerkProvider, fonts, metadata
+- **Package Config**: [frontend/package.json](mdc:frontend/package.json) - Dependencies and scripts
+- **Global Styles**: [frontend/src/app/globals.css](mdc:frontend/src/app/globals.css) - Tailwind CSS setup
+
+### App Router Pages
+Located in [frontend/src/app/](mdc:frontend/src/app)
+
+#### Customer Portal
+- **Main Page**: [frontend/src/app/page.tsx](mdc:frontend/src/app/page.tsx) - Landing page
+- **Customer Layout**: [frontend/src/app/customer/layout.tsx](mdc:frontend/src/app/customer/layout.tsx) - Customer portal wrapper
+- **Quote Generator**: [frontend/src/app/customer/quote-generator/page.tsx](mdc:frontend/src/app/customer/quote-generator/page.tsx)
+- **Event Information**: [frontend/src/app/customer/event-information/page.tsx](mdc:frontend/src/app/customer/event-information/page.tsx)
+- **Policy Holder**: [frontend/src/app/customer/policy-holder/page.tsx](mdc:frontend/src/app/customer/policy-holder/page.tsx)
+- **Payment**: [frontend/src/app/customer/payment/page.tsx](mdc:frontend/src/app/customer/payment/page.tsx)
+- **Review**: [frontend/src/app/customer/review/page.tsx](mdc:frontend/src/app/customer/review/page.tsx)
+
+#### Admin Portal
+- **Admin Layout**: [frontend/src/app/admin/layout.tsx](mdc:frontend/src/app/admin/layout.tsx) - Admin portal wrapper
+- **Admin Dashboard**: [frontend/src/app/admin/page.tsx](mdc:frontend/src/app/admin/page.tsx)
+- **Create Quote**: [frontend/src/app/admin/create-quote/page.tsx](mdc:frontend/src/app/admin/create-quote/page.tsx)
+- **Policies**: [frontend/src/app/admin/policies/page.tsx](mdc:frontend/src/app/admin/policies/page.tsx)
+- **Quotes**: [frontend/src/app/admin/quotes/page.tsx](mdc:frontend/src/app/admin/quotes/page.tsx)
+- **Transactions**: [frontend/src/app/admin/transactions/page.tsx](mdc:frontend/src/app/admin/transactions/page.tsx)
+
+#### Other Pages
+- **Contact**: [frontend/src/app/contact/page.tsx](mdc:frontend/src/app/contact/page.tsx)
+- **Retrieve Quote**: [frontend/src/app/retrive-quote/page.tsx](mdc:frontend/src/app/retrive-quote/page.tsx)
+
+### Components
+Located in [frontend/src/components/](mdc:frontend/src/components)
+
+#### UI Components
+- **Layout**: [frontend/src/components/Layout.tsx](mdc:frontend/src/components/Layout.tsx) - Main layout wrapper
+- **Header**: [frontend/src/components/Header.tsx](mdc:frontend/src/components/Header.tsx) - Navigation header
+- **Footer**: [frontend/src/components/Footer.tsx](mdc:frontend/src/components/Footer.tsx) - Site footer
+- **Progress Tracker**: [frontend/src/components/ProgressTracker.tsx](mdc:frontend/src/components/ProgressTracker.tsx) - Multi-step form progress
+
+#### Quote Components
+Located in [frontend/src/components/quote/](mdc:frontend/src/components/quote)
+- **Step1Form**: [frontend/src/components/quote/Step1Form.tsx](mdc:frontend/src/components/quote/Step1Form.tsx)
+- **Step2Form**: [frontend/src/components/quote/Step2Form.tsx](mdc:frontend/src/components/quote/Step2Form.tsx)
+- **Step3Form**: [frontend/src/components/quote/Step3Form.tsx](mdc:frontend/src/components/quote/Step3Form.tsx)
+- **Step4Form**: [frontend/src/components/quote/Step4Form.tsx](mdc:frontend/src/components/quote/Step4Form.tsx)
+
+#### UI Library
+Located in [frontend/src/components/ui/](mdc:frontend/src/components/ui)
+- **Button**: [frontend/src/components/ui/Button.tsx](mdc:frontend/src/components/ui/Button.tsx)
+- **Input**: [frontend/src/components/ui/Input.tsx](mdc:frontend/src/components/ui/Input.tsx)
+- **Card**: [frontend/src/components/ui/Card.tsx](mdc:frontend/src/components/ui/Card.tsx)
+- **Select**: [frontend/src/components/ui/Select.tsx](mdc:frontend/src/components/ui/Select.tsx)
+- **DatePicker**: [frontend/src/components/ui/DatePicker.tsx](mdc:frontend/src/components/ui/DatePicker.tsx)
+- **QuotePreview**: [frontend/src/components/ui/QuotePreview.tsx](mdc:frontend/src/components/ui/QuotePreview.tsx)
+- **Toast**: [frontend/src/components/ui/toast.tsx](mdc:frontend/src/components/ui/toast.tsx)
+
+#### Admin Components
+- **AdminLayout**: [frontend/src/components/admin/AdminLayout.tsx](mdc:frontend/src/components/admin/AdminLayout.tsx)
+
+### State Management
+- **Quote Context**: [frontend/src/context/QuoteContext.tsx](mdc:frontend/src/context/QuoteContext.tsx) - Global quote state management
+- **Toast Hook**: [frontend/src/hooks/use-toast.ts](mdc:frontend/src/hooks/use-toast.ts) - Toast notifications
+
+### Utilities & Types
+- **Utils**: [frontend/src/lib/utils.ts](mdc:frontend/src/lib/utils.ts) - Helper functions
+- **Constants**: [frontend/src/utils/constants.ts](mdc:frontend/src/utils/constants.ts) - Application constants
+- **Validators**: [frontend/src/utils/validators.ts](mdc:frontend/src/utils/validators.ts) - Form validation
+- **Types**: [frontend/src/types/policy.ts](mdc:frontend/src/types/policy.ts) - TypeScript interfaces
+
+## Key Frontend Patterns
+- **App Router**: Next.js 15 App Router for file-based routing
+- **Server Components**: Default server components with client components as needed
+- **Authentication**: Clerk integration for user management
+- **Styling**: Tailwind CSS with Radix UI components
+- **State Management**: React Context for global state
+- **Form Handling**: Multi-step forms with progress tracking
+- **PDF Generation**: Client-side PDF creation with jsPDF
+

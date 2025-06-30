@@ -33,6 +33,8 @@ interface Transaction {
   status: string;
   source?: string | null;
   paymentMethod?: string | null;
+  convertedToPolicy?: boolean;
+  policy?: boolean;
 }
 
 const Transactions = () => {
@@ -57,33 +59,65 @@ const Transactions = () => {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
       try {
-        const res = await fetch(`${apiUrl}/quotes?allQuotes=true`, { method: 'GET' });
+        // Fetch policies directly instead of quotes
+        const res = await fetch(`${apiUrl}/policies`, { method: 'GET' });
         if (res.ok) {
           const data = await res.json();
 
-          // changed q:any to new one
-          setTransactions(
-            (data.quotes || []).map((q: Record<string, unknown>) => ({
-              transactionId: generateTransactionIdFromQuoteNumber(q.quoteNumber as string),
-              quoteNumber: String(q.quoteNumber || 'N/A'),
-              policyHolder: q.policyHolder as TransactionPolicyHolder,
-              createdAt: String(q.createdAt || ''),
+          // Debug: Log the raw data to see what we're getting
+          console.log('Raw policies data:', data.policies);
+
+          // Map policies to transactions format
+          const mappedTransactions = (data.policies || []).map((p: Record<string, unknown>) => {
+            const quote = p.quote as Record<string, unknown>;
+
+            // Get payment method from policy payments first, then fall back to quote payments
+            let paymentMethod = '-';
+            if (Array.isArray(p.payments) && p.payments.length > 0) {
+              // Policy has payments - use the first one
+              paymentMethod = String((p.payments[0] as { method?: string }).method || 'online');
+            } else if (Array.isArray(quote?.payments) && quote.payments.length > 0) {
+              // Fall back to quote payments if policy doesn't have payments
+              paymentMethod = String((quote.payments[0] as { method?: string }).method || '-');
+            } else if (quote?.source === 'ADMIN') {
+              // Admin quotes default to CASH
+              paymentMethod = 'CASH';
+            }
+
+            const transaction = {
+              transactionId: generateTransactionIdFromQuoteNumber(quote?.quoteNumber as string),
+              quoteNumber: String(quote?.quoteNumber || 'N/A'),
+              policyHolder: quote?.policyHolder as TransactionPolicyHolder,
+              createdAt: String(quote?.createdAt || ''),
               totalPremium:
-                q.totalPremium !== undefined && q.totalPremium !== null
-                  ? Number(q.totalPremium)
+                quote?.totalPremium !== undefined && quote?.totalPremium !== null
+                  ? Number(quote.totalPremium)
                   : null,
-              status: String(q.status || 'N/A'),
-              source: q.source ? String(q.source) : null,
-              paymentMethod:
-                q.source === 'ADMIN'
-                  ? 'CASH'
-                  : Array.isArray(q.payments) && q.payments.length > 0
-                    ? String((q.payments[0] as { method?: string }).method || '-')
-                    : '-',
-            })),
-          );
+              status: String(quote?.status || 'N/A'),
+              source: quote?.source ? String(quote.source) : null,
+              paymentMethod: paymentMethod,
+              convertedToPolicy: true, // If we have a policy, it's definitely converted
+              policy: true, // If we have a policy, it's definitely true
+            };
+
+            // Debug: Log each transaction to see the policy flags
+            console.log(`Policy for quote ${transaction.quoteNumber}:`, {
+              status: transaction.status,
+              convertedToPolicy: transaction.convertedToPolicy,
+              policy: transaction.policy,
+              policyNumber: p.policyNumber,
+              paymentMethod: transaction.paymentMethod,
+              hasPolicyPayments: Array.isArray(p.payments) && p.payments.length > 0,
+              hasQuotePayments: Array.isArray(quote?.payments) && quote.payments.length > 0,
+              source: transaction.source,
+            });
+
+            return transaction;
+          });
+
+          setTransactions(mappedTransactions);
         } else {
-          throw new Error('Failed to fetch transactions.');
+          throw new Error('Failed to fetch policies.');
         }
       } catch (error) {
         const message = error instanceof Error ? error.message : 'An unknown error occurred.';
@@ -109,20 +143,69 @@ const Transactions = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showExportDropdown]);
 
-  // Filter transactions based on date range
+  // Set default date range based on timeFrame
+  useEffect(() => {
+    const now = new Date();
+    let start: Date, end: Date;
+
+    switch (timeFrame) {
+      case '7days':
+        end = new Date(now);
+        start = new Date(now);
+        start.setDate(start.getDate() - 7);
+        break;
+      case '30days':
+        end = new Date(now);
+        start = new Date(now);
+        start.setDate(start.getDate() - 30);
+        break;
+      case '90days':
+        end = new Date(now);
+        start = new Date(now);
+        start.setDate(start.getDate() - 90);
+        break;
+      case 'ytd':
+        end = new Date(now);
+        start = new Date(now.getFullYear(), 0, 1);
+        break;
+      default:
+        end = new Date(now);
+        start = new Date(now);
+        start.setDate(start.getDate() - 30);
+    }
+
+    setStartDate(start);
+    setEndDate(end);
+  }, [timeFrame]);
+
+  // Filter transactions based on date range and COMPLETE status only
   const filteredTransactions = transactions.filter((transaction) => {
-    if (!startDate && !endDate) return true;
-    const transactionDate = new Date(transaction.createdAt);
+    // Date filter
+    let dateFilter = true;
     if (startDate && endDate) {
-      return transactionDate >= startDate && transactionDate <= endDate;
+      const transactionDate = new Date(transaction.createdAt);
+      // Set time to start of day for startDate and end of day for endDate
+      const startOfDay = new Date(startDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(endDate);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      dateFilter = transactionDate >= startOfDay && transactionDate <= endOfDay;
     }
-    if (startDate) {
-      return transactionDate >= startDate;
+
+    // Only show COMPLETE transactions (since we're fetching policies directly, all have policies)
+    const statusFilter = transaction.status === 'COMPLETE';
+
+    // Debug: Log filtering decisions
+    if (transaction.status === 'COMPLETE') {
+      console.log(`Filtering policy for quote ${transaction.quoteNumber}:`, {
+        statusFilter,
+        dateFilter,
+        willShow: dateFilter && statusFilter,
+      });
     }
-    if (endDate) {
-      return transactionDate <= endDate;
-    }
-    return true;
+
+    return dateFilter && statusFilter;
   });
 
   // Pagination logic
@@ -136,7 +219,7 @@ const Transactions = () => {
     (sum, transaction) => sum + (transaction.totalPremium || 0),
     0,
   );
-  const successfulTransactions = filteredTransactions.filter((t) => t.status === 'COMPLETE').length;
+  const successfulTransactions = filteredTransactions.length; // All filtered transactions are COMPLETE
   // const failedTransactions = filteredTransactions.filter(
   //   (t) => t.status === "FAILED"
   // ).length;
@@ -153,27 +236,13 @@ const Transactions = () => {
       const diff = endDate.getTime() - startDate.getTime();
       prevEnd = new Date(startDate.getTime() - 1);
       prevStart = new Date(prevEnd.getTime() - diff);
-    } else if (timeFrame === '7days') {
-      prevEnd = new Date();
-      prevEnd.setDate(prevEnd.getDate() - 7);
-      prevStart = new Date();
-      prevStart.setDate(prevStart.getDate() - 14);
-    } else if (timeFrame === '30days') {
-      prevEnd = new Date();
-      prevEnd.setDate(prevEnd.getDate() - 30);
-      prevStart = new Date();
-      prevStart.setDate(prevStart.getDate() - 60);
-    } else if (timeFrame === '90days') {
-      prevEnd = new Date();
-      prevEnd.setDate(prevEnd.getDate() - 90);
-      prevStart = new Date();
-      prevStart.setDate(prevStart.getDate() - 180);
-    } else if (timeFrame === 'ytd') {
-      prevEnd = new Date(new Date().getFullYear(), 0, 1);
-      prevStart = new Date(new Date().getFullYear() - 1, 0, 1);
     } else {
-      prevEnd = null;
-      prevStart = null;
+      // Fallback to default 30 days if no dates are set
+      const now = new Date();
+      prevEnd = new Date(now);
+      prevEnd.setDate(prevEnd.getDate() - 30);
+      prevStart = new Date(now);
+      prevStart.setDate(prevStart.getDate() - 60);
     }
     return { prevStart, prevEnd };
   }
@@ -181,12 +250,19 @@ const Transactions = () => {
   const prevTransactions = transactions.filter((transaction) => {
     if (!prevStart || !prevEnd) return false;
     const transactionDate = new Date(transaction.createdAt);
-    return transactionDate >= prevStart && transactionDate <= prevEnd;
+    // Set time to start of day for prevStart and end of day for prevEnd
+    const startOfDay = new Date(prevStart);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(prevEnd);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    // Only include COMPLETE transactions in previous period (since we're fetching policies directly)
+    const statusFilter = transaction.status === 'COMPLETE';
+
+    return transactionDate >= startOfDay && transactionDate <= endOfDay && statusFilter;
   });
-  const prevTotalSales = prevTransactions
-    .filter((t) => t.status === 'Completed')
-    .reduce((sum, t) => sum + (t.totalPremium || 0), 0);
-  const prevSuccessful = prevTransactions.filter((t) => t.status === 'Completed').length;
+  const prevTotalSales = prevTransactions.reduce((sum, t) => sum + (t.totalPremium || 0), 0);
+  const prevSuccessful = prevTransactions.length; // All prevTransactions are COMPLETE
   // const prevFailed = prevTransactions.filter(
   //   (t) => t.status === "Failed"
   // ).length;
@@ -228,10 +304,7 @@ const Transactions = () => {
             '-',
           transaction.createdAt ? new Date(transaction.createdAt).toLocaleDateString() : '-',
           transaction.totalPremium ?? '-', // Amount
-          (transaction.source === 'ADMIN'
-            ? 'CASH'
-            : transaction.paymentMethod || '-'
-          ).toUpperCase(), // Payment Method
+          (transaction.source === 'ADMIN' ? 'Offline' : 'Online').toUpperCase(), // Payment Method
           String(transaction.status).toUpperCase(),
         ].join(','),
       ),
@@ -277,7 +350,7 @@ const Transactions = () => {
           ? `$${transaction.totalPremium.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
           : 'N/A',
       ),
-      String(transaction.source === 'ADMIN' ? 'CASH' : transaction.paymentMethod || 'N/A'),
+      String(transaction.source === 'ADMIN' ? 'Offline' : 'Online'),
       String(transaction.status || 'N/A'),
     ]);
 
@@ -578,7 +651,7 @@ const Transactions = () => {
         </Card> */}
       </div>
 
-      <Card title="Recent Transactions" className="text-gray-800" icon={<Calendar size={18} />}>
+      <Card title="Completed Transactions" className="text-gray-800" icon={<Calendar size={18} />}>
         <div className="overflow-x-auto">
           <table className="w-full text-gray-800">
             <thead>
@@ -625,18 +698,10 @@ const Transactions = () => {
                     ${transaction.totalPremium ?? '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap uppercase">
-                    {transaction.source === 'ADMIN' ? 'CASH' : transaction.paymentMethod || '-'}
+                    {transaction.source === 'ADMIN' ? 'Offline' : 'Online'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        transaction.status === 'COMPLETE'
-                          ? 'bg-green-100 text-green-800'
-                          : transaction.status === 'FAILED'
-                            ? 'bg-red-100 text-red-800'
-                            : 'bg-gray-100 text-gray-800'
-                      }`}
-                    >
+                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
                       {transaction.status || '-'}
                     </span>
                   </td>
@@ -650,7 +715,8 @@ const Transactions = () => {
           <p className="text-sm text-gray-700 text-center sm:text-left">
             Showing{' '}
             <span className="font-medium">{Math.min(endIndex, filteredTransactions.length)}</span>{' '}
-            of <span className="font-medium">{filteredTransactions.length}</span> transactions
+            of <span className="font-medium">{filteredTransactions.length}</span> completed
+            transactions
           </p>
 
           {totalPages > 0 && (
@@ -679,7 +745,7 @@ const Transactions = () => {
         </div>
         {filteredTransactions.length === 0 && (
           <div className="text-center py-8 text-gray-500">
-            No transactions found for the selected criteria.
+            No completed transactions found for the selected criteria.
           </div>
         )}
       </Card>

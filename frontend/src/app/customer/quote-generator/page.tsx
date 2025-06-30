@@ -36,40 +36,17 @@ type CoverageLevel = number;
 type LiabilityOption = string;
 
 // Add premium calculation functions
-const calculateBasePremium = (level: CoverageLevel | null): number => {
-  if (!level) return 0;
-  const premiumMap: Record<CoverageLevel, number> = {
-    1: 160, // $7,500 coverage
-    2: 200,
-    3: 250,
-    4: 300,
-    5: 355, // $50,000 coverage
-    6: 450,
-    7: 600,
-    8: 750,
-    9: 900,
-    10: 1025, // $175,000 coverage
-  };
-  return premiumMap[level] || 0;
+const calculateBasePremium = (level: CoverageLevel | null, guestRange: GuestRange | ''): number => {
+  if (!level || !guestRange) return 0;
+  return CORE_COVERAGE_PREMIUMS[guestRange]?.[level] ?? 0;
 };
 
-const calculateLiabilityPremium = (option: LiabilityOption): number => {
-  switch (option) {
-    case 'option1': // $1M liability with $25K property damage
-      return 195;
-    case 'option2': // $1M liability with $250K property damage
-      return 210;
-    case 'option3': // $1M liability with $1M property damage
-      return 240;
-    case 'option4': // $1M/$2M Aggregate Liability with $25K PD
-      return 240;
-    case 'option5': // $1M/$2M Aggregate Liability with $250K PD
-      return 255;
-    case 'option6': // $1M/$2M Aggregate Liability with $1M PD
-      return 265;
-    default:
-      return 0;
-  }
+const calculateLiabilityPremium = (
+  option: LiabilityOption,
+  guestRange: GuestRange | '',
+): number => {
+  if (!option || !guestRange || option === 'none') return 0;
+  return LIABILITY_COVERAGE_PREMIUMS[guestRange]?.[option] ?? 0;
 };
 
 const calculateLiquorLiabilityPremium = (
@@ -79,15 +56,13 @@ const calculateLiquorLiabilityPremium = (
 ): number => {
   if (!hasLiquorLiability || !guestRange || !liabilityOption) return 0;
 
-  const selectedLiability = LIABILITY_OPTIONS.find(opt => opt.value === liabilityOption);
+  const selectedLiability = LIABILITY_OPTIONS.find((opt) => opt.value === liabilityOption);
 
   if (selectedLiability?.isNew) {
     return LIQUOR_LIABILITY_PREMIUMS_NEW[guestRange] || 0;
   }
   return LIQUOR_LIABILITY_PREMIUMS[guestRange] || 0;
 };
-
-
 
 export default function QuoteGenerator() {
   const router = useRouter();
@@ -97,9 +72,29 @@ export default function QuoteGenerator() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showQuoteResults, setShowQuoteResults] = useState(false);
   const [showSpecialActivitiesModal, setShowSpecialActivitiesModal] = useState(false);
+  const [showContactModal, setShowContactModal] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
+  const [lastCalculatedData, setLastCalculatedData] = useState<string>('');
+  const [isCalculating, setIsCalculating] = useState(false);
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+  // Function to create a hash of the current form data for comparison
+  const createFormDataHash = useCallback(() => {
+    const formData = {
+      residentState: state.residentState,
+      eventType: state.eventType,
+      maxGuests: state.maxGuests,
+      eventDate: state.eventDate,
+      coverageLevel: state.coverageLevel,
+      liabilityCoverage: state.liabilityCoverage,
+      liquorLiability: state.liquorLiability,
+      covidDisclosure: state.covidDisclosure,
+      specialActivities: state.specialActivities,
+      email: state.email,
+    };
+    return JSON.stringify(formData);
+  }, [state]);
 
   // Clear quoteNumber on mount to always start a new quote
   useEffect(() => {
@@ -122,7 +117,6 @@ export default function QuoteGenerator() {
     }
   }, [showQuoteResults]);
 
-
   // Handle form field changes
   const handleInputChange = useCallback(
     (field: keyof QuoteState, value: QuoteState[keyof QuoteState]) => {
@@ -136,11 +130,16 @@ export default function QuoteGenerator() {
         });
       }
 
+      // Reset last calculated data when form changes
+      if (lastCalculatedData) {
+        setLastCalculatedData('');
+      }
+
       if (['coverageLevel', 'liabilityCoverage', 'liquorLiability', 'maxGuests'].includes(field)) {
         setShowQuoteResults(false);
       }
     },
-    [dispatch, errors],
+    [dispatch, errors, lastCalculatedData],
   );
 
   const parseDateStringLocal = (dateString: string | null): Date | null => {
@@ -211,28 +210,49 @@ export default function QuoteGenerator() {
   // ==================================================================
   const handleCalculateQuote = async () => {
     if (validateForm()) {
-      // Calculate premiums first
-      const basePremium = calculateBasePremium(state.coverageLevel);
-      const liabilityPremium = calculateLiabilityPremium(state.liabilityCoverage);
-      const liquorLiabilityPremium = calculateLiquorLiabilityPremium(
-        state.liquorLiability,
-        state.maxGuests as GuestRange,
-        state.liabilityCoverage as LiabilityOption,
-      );
-      const totalPremium = basePremium + liabilityPremium + liquorLiabilityPremium;
+      // Check if form data has changed since last calculation
+      const currentFormDataHash = createFormDataHash();
 
-      // Update state with calculated values
-      dispatch({
-        type: 'CALCULATE_QUOTE',
-        payload: {
-          basePremium,
-          liabilityPremium,
-          liquorLiabilityPremium,
-          totalPremium,
-        },
-      });
+      if (lastCalculatedData === currentFormDataHash && state.quoteNumber) {
+        // No changes detected, just show existing results
+        setShowQuoteResults(true);
+        // toast.info('No changes detected. Showing previous quote results.');
+        return;
+      }
+
+      // Prevent multiple simultaneous calculations
+      if (isCalculating) {
+        // toast.info('Quote calculation in progress...');
+        return;
+      }
+
+      setIsCalculating(true);
 
       try {
+        // Calculate premiums first
+        const basePremium = calculateBasePremium(state.coverageLevel, state.maxGuests);
+        const liabilityPremium = calculateLiabilityPremium(
+          state.liabilityCoverage,
+          state.maxGuests,
+        );
+        const liquorLiabilityPremium = calculateLiquorLiabilityPremium(
+          state.liquorLiability,
+          state.maxGuests as GuestRange,
+          state.liabilityCoverage as LiabilityOption,
+        );
+        const totalPremium = basePremium + liabilityPremium + liquorLiabilityPremium;
+
+        // Update state with calculated values
+        dispatch({
+          type: 'CALCULATE_QUOTE',
+          payload: {
+            basePremium,
+            liabilityPremium,
+            liquorLiabilityPremium,
+            totalPremium,
+          },
+        });
+
         // 1. Call the new backend to create the quote
         const res = await fetch(`${apiUrl}/quotes`, {
           method: 'POST',
@@ -261,6 +281,9 @@ export default function QuoteGenerator() {
         const newQuote = data.quote;
 
         if (res.ok && newQuote && newQuote.quoteNumber) {
+          // Store the form data hash to track changes
+          setLastCalculatedData(currentFormDataHash);
+
           localStorage.setItem('quoteNumber', newQuote.quoteNumber);
           dispatch({
             type: 'UPDATE_FIELD',
@@ -268,6 +291,13 @@ export default function QuoteGenerator() {
             value: newQuote.quoteNumber,
           });
           setShowQuoteResults(true);
+
+          // Show appropriate message based on whether it's a duplicate
+          if (data.isDuplicate) {
+            // toast.info(data.message || 'Duplicate quote detected. Showing existing quote.');
+          } else {
+            toast.success('Quote calculated successfully!');
+          }
 
           // 2. Call the new backend to send the email
           try {
@@ -299,6 +329,8 @@ export default function QuoteGenerator() {
       } catch {
         // removed (err)
         toast.error('Failed to create quote.');
+      } finally {
+        setIsCalculating(false);
       }
     } else {
       // Toast errors are already handled by validateForm if we decide to move toast there
@@ -757,10 +789,11 @@ export default function QuoteGenerator() {
             variant="primary"
             size="lg"
             onClick={handleCalculateQuote}
-            className="w-full sm:w-auto transition-transform cursor-pointer duration-150 hover:scale-105"
+            disabled={isCalculating}
+            className="w-full sm:w-auto transition-transform cursor-pointer duration-150 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <DollarSign size={18} />
-            Calculate Quote
+            {isCalculating ? 'Calculating...' : 'Calculate Quote'}
           </Button>
         </div>
       </div>
@@ -770,9 +803,7 @@ export default function QuoteGenerator() {
         <Card
           title={
             // Removed autoFocus from here as we'll focus the quote number specifically
-            <span className="text-lg sm:text-xl font-bold text-blue-800">
-              Your Insurance Quote
-            </span>
+            <span className="text-lg sm:text-xl font-bold text-blue-800">Your Insurance Quote</span>
           }
           subtitle={
             <span className="text-sm sm:text-base text-gray-600">
@@ -817,7 +848,9 @@ export default function QuoteGenerator() {
                     {state.liabilityCoverage !== 'none' && (
                       <div className="flex justify-between text-sm">
                         <span>Liability Coverage:</span>
-                        <span className="font-medium">{formatCurrency(state.liabilityPremium)}</span>
+                        <span className="font-medium">
+                          {formatCurrency(state.liabilityPremium)}
+                        </span>
                       </div>
                     )}
                     {state.liquorLiability && (
@@ -880,8 +913,8 @@ export default function QuoteGenerator() {
               <div className="flex items-center text-sm bg-gray-100 text-gray-700 p-4 rounded-lg">
                 <AlertCircle size={16} className="flex-shrink-0 mr-2" />
                 <p>
-                  This quote is valid for 30 days. Continue to provide event details and complete your
-                  purchase.
+                  This quote is valid for 30 days. Continue to provide event details and complete
+                  your purchase.
                 </p>
               </div>
             </div>
@@ -924,11 +957,84 @@ export default function QuoteGenerator() {
                   className="w-full sm:w-auto"
                   onClick={() => {
                     setShowSpecialActivitiesModal(false);
-                    window.open('/contact', '_blank', 'noopener,noreferrer');
+                    setShowContactModal(true);
                   }}
                 >
                   Contact me for special coverage
                 </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Contact Modal */}
+      {showContactModal && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center px-4 py-6 sm:px-6">
+          <div className="bg-white rounded-2xl shadow-xl w-full min-w-[300px] sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl max-h-[90vh] overflow-y-auto transition-transform duration-300 ease-out animate-fade-in">
+            <div className="p-6 sm:p-8">
+              <h3 className="text-xl sm:text-2xl font-semibold text-blue-600 mb-4">
+                Contact Our Support Team
+              </h3>
+              <p className="text-gray-700 mb-5 text-sm sm:text-base leading-relaxed">
+                For special activities coverage, please contact our support team directly.
+                We&apos;ll work with you to provide the appropriate coverage for your event.
+              </p>
+
+              <div className="space-y-4 mb-6">
+                <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                  <h4 className="font-semibold text-blue-800 mb-2">Contact Information</h4>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center">
+                      <span className="font-medium text-gray-700 w-20">Email:</span>
+                      <span className="text-blue-600">support@weddinginsurance.com</span>
+                    </div>
+                    <div className="flex items-center">
+                      <span className="font-medium text-gray-700 w-20">Phone:</span>
+                      <span className="text-blue-600">1-800-WEDDING</span>
+                    </div>
+                    <div className="flex items-center">
+                      <span className="font-medium text-gray-700 w-20">Hours:</span>
+                      <span className="text-gray-600">Mon-Fri 9AM-6PM EST</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
+                  <h4 className="font-semibold text-yellow-800 mb-2">What to Include</h4>
+                  <ul className="text-sm text-gray-700 space-y-1">
+                    <li>• Description of your special activities</li>
+                    <li>• Event date and location</li>
+                    <li>• Number of guests</li>
+                    <li>• Any existing quote number</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row sm:justify-end gap-3">
+                <Button
+                  variant="outline"
+                  className="w-full sm:w-auto"
+                  onClick={() => {
+                    setShowContactModal(false);
+                    handleInputChange('specialActivities', false);
+                  }}
+                >
+                  Close
+                </Button>
+                {/* <Button
+                  variant="primary"
+                  className="w-full sm:w-auto"
+                  onClick={() => {
+                    setShowContactModal(false);
+                    window.open(
+                      'mailto:support@weddinginsurance.com?subject=Special Activities Coverage Request',
+                      '_blank',
+                    );
+                  }}
+                >
+                  Send Email
+                </Button> */}
               </div>
             </div>
           </div>

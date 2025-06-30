@@ -136,3 +136,4 @@ exports.Quote = Quote = __decorate([
     (0, typeorm_1.Index)(['source']),
     (0, typeorm_1.Index)(['convertedToPolicy'])
 ], Quote);
+//# sourceMappingURL=quote.entity.js.map

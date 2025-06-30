@@ -1,0 +1,42 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Wedding Insurance Application - Project Overview
+
+This is a full-stack wedding insurance application built with Next.js frontend and Express.js backend with TypeORM and Oracle database.
+
+## Architecture Overview
+
+### Backend (Express.js + TypeORM + Oracle)
+- **Entry Point**: [backend/src/index.ts](mdc:backend/src/index.ts) - Main server setup with Express, CORS, rate limiting
+- **Database**: Oracle database with TypeORM ORM configured in [backend/src/data-source.ts](mdc:backend/src/data-source.ts)
+- **Authentication**: Clerk integration for user management
+- **Payment Processing**: Authorize.net integration
+- **PDF Generation**: PDFKit and jsPDF for policy document generation
+- **Email Service**: Nodemailer for automated email notifications
+
+### Frontend (Next.js 15 + React 19)
+- **Framework**: Next.js 15 with App Router
+- **Authentication**: Clerk integration via [frontend/src/app/layout.tsx](mdc:frontend/src/app/layout.tsx)
+- **Styling**: Tailwind CSS with Radix UI components
+- **State Management**: React Context for quote management
+- **PDF Generation**: jsPDF for client-side PDF creation
+
+## Key Features
+- Quote generation and management
+- Policy creation and versioning
+- Payment processing
+- Admin dashboard
+- Customer portal
+- PDF document generation
+- Email notifications
+- Event logging and backup
+
+## Development Setup
+- Backend runs on port 8000 (dev mode with HTTPS)
+- Frontend runs on port 3000 (dev mode with HTTPS)
+- Oracle database required for backend
+- Environment variables needed for database and API keys
+

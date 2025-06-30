@@ -7,6 +7,7 @@ var StepStatus;
     StepStatus["STEP2"] = "STEP2";
     StepStatus["STEP3"] = "STEP3";
     StepStatus["COMPLETE"] = "COMPLETE";
+    StepStatus["EXPIRED"] = "EXPIRED";
 })(StepStatus || (exports.StepStatus = StepStatus = {}));
 var QuoteSource;
 (function (QuoteSource) {
@@ -19,3 +20,4 @@ var PaymentStatus;
     PaymentStatus["SUCCESS"] = "SUCCESS";
     PaymentStatus["FAILED"] = "FAILED";
 })(PaymentStatus || (exports.PaymentStatus = PaymentStatus = {}));
+//# sourceMappingURL=enums.js.map

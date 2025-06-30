@@ -2,6 +2,7 @@ import React from 'react';
 import { Button } from '@/components/ui/Button';
 import { formatCurrency } from '@/utils/validators';
 import { Mail } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 
 // ------------------------
 // Type definition for the props of Step4Form component.
@@ -22,6 +23,11 @@ type Step4FormProps = {
   onEmail: () => void; // Callback function to send the quote email.
   isRetrievedQuote: boolean; // Flag indicating if the current quote was retrieved from storage.
   isAdmin: boolean; // Flag indicating if the current user is an admin.
+  // Validation functions for admin validation
+  onValidateStep1?: () => boolean;
+  onValidateStep2?: () => boolean;
+  onValidateStep3?: () => boolean;
+  onSetStep?: (step: number) => void; // Function to navigate to specific step
 };
 
 // ------------------------
@@ -30,7 +36,20 @@ type Step4FormProps = {
 // to email the quote, save it (for admins), or proceed to payment (for customers).
 // ------------------------
 export default function Step4Form(props: Step4FormProps) {
-  const { state, onSave, onBack, emailSent, onEmail, isRetrievedQuote, isAdmin } = props;
+  const {
+    state,
+    onSave,
+    onBack,
+    emailSent,
+    onEmail,
+    isRetrievedQuote,
+    isAdmin,
+    onValidateStep1,
+    onValidateStep2,
+    onValidateStep3,
+    onSetStep,
+  } = props;
+
   // ------------------------
   // Handles the navigation to the payment page.
   // Sets a flag in localStorage to indicate that a quote is being retrieved for payment.
@@ -41,6 +60,71 @@ export default function Step4Form(props: Step4FormProps) {
       window.location.href = '/customer/payment';
     }
   };
+
+  // ------------------------
+  // Handles admin save with validation check.
+  // Validates all steps and redirects to first error if validation fails.
+  // ------------------------
+  const handleAdminSave = () => {
+    if (!isAdmin) {
+      onSave();
+      return;
+    }
+
+    // Validate all steps
+    const step1Valid = onValidateStep1 ? onValidateStep1() : true;
+    const step2Valid = onValidateStep2 ? onValidateStep2() : true;
+    const step3Valid = onValidateStep3 ? onValidateStep3() : true;
+
+    if (!step1Valid) {
+      toast({
+        title: 'Validation Error',
+        description: 'Please complete Step 1 correctly before saving.',
+        variant: 'destructive',
+      });
+      onSetStep?.(1);
+      // Add a small delay to ensure errors are properly displayed
+      setTimeout(() => {
+        // Force a re-render by triggering validation again
+        onValidateStep1?.();
+      }, 100);
+      return;
+    }
+
+    if (!step2Valid) {
+      toast({
+        title: 'Validation Error',
+        description: 'Please complete Step 2 correctly before saving.',
+        variant: 'destructive',
+      });
+      onSetStep?.(2);
+      // Add a small delay to ensure errors are properly displayed
+      setTimeout(() => {
+        // Force a re-render by triggering validation again
+        onValidateStep2?.();
+      }, 100);
+      return;
+    }
+
+    if (!step3Valid) {
+      toast({
+        title: 'Validation Error',
+        description: 'Please complete Step 3 correctly before saving.',
+        variant: 'destructive',
+      });
+      onSetStep?.(3);
+      // Add a small delay to ensure errors are properly displayed
+      setTimeout(() => {
+        // Force a re-render by triggering validation again
+        onValidateStep3?.();
+      }, 100);
+      return;
+    }
+
+    // All validations passed, proceed with save
+    onSave();
+  };
+
   return (
     <div className="space-y-8">
       {/* ------------------------ */}
@@ -130,7 +214,12 @@ export default function Step4Form(props: Step4FormProps) {
               // ------------------------
               // Save Quote Button (Visible for Admins).
               // ------------------------
-              <Button variant="primary" size="lg" onClick={onSave} className="w-full md:w-auto">
+              <Button
+                variant="primary"
+                size="lg"
+                onClick={handleAdminSave}
+                className="w-full md:w-auto"
+              >
                 Save Quote
               </Button>
             ) : isRetrievedQuote || state.quoteNumber ? (

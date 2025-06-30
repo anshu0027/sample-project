@@ -92,7 +92,7 @@ const Footer: React.FC = () => {
         <div className=" border-blue-300 mt-6 pt-6 text-sm text-blue-300 flex flex-col md:flex-row justify-between">
           {' '}
           {/* border-t-2*/}
-          <p>&copy; {currentYear} Wedevent Focalat Insurance. All rights reserved.</p>
+          <p>&copy; {currentYear} Wedevent Insurance. All rights reserved.</p>
           {/* ------------------------ */}
           {/* Links to legal pages. */}
           {/* Arranged horizontally with spacing, stacking vertically on smaller screens. */}

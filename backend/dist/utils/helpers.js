@@ -19,3 +19,4 @@ function generateUniqueId(prefix, length = 6) {
         .padStart(length, "0");
     return `${prefix}-${randomPart}`;
 }
+//# sourceMappingURL=helpers.js.map

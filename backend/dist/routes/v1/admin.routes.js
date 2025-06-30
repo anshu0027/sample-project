@@ -6,11 +6,15 @@ const data_source_1 = require("../../data-source");
 const policy_entity_1 = require("../../entities/policy.entity");
 const policy_version_entity_1 = require("../../entities/policy-version.entity");
 const typeorm_1 = require("typeorm");
+const event_logger_service_1 = require("../../services/event-logger.service");
+const sentry_error_service_1 = require("../../services/sentry-error.service");
 // ------------------------
 // Router for handling admin-specific API endpoints.
 // Base path: /api/v1/admin
 // ------------------------
 const router = (0, express_1.Router)();
+const eventLogger = event_logger_service_1.EventLoggerService.getInstance();
+const sentryErrorService = sentry_error_service_1.SentryErrorService.getInstance();
 // --- POST /api/v1/admin/cleanup-policy-versions ---
 // ------------------------
 // Handles the cleanup of old policy versions.
@@ -18,6 +22,7 @@ const router = (0, express_1.Router)();
 // This is useful for managing database size and performance.
 // ------------------------
 router.post("/cleanup-policy-versions", async (_req, res) => {
+    const startTime = Date.now();
     try {
         const policyRepository = data_source_1.AppDataSource.getRepository(policy_entity_1.Policy);
         const versionRepository = data_source_1.AppDataSource.getRepository(policy_version_entity_1.PolicyVersion);
@@ -59,11 +64,15 @@ router.post("/cleanup-policy-versions", async (_req, res) => {
                 id: (0, typeorm_1.In)(allVersionIdsToDelete),
             });
         }
-        res.json({
+        const response = {
             message: `Successfully cleaned up policy versions. Deleted ${totalDeleted} old versions.`,
-        });
+        };
+        res.json(response);
+        await eventLogger.logApiCall(_req, res, startTime, response);
     }
     catch (error) {
+        await sentryErrorService.captureRequestError(_req, res, error, res.statusCode || 500);
+        await eventLogger.logApiCall(_req, res, startTime, undefined, error);
         // ------------------------
         // Error handling for the cleanup process.
         // ------------------------
@@ -72,3 +81,4 @@ router.post("/cleanup-policy-versions", async (_req, res) => {
     }
 });
 exports.default = router;
+//# sourceMappingURL=admin.routes.js.map

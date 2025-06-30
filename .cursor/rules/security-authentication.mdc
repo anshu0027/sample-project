@@ -1,0 +1,166 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Security & Authentication Guide
+
+## Authentication System
+
+### Clerk Integration
+- **Frontend**: ClerkProvider in [frontend/src/app/layout.tsx](mdc:frontend/src/app/layout.tsx)
+- **Backend**: Clerk backend SDK in [backend/package.json](mdc:backend/package.json)
+- **Configuration**: Clerk settings in [frontend/clerk.json](mdc:frontend/clerk.json)
+
+### Authentication Flow
+1. **User Registration**: Clerk handles user signup
+2. **User Login**: Clerk authentication with JWT tokens
+3. **Token Validation**: Backend validates Clerk tokens
+4. **Session Management**: Clerk manages user sessions
+5. **Role-based Access**: Admin vs Customer portal access
+
+## Security Measures
+
+### Backend Security
+
+#### Rate Limiting
+Configured in [backend/src/index.ts](mdc:backend/src/index.ts):
+```typescript
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 500, // 500 requests per window
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+```
+
+#### CORS Configuration
+- **Allowed Origins**: Specific localhost and ngrok domains
+- **Methods**: GET, POST, PUT, DELETE, OPTIONS, PATCH
+- **Headers**: Content-Type, Authorization, X-Requested-With
+- **Credentials**: Enabled for authentication
+
+#### Input Validation
+- **Request Validation**: Validate all incoming request data
+- **SQL Injection Prevention**: TypeORM parameterized queries
+- **XSS Prevention**: Input sanitization and output encoding
+- **File Upload Security**: Validate file types and sizes
+
+#### Error Handling
+- **Sentry Integration**: Error tracking via [backend/src/services/sentry-error.service.ts](mdc:backend/src/services/sentry-error.service.ts)
+- **Error Logging**: Winston logger for security events
+- **No Information Disclosure**: Generic error messages in production
+
+### Frontend Security
+
+#### Authentication Guards
+- **Protected Routes**: Clerk authentication required
+- **Role-based Routing**: Admin vs Customer access control
+- **Token Management**: Automatic token refresh
+
+#### Data Protection
+- **HTTPS Only**: All API calls use HTTPS
+- **Secure Headers**: Security headers configured
+- **Input Sanitization**: Form validation and sanitization
+
+## Payment Security
+
+### Authorize.net Integration
+- **Secure Payment Processing**: [backend/package.json](mdc:backend/package.json) includes authorizenet
+- **PCI Compliance**: Payment data handled securely
+- **Transaction Logging**: All payment attempts logged
+- **Fraud Prevention**: Transaction monitoring
+
+### Payment Data Handling
+- **No Card Storage**: Payment tokens only
+- **Encrypted Transmission**: All payment data encrypted
+- **Audit Trail**: Complete payment history tracking
+
+## API Security
+
+### Authentication Middleware
+- **Token Validation**: Verify Clerk JWT tokens
+- **User Context**: Attach user information to requests
+- **Permission Checks**: Role-based endpoint access
+
+### Request Security
+- **Content-Type Validation**: Ensure proper request format
+- **Size Limits**: Prevent large payload attacks
+- **Method Validation**: Only allow intended HTTP methods
+
+### Response Security
+- **No Sensitive Data**: Filter sensitive information
+- **Caching Headers**: Proper cache control
+- **Security Headers**: X-Frame-Options, X-Content-Type-Options
+
+## Database Security
+
+### Connection Security
+- **Encrypted Connections**: Oracle database encryption
+- **Credential Management**: Environment variables for secrets
+- **Connection Pooling**: Secure connection management
+
+### Data Protection
+- **Encryption at Rest**: Database-level encryption
+- **Access Control**: Database user permissions
+- **Audit Logging**: Database access logging
+
+## File Security
+
+### Upload Security
+- **File Type Validation**: Only allow specific file types
+- **Size Limits**: Prevent large file uploads
+- **Virus Scanning**: Scan uploaded files
+- **Secure Storage**: Files stored in protected directory
+
+### PDF Security
+- **Watermarking**: Add security watermarks to PDFs
+- **Access Control**: Secure PDF access
+- **Version Control**: Track PDF modifications
+
+## Environment Security
+
+### Environment Variables
+- **Database Credentials**: DB_HOST, DB_USER, DB_PASSWORD
+- **API Keys**: Authorize.net, Clerk, Sentry keys
+- **Email Configuration**: SMTP settings
+- **JWT Secrets**: Authentication secrets
+
+### Production Security
+- **HTTPS Only**: All production traffic encrypted
+- **Security Headers**: Comprehensive security headers
+- **Error Handling**: No sensitive data in error responses
+- **Logging**: Secure logging practices
+
+## Security Best Practices
+
+### Code Security
+- **Dependency Scanning**: Regular security audits
+- **Code Review**: Security-focused code reviews
+- **Input Validation**: Validate all user inputs
+- **Output Encoding**: Encode all user outputs
+
+### Infrastructure Security
+- **Firewall Configuration**: Network-level protection
+- **SSL/TLS**: Encrypted communication
+- **Backup Security**: Encrypted backups
+- **Access Control**: Principle of least privilege
+
+### Monitoring & Alerting
+- **Security Events**: Monitor for suspicious activity
+- **Error Tracking**: Sentry integration for security errors
+- **Audit Logging**: Complete audit trail
+- **Alert System**: Security incident notifications
+
+## Compliance Considerations
+
+### Data Privacy
+- **GDPR Compliance**: User data protection
+- **Data Retention**: Proper data lifecycle management
+- **User Rights**: Data access and deletion capabilities
+
+### Insurance Industry Standards
+- **Regulatory Compliance**: Insurance industry requirements
+- **Data Protection**: Policyholder data security
+- **Audit Requirements**: Compliance audit trails
+

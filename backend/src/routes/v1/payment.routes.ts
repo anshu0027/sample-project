@@ -9,12 +9,20 @@ import { Policy } from "../../entities/policy.entity";
 import { StepStatus } from "../../entities/enums";
 import { APIContracts, APIControllers } from "authorizenet"; // Removed "Constants" as it was not used.
 import rateLimit from "express-rate-limit";
+import { SentryService } from "../../services/sentry.service";
+import { SentryErrorService } from "../../services/sentry-error.service";
+import { createClerkClient, verifyToken } from "@clerk/backend";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 // ------------------------
 // Router for handling payment-related API endpoints.
 // Base path: /api/v1/payment
 // ------------------------
 const router = Router();
+const sentryService = SentryService.getInstance();
+const sentryErrorService = SentryErrorService.getInstance();
 
 // ------------------------
 // Rate limiter for manual payment creation endpoint.
@@ -82,6 +90,7 @@ const mapPaymentStatus = (payment: Payment) => {
 // Handles fetching a single payment by its ID.
 // ------------------------
 router.get("/:id", async (req: Request, res: Response) => {
+  const startTime = Date.now();
   try {
     const { id } = req.params;
     const paymentRepository = AppDataSource.getRepository(Payment);
@@ -106,10 +115,27 @@ router.get("/:id", async (req: Request, res: Response) => {
     // ------------------------
     if (!payment) {
       res.status(404).json({ error: "Payment not found" });
+      await sentryService.logApiCall(req, res, startTime, undefined);
       return;
     }
     res.json({ payment: mapPaymentStatus(payment) });
+    await sentryService.logApiCall(req, res, startTime, {
+      payment: mapPaymentStatus(payment),
+    });
   } catch (error) {
+    await sentryErrorService.captureRequestError(
+      req,
+      res,
+      error as Error,
+      res.statusCode || 500
+    );
+    await sentryService.logApiCall(
+      req,
+      res,
+      startTime,
+      undefined,
+      error as Error
+    );
     // ------------------------
     // Error handling for GET /api/v1/payment/:id.
     // ------------------------
@@ -125,6 +151,7 @@ router.get("/:id", async (req: Request, res: Response) => {
 // Supports optional filtering by policyId or quoteId.
 // ------------------------
 router.get("/", async (req: Request, res: Response) => {
+  const startTime = Date.now();
   try {
     const { policyId, quoteId } = req.query;
     const paymentRepository = AppDataSource.getRepository(Payment);
@@ -154,7 +181,23 @@ router.get("/", async (req: Request, res: Response) => {
 
     const mappedPayments = payments.map(mapPaymentStatus);
     res.json({ payments: mappedPayments });
+    await sentryService.logApiCall(req, res, startTime, {
+      payments: mappedPayments,
+    });
   } catch (error) {
+    await sentryErrorService.captureRequestError(
+      req,
+      res,
+      error as Error,
+      res.statusCode || 500
+    );
+    await sentryService.logApiCall(
+      req,
+      res,
+      startTime,
+      undefined,
+      error as Error
+    );
     // ------------------------
     // Error handling for GET /api/v1/payment.
     // ------------------------
@@ -171,6 +214,7 @@ router.post("/", manualPaymentLimiter, async (req: Request, res: Response) => {
   // Uses a transaction to ensure atomicity, especially if a quote needs to be converted to a policy.
   // Applies rate limiting.
   // ------------------------
+  const startTime = Date.now();
   const queryRunner = AppDataSource.createQueryRunner();
   await queryRunner.connect();
   await queryRunner.startTransaction();
@@ -307,6 +351,9 @@ router.post("/", manualPaymentLimiter, async (req: Request, res: Response) => {
 
     res.status(201).json({
       message: "Payment processed successfully",
+      payment: completePayment,
+    });
+    await sentryService.logApiCall(req, res, startTime, {
       payment: completePayment,
     });
   } catch (error) {

@@ -1,0 +1,65 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Backend Structure Guide
+
+## Core Backend Architecture
+
+### Entry Point & Configuration
+- **Main Server**: [backend/src/index.ts](mdc:backend/src/index.ts) - Express app setup, middleware, routes mounting
+- **Database Config**: [backend/src/data-source.ts](mdc:backend/src/data-source.ts) - TypeORM Oracle connection and entity registration
+- **Package Config**: [backend/package.json](mdc:backend/package.json) - Dependencies and scripts
+
+### Entity Models (TypeORM)
+Located in [backend/src/entities/](mdc:backend/src/entities)
+- **User**: User management and authentication
+- **Quote**: Quote generation and storage
+- **Event**: Wedding event details
+- **Venue**: Venue information
+- **PolicyHolder**: Policy holder details
+- **Policy**: Insurance policy data
+- **Payment**: Payment transaction records
+- **PolicyVersion**: Policy versioning system
+- **EventLog**: System event logging
+- **SentryError**: Error tracking
+- **BackupLog**: Backup operation logs
+
+### API Routes (Express)
+Located in [backend/src/routes/v1/](mdc:backend/src/routes/v1)
+- **quote.routes.ts**: Quote CRUD operations
+- **policy.routes.ts**: Policy management
+- **policy-list.routes.ts**: Policy listing and search
+- **payment.routes.ts**: Payment processing
+- **admin.routes.ts**: Admin dashboard endpoints
+- **email.routes.ts**: Email service endpoints
+- **login.route.ts**: Authentication endpoints
+
+### Services (Business Logic)
+Located in [backend/src/services/](mdc:backend/src/services)
+- **policy.service.ts**: Policy business logic
+- **email.service.ts**: Email sending functionality
+- **pdf.service.ts**: PDF generation
+- **versionPdf.service.ts**: PDF versioning
+- **event-logger.service.ts**: Event logging
+- **backup.service.ts**: Database backup operations
+- **scheduled-tasks.service.ts**: Automated tasks
+- **sentry-error.service.ts**: Error tracking
+
+### Database Migrations
+Located in [backend/src/migrations/](mdc:backend/src/migrations)
+- TypeORM migration files for database schema changes
+- Run with: `npm run typeorm:migrate`
+
+### Utilities & Types
+- **Types**: [backend/src/types/](mdc:backend/src/types) - TypeScript type definitions
+- **Utils**: [backend/src/utils/](mdc:backend/src/utils) - Helper functions and templates
+
+## Key Backend Patterns
+- **Middleware**: CORS, rate limiting, JSON parsing
+- **Error Handling**: Global error handling with Sentry integration
+- **Logging**: Winston logger with daily rotation
+- **Security**: Rate limiting, CORS configuration, input validation
+- **File Handling**: Static file serving, PDF uploads/downloads
+

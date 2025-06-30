@@ -1,0 +1,18 @@
+{
+  "signInUrl": "/admin/login",
+  "afterSignInUrl": "/admin",
+  "appearance": {
+    "elements": {
+      "formButtonPrimary": "bg-blue-600 hover:bg-blue-700 text-white",
+      "card": "shadow-none",
+      "headerTitle": "text-gray-900 text-2xl font-bold",
+      "headerSubtitle": "text-gray-600",
+      "socialButtonsBlockButton": "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50",
+      "formFieldInput": "border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent",
+      "formFieldLabel": "text-gray-700 font-medium",
+      "footerActionLink": "text-blue-600 hover:text-blue-700",
+      "dividerLine": "bg-gray-300",
+      "dividerText": "text-gray-500"
+    }
+  }
+}

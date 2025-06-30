@@ -20,6 +20,79 @@ import {
   LiabilityOption,
 } from "../../utils/quote.utils";
 import { rateLimit } from "express-rate-limit";
+import { createClerkClient, verifyToken } from "@clerk/backend";
+import dotenv from "dotenv";
+import { SentryService } from "../../services/sentry.service";
+import { SentryErrorService } from "../../services/sentry-error.service";
+// import { MoreThanOrEqual } from "typeorm";
+
+dotenv.config();
+
+// Check if Clerk secret key is configured
+if (!process.env.CLERK_SECRET_KEY) {
+  console.error("CLERK_SECRET_KEY is not configured in environment variables");
+}
+
+const clerkClient = createClerkClient({
+  secretKey: process.env.CLERK_SECRET_KEY!,
+});
+
+// ------------------------
+// Authentication middleware for admin routes
+// ------------------------
+const authenticateAdmin = async (
+  req: Request,
+  res: Response,
+  next: Function
+): Promise<void> => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      res.status(401).json({ error: "No authorization token provided" });
+      return;
+    }
+
+    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+
+    // Try to verify as a session token first
+    let session;
+    try {
+      session = await clerkClient.sessions.verifySession(token, "");
+    } catch (sessionError) {
+      // If session verification fails, try to verify as a JWT token
+      try {
+        const payload = await verifyToken(token, {
+          secretKey: process.env.CLERK_SECRET_KEY,
+        });
+        if (payload) {
+          // Token is valid, create a mock session object
+          session = { id: payload.sub || "unknown" };
+        } else {
+          throw new Error("Invalid token");
+        }
+      } catch (jwtError) {
+        console.error("Both session and JWT verification failed:", {
+          sessionError,
+          jwtError,
+        });
+        throw new Error("Token verification failed");
+      }
+    }
+
+    if (!session) {
+      res.status(401).json({ error: "Invalid authentication token" });
+      return;
+    }
+
+    // Add user info to request for later use
+    (req as any).user = { sessionId: session.id };
+    next();
+  } catch (error) {
+    console.error("Authentication error:", error);
+    res.status(401).json({ error: "Authentication failed" });
+    return;
+  }
+};
 
 // ------------------------
 // Rate limiter for quote creation to prevent abuse.
@@ -27,7 +100,7 @@ import { rateLimit } from "express-rate-limit";
 // ------------------------
 const quoteLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 100, // limit each IP to 10 quote creations per hour
+  max: 500, // limit each IP to 10 quote creations per hour
 });
 // import { In } from 'typeorm';
 
@@ -36,11 +109,14 @@ const quoteLimiter = rateLimit({
 // Base path: /api/v1/quotes
 // ------------------------
 const router = Router();
+const sentryService = SentryService.getInstance();
+const sentryErrorService = SentryErrorService.getInstance();
 
 // --- GET /api/v1/quotes ---
 router.get("/", async (req: Request, res: Response) => {
+  const startTime = Date.now();
   try {
-    const { quoteNumber, id, email, allQuotes } = req.query;
+    const { quoteNumber, id, email, allQuotes, page, pageSize } = req.query;
     const quoteRepository = AppDataSource.getRepository(Quote);
     // ------------------------
     // Define relations to be loaded with the quote(s).
@@ -67,9 +143,11 @@ router.get("/", async (req: Request, res: Response) => {
       // ------------------------
       if (!quote) {
         res.status(404).json({ error: "Quote not found" });
+        await sentryService.logApiCall(req, res, startTime, undefined);
         return;
       }
       res.json({ quote });
+      await sentryService.logApiCall(req, res, startTime, { quote });
       return;
     }
 
@@ -86,9 +164,11 @@ router.get("/", async (req: Request, res: Response) => {
       // ------------------------
       if (!quote) {
         res.status(404).json({ error: "Quote not found" });
+        await sentryService.logApiCall(req, res, startTime, undefined);
         return;
       }
       res.json({ quote });
+      await sentryService.logApiCall(req, res, startTime, { quote });
       return;
     }
 
@@ -106,9 +186,37 @@ router.get("/", async (req: Request, res: Response) => {
         // If quote not found for the email, return 404.
         // ------------------------
         res.status(404).json({ error: "Quote not found" });
+        await sentryService.logApiCall(req, res, startTime, undefined);
         return;
       }
       res.json({ quote });
+      await sentryService.logApiCall(req, res, startTime, { quote });
+      return;
+    }
+
+    // ------------------------
+    // Handle paginated quotes fetching
+    // ------------------------
+    if (page && pageSize) {
+      const currentPage = parseInt(String(page), 10);
+      const limit = parseInt(String(pageSize), 10);
+      const offset = (currentPage - 1) * limit;
+
+      const [quotes, total] = await quoteRepository.findAndCount({
+        order: { createdAt: "DESC" },
+        relations,
+        skip: offset,
+        take: limit,
+      });
+
+      res.json({
+        quotes,
+        total,
+        currentPage,
+        totalPages: Math.ceil(total / limit),
+        hasNextPage: currentPage < Math.ceil(total / limit),
+        hasPreviousPage: currentPage > 1,
+      });
       return;
     }
 
@@ -122,6 +230,7 @@ router.get("/", async (req: Request, res: Response) => {
       });
       console.log("Quotes from database:", JSON.stringify(quotes, null, 2));
       res.json({ quotes });
+      await sentryService.logApiCall(req, res, startTime, { quotes });
       return;
     }
 
@@ -135,7 +244,21 @@ router.get("/", async (req: Request, res: Response) => {
       relations,
     });
     res.json({ policies: quotes });
+    await sentryService.logApiCall(req, res, startTime, { policies: quotes });
   } catch (error) {
+    await sentryErrorService.captureRequestError(
+      req,
+      res,
+      error as Error,
+      res.statusCode || 500
+    );
+    await sentryService.logApiCall(
+      req,
+      res,
+      startTime,
+      undefined,
+      error as Error
+    );
     // ------------------------
     // Error handling for GET /api/v1/quotes.
     // ------------------------
@@ -149,9 +272,12 @@ router.get("/", async (req: Request, res: Response) => {
 // ------------------------
 // Handles the creation of a new quote.
 // Applies rate limiting to prevent abuse.
+// Applies authentication for admin requests.
 // ------------------------
 router.post("/", quoteLimiter, async (req: Request, res: Response) => {
+  const startTime = Date.now();
   console.log("Request Body:", req.body);
+
   try {
     // ------------------------
     // Extract fields from the request body.
@@ -167,16 +293,141 @@ router.post("/", quoteLimiter, async (req: Request, res: Response) => {
     const isAdminRequest =
       source === "ADMIN" || (referer && referer.includes("/admin/"));
     console.log("Is Admin Request:", isAdminRequest);
+
+    // ------------------------
+    // Apply authentication for admin requests
+    // ------------------------
+    if (isAdminRequest) {
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        res
+          .status(401)
+          .json({ error: "No authorization token provided for admin request" });
+        return;
+      }
+
+      const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+      try {
+        // Try to verify as a session token first
+        let session;
+        try {
+          session = await clerkClient.sessions.verifySession(token, "");
+        } catch (sessionError) {
+          // If session verification fails, try to verify as a JWT token
+          try {
+            const payload = await verifyToken(token, {
+              secretKey: process.env.CLERK_SECRET_KEY,
+            });
+            if (payload) {
+              // Token is valid, create a mock session object
+              session = { id: payload.sub || "unknown" };
+            } else {
+              throw new Error("Invalid token");
+            }
+          } catch (jwtError) {
+            console.error("Both session and JWT verification failed:", {
+              sessionError,
+              jwtError,
+            });
+            throw new Error("Token verification failed");
+          }
+        }
+
+        if (!session) {
+          res
+            .status(401)
+            .json({ error: "Invalid authentication token for admin request" });
+          return;
+        }
+        // Add user info to request for later use
+        (req as any).user = { sessionId: session.id };
+      } catch (error) {
+        console.error("Authentication error for admin request:", error);
+        res
+          .status(401)
+          .json({ error: "Authentication failed for admin request" });
+        return;
+      }
+    }
+
     const effectiveSource = isAdminRequest
       ? QuoteSource.ADMIN
       : QuoteSource.CUSTOMER;
-    console.log("Effective Source:", effectiveSource);
 
     // ------------------------
     // Validate that email is provided.
     // ------------------------
     if (!fields.email) {
       res.status(400).json({ error: "Missing user email." });
+      return;
+    }
+
+    // --- Duplicate Quote Detection ---
+    // ------------------------
+    // Check if a quote with identical data already exists for this user within the last 5 minutes.
+    // This prevents duplicate quotes from accidental double-clicks or form resubmissions.
+    // ------------------------
+    const quoteRepository = AppDataSource.getRepository(Quote);
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000); // 5 minutes ago
+
+    // Use query builder to check both quote and event fields
+    const existingQuote = await quoteRepository
+      .createQueryBuilder("quote")
+      .leftJoinAndSelect("quote.event", "event")
+      .where("quote.email = :email", { email: fields.email })
+      .andWhere("quote.createdAt >= :fiveMinutesAgo", { fiveMinutesAgo })
+      .andWhere("quote.residentState = :residentState", {
+        residentState: fields.residentState,
+      })
+      .andWhere("quote.coverageLevel = :coverageLevel", {
+        coverageLevel: fields.coverageLevel,
+      })
+      .andWhere("quote.liabilityCoverage = :liabilityCoverage", {
+        liabilityCoverage: fields.liabilityCoverage,
+      })
+      .andWhere("quote.liquorLiability = :liquorLiability", {
+        liquorLiability: fields.liquorLiability,
+      })
+      .andWhere("quote.covidDisclosure = :covidDisclosure", {
+        covidDisclosure: fields.covidDisclosure,
+      })
+      .andWhere("quote.specialActivities = :specialActivities", {
+        specialActivities: fields.specialActivities,
+      })
+      .andWhere("quote.totalPremium = :totalPremium", {
+        totalPremium: fields.totalPremium,
+      })
+      .andWhere("quote.basePremium = :basePremium", {
+        basePremium: fields.basePremium,
+      })
+      .andWhere("quote.liabilityPremium = :liabilityPremium", {
+        liabilityPremium: fields.liabilityPremium,
+      })
+      .andWhere("quote.liquorLiabilityPremium = :liquorLiabilityPremium", {
+        liquorLiabilityPremium: fields.liquorLiabilityPremium,
+      })
+      .andWhere("quote.source = :source", { source: effectiveSource })
+      .andWhere("event.eventType = :eventType", { eventType: fields.eventType })
+      .andWhere("event.maxGuests = :maxGuests", { maxGuests: fields.maxGuests })
+      .andWhere("event.eventDate = :eventDate", {
+        eventDate: fields.eventDate ? new Date(fields.eventDate) : null,
+      })
+      .orderBy("quote.createdAt", "DESC")
+      .getOne();
+
+    if (existingQuote) {
+      console.log(
+        "Duplicate quote detected, returning existing quote:",
+        existingQuote.quoteNumber
+      );
+      res.json({
+        quote: existingQuote,
+        message: "Duplicate quote detected. Returning existing quote.",
+        isDuplicate: true,
+      });
+      await sentryService.logApiCall(req, res, startTime, {
+        quote: existingQuote,
+      });
       return;
     }
 
@@ -215,12 +466,11 @@ router.post("/", quoteLimiter, async (req: Request, res: Response) => {
     // Create and save the new Quote entity.
     // ------------------------
 
-    const quoteRepository = AppDataSource.getRepository(Quote);
     console.log("Quote Repository:", quoteRepository);
     const newQuote = quoteRepository.create({
       ...quoteData,
       quoteNumber: generateQuoteNumber(),
-      status: isAdminRequest ? StepStatus.COMPLETE : StepStatus.STEP1,
+      status: StepStatus.STEP1,
       source: effectiveSource,
       isCustomerGenerated: effectiveSource === QuoteSource.CUSTOMER,
       user: user,
@@ -295,8 +545,7 @@ router.post("/", quoteLimiter, async (req: Request, res: Response) => {
           rehearsalDinnerVenueAsInsured: fields.rehearsalDinnerVenueAsInsured,
         };
         newEvent.venue = venueRepository.create(venueData);
-        // Explicitly save the venue
-        await venueRepository.save(newEvent.venue);
+        // Don't save venue here - let it be saved with the event
         console.log("New Event:", newEvent);
       }
       newQuote.event = newEvent;
@@ -332,7 +581,7 @@ router.post("/", quoteLimiter, async (req: Request, res: Response) => {
     // ------------------------
     // Save the quote and its related entities (event, policyHolder).
     // ------------------------
-    // Explicitly save the event if it was created
+    // Explicitly save the event if it was created (this will also save the venue)
     if (newQuote.event) {
       await AppDataSource.getRepository(Event).save(newQuote.event);
     }
@@ -370,6 +619,12 @@ router.post("/", quoteLimiter, async (req: Request, res: Response) => {
         policy: policy,
         converted: true,
       });
+      await sentryService.logApiCall(req, res, startTime, {
+        quoteNumber: savedQuote.quoteNumber,
+        quote: savedQuote,
+        policy: policy,
+        converted: true,
+      });
       return; // End the request here
     }
     // --- END: AUTO-CONVERSION LOGIC ---
@@ -383,7 +638,25 @@ router.post("/", quoteLimiter, async (req: Request, res: Response) => {
       quoteNumber: savedQuote.quoteNumber,
       quote: savedQuote,
     });
+    await sentryService.logApiCall(req, res, startTime, {
+      message: "Quote saved successfully",
+      quoteNumber: savedQuote.quoteNumber,
+      quote: savedQuote,
+    });
   } catch (error) {
+    await sentryErrorService.captureRequestError(
+      req,
+      res,
+      error as Error,
+      res.statusCode || 500
+    );
+    await sentryService.logApiCall(
+      req,
+      res,
+      startTime,
+      undefined,
+      error as Error
+    );
     // ------------------------
     // Error handling for POST /api/v1/quotes.
     // Specifically checks for Oracle unique constraint violation (ORA-00001).
@@ -412,6 +685,7 @@ router.post("/", quoteLimiter, async (req: Request, res: Response) => {
 // Handles updating an existing quote by its quoteNumber.
 // ------------------------
 router.put("/:quoteNumber", async (req: Request, res: Response) => {
+  const startTime = Date.now();
   try {
     const { quoteNumber } = req.params;
     const fields = req.body;
@@ -477,6 +751,21 @@ router.put("/:quoteNumber", async (req: Request, res: Response) => {
     // ------------------------
     // Update quote fields
     quoteRepository.merge(quoteToUpdate, fields);
+
+    // Update step status based on what data is being updated
+    // Only auto-determine status if no explicit status is provided
+    if (!fields.status) {
+      if (fields.firstName || fields.lastName) {
+        // If policy holder data is being updated, move to STEP3
+        quoteToUpdate.status = StepStatus.STEP3;
+      } else if (fields.eventType || fields.venueName) {
+        // If event/venue data is being updated, move to STEP2
+        quoteToUpdate.status = StepStatus.STEP2;
+      } else {
+        quoteToUpdate.status = StepStatus.STEP1;
+      }
+    }
+    // If fields.status is provided, it will be used as-is from the merge above
 
     // ------------------------
     // Handle updates to the related Event entity.
@@ -587,6 +876,32 @@ router.put("/:quoteNumber", async (req: Request, res: Response) => {
         throw new Error("Venue name and address are required");
       }
 
+      // Helper function to handle venue fields based on venue type
+      const getVenueFieldValue = (
+        fieldValue: any,
+        isCruiseShip: boolean,
+        fieldName: string
+      ) => {
+        const value =
+          typeof fieldValue === "object" ? fieldValue.target.value : fieldValue;
+
+        // For cruise ships, set country, state, zip to default values instead of null
+        if (
+          isCruiseShip &&
+          (fieldName === "country" ||
+            fieldName === "state" ||
+            fieldName === "zip")
+        ) {
+          if (fieldName === "country") return "Country";
+          if (fieldName === "state") return "State";
+          if (fieldName === "zip") return "Zip";
+        }
+
+        return value || "";
+      };
+
+      const isCruiseShip = fields.ceremonyLocationType === "cruise_ship";
+
       const venueFields = {
         name:
           typeof fields.venueName === "object"
@@ -604,18 +919,13 @@ router.put("/:quoteNumber", async (req: Request, res: Response) => {
           typeof fields.venueCity === "object"
             ? fields.venueCity.target.value
             : fields.venueCity || "",
-        state:
-          typeof fields.venueState === "object"
-            ? fields.venueState.target.value
-            : fields.venueState || "",
-        zip:
-          typeof fields.venueZip === "object"
-            ? fields.venueZip.target.value
-            : fields.venueZip || "",
-        country:
-          typeof fields.venueCountry === "object"
-            ? fields.venueCountry.target.value
-            : fields.venueCountry || "",
+        state: getVenueFieldValue(fields.venueState, isCruiseShip, "state"),
+        zip: getVenueFieldValue(fields.venueZip, isCruiseShip, "zip"),
+        country: getVenueFieldValue(
+          fields.venueCountry,
+          isCruiseShip,
+          "country"
+        ),
         ceremonyLocationType: fields.ceremonyLocationType || "",
         indoorOutdoor: fields.indoorOutdoor || "",
         receptionLocationType: fields.receptionLocationType || "",
@@ -632,22 +942,25 @@ router.put("/:quoteNumber", async (req: Request, res: Response) => {
           typeof fields.receptionVenueAddress2 === "object"
             ? fields.receptionVenueAddress2.target.value
             : fields.receptionVenueAddress2 || "",
-        receptionVenueCountry:
-          typeof fields.receptionVenueCountry === "object"
-            ? fields.receptionVenueCountry.target.value
-            : fields.receptionVenueCountry || "",
+        receptionVenueCountry: getVenueFieldValue(
+          fields.receptionVenueCountry,
+          fields.receptionLocationType === "cruise_ship",
+          "country"
+        ),
         receptionVenueCity:
           typeof fields.receptionVenueCity === "object"
             ? fields.receptionVenueCity.target.value
             : fields.receptionVenueCity || "",
-        receptionVenueState:
-          typeof fields.receptionVenueState === "object"
-            ? fields.receptionVenueState.target.value
-            : fields.receptionVenueState || "",
-        receptionVenueZip:
-          typeof fields.receptionVenueZip === "object"
-            ? fields.receptionVenueZip.target.value
-            : fields.receptionVenueZip || "",
+        receptionVenueState: getVenueFieldValue(
+          fields.receptionVenueState,
+          fields.receptionLocationType === "cruise_ship",
+          "state"
+        ),
+        receptionVenueZip: getVenueFieldValue(
+          fields.receptionVenueZip,
+          fields.receptionLocationType === "cruise_ship",
+          "zip"
+        ),
         receptionVenueAsInsured: fields.receptionVenueAsInsured || false,
         brunchLocationType: fields.brunchLocationType || "",
         brunchIndoorOutdoor: fields.brunchIndoorOutdoor || "",
@@ -663,22 +976,25 @@ router.put("/:quoteNumber", async (req: Request, res: Response) => {
           typeof fields.brunchVenueAddress2 === "object"
             ? fields.brunchVenueAddress2.target.value
             : fields.brunchVenueAddress2 || "",
-        brunchVenueCountry:
-          typeof fields.brunchVenueCountry === "object"
-            ? fields.brunchVenueCountry.target.value
-            : fields.brunchVenueCountry || "",
+        brunchVenueCountry: getVenueFieldValue(
+          fields.brunchVenueCountry,
+          fields.brunchLocationType === "cruise_ship",
+          "country"
+        ),
         brunchVenueCity:
           typeof fields.brunchVenueCity === "object"
             ? fields.brunchVenueCity.target.value
             : fields.brunchVenueCity || "",
-        brunchVenueState:
-          typeof fields.brunchVenueState === "object"
-            ? fields.brunchVenueState.target.value
-            : fields.brunchVenueState || "",
-        brunchVenueZip:
-          typeof fields.brunchVenueZip === "object"
-            ? fields.brunchVenueZip.target.value
-            : fields.brunchVenueZip || "",
+        brunchVenueState: getVenueFieldValue(
+          fields.brunchVenueState,
+          fields.brunchLocationType === "cruise_ship",
+          "state"
+        ),
+        brunchVenueZip: getVenueFieldValue(
+          fields.brunchVenueZip,
+          fields.brunchLocationType === "cruise_ship",
+          "zip"
+        ),
         brunchVenueAsInsured: fields.brunchVenueAsInsured || false,
         rehearsalLocationType: fields.rehearsalLocationType || "",
         rehearsalIndoorOutdoor: fields.rehearsalIndoorOutdoor || "",
@@ -694,22 +1010,25 @@ router.put("/:quoteNumber", async (req: Request, res: Response) => {
           typeof fields.rehearsalVenueAddress2 === "object"
             ? fields.rehearsalVenueAddress2.target.value
             : fields.rehearsalVenueAddress2 || "",
-        rehearsalVenueCountry:
-          typeof fields.rehearsalVenueCountry === "object"
-            ? fields.rehearsalVenueCountry.target.value
-            : fields.rehearsalVenueCountry || "",
+        rehearsalVenueCountry: getVenueFieldValue(
+          fields.rehearsalVenueCountry,
+          fields.rehearsalLocationType === "cruise_ship",
+          "country"
+        ),
         rehearsalVenueCity:
           typeof fields.rehearsalVenueCity === "object"
             ? fields.rehearsalVenueCity.target.value
             : fields.rehearsalVenueCity || "",
-        rehearsalVenueState:
-          typeof fields.rehearsalVenueState === "object"
-            ? fields.rehearsalVenueState.target.value
-            : fields.rehearsalVenueState || "",
-        rehearsalVenueZip:
-          typeof fields.rehearsalVenueZip === "object"
-            ? fields.rehearsalVenueZip.target.value
-            : fields.rehearsalVenueZip || "",
+        rehearsalVenueState: getVenueFieldValue(
+          fields.rehearsalVenueState,
+          fields.rehearsalLocationType === "cruise_ship",
+          "state"
+        ),
+        rehearsalVenueZip: getVenueFieldValue(
+          fields.rehearsalVenueZip,
+          fields.rehearsalLocationType === "cruise_ship",
+          "zip"
+        ),
         rehearsalVenueAsInsured: fields.rehearsalVenueAsInsured || false,
         rehearsalDinnerLocationType: fields.rehearsalDinnerLocationType || "",
         rehearsalDinnerIndoorOutdoor: fields.rehearsalDinnerIndoorOutdoor || "",
@@ -725,22 +1044,25 @@ router.put("/:quoteNumber", async (req: Request, res: Response) => {
           typeof fields.rehearsalDinnerVenueAddress2 === "object"
             ? fields.rehearsalDinnerVenueAddress2.target.value
             : fields.rehearsalDinnerVenueAddress2 || "",
-        rehearsalDinnerVenueCountry:
-          typeof fields.rehearsalDinnerVenueCountry === "object"
-            ? fields.rehearsalDinnerVenueCountry.target.value
-            : fields.rehearsalDinnerVenueCountry || "",
+        rehearsalDinnerVenueCountry: getVenueFieldValue(
+          fields.rehearsalDinnerVenueCountry,
+          fields.rehearsalDinnerLocationType === "cruise_ship",
+          "country"
+        ),
         rehearsalDinnerVenueCity:
           typeof fields.rehearsalDinnerVenueCity === "object"
             ? fields.rehearsalDinnerVenueCity.target.value
             : fields.rehearsalDinnerVenueCity || "",
-        rehearsalDinnerVenueState:
-          typeof fields.rehearsalDinnerVenueState === "object"
-            ? fields.rehearsalDinnerVenueState.target.value
-            : fields.rehearsalDinnerVenueState || "",
-        rehearsalDinnerVenueZip:
-          typeof fields.rehearsalDinnerVenueZip === "object"
-            ? fields.rehearsalDinnerVenueZip.target.value
-            : fields.rehearsalDinnerVenueZip || "",
+        rehearsalDinnerVenueState: getVenueFieldValue(
+          fields.rehearsalDinnerVenueState,
+          fields.rehearsalDinnerLocationType === "cruise_ship",
+          "state"
+        ),
+        rehearsalDinnerVenueZip: getVenueFieldValue(
+          fields.rehearsalDinnerVenueZip,
+          fields.rehearsalDinnerLocationType === "cruise_ship",
+          "zip"
+        ),
         rehearsalDinnerVenueAsInsured:
           fields.rehearsalDinnerVenueAsInsured || false,
       };
@@ -846,7 +1168,24 @@ router.put("/:quoteNumber", async (req: Request, res: Response) => {
       message: "Quote updated successfully",
       quote: completeQuote,
     });
+    await sentryService.logApiCall(req, res, startTime, {
+      message: "Quote updated successfully",
+      quote: completeQuote,
+    });
   } catch (error) {
+    await sentryErrorService.captureRequestError(
+      req,
+      res,
+      error as Error,
+      res.statusCode || 500
+    );
+    await sentryService.logApiCall(
+      req,
+      res,
+      startTime,
+      undefined,
+      error as Error
+    );
     // ------------------------
     // Error handling for PUT /api/v1/quotes/:quoteNumber.
     // ------------------------
@@ -861,6 +1200,7 @@ router.put("/:quoteNumber", async (req: Request, res: Response) => {
 // Uses a transaction to ensure atomicity.
 // ------------------------
 router.delete("/:quoteNumber", async (req: Request, res: Response) => {
+  const startTime = Date.now();
   const queryRunner = AppDataSource.createQueryRunner();
   await queryRunner.connect();
   await queryRunner.startTransaction();
@@ -959,6 +1299,9 @@ router.delete("/:quoteNumber", async (req: Request, res: Response) => {
       res.json({
         message: "Quote and all related records deleted successfully",
       });
+      await sentryService.logApiCall(req, res, startTime, {
+        message: "Quote and all related records deleted successfully",
+      });
     } catch (deleteError) {
       console.error("Error during deletion:", deleteError);
       // ------------------------
@@ -969,7 +1312,19 @@ router.delete("/:quoteNumber", async (req: Request, res: Response) => {
     }
   } catch (error) {
     await queryRunner.rollbackTransaction();
-    console.error("DELETE /api/v1/quotes error:", error);
+    await sentryErrorService.captureRequestError(
+      req,
+      res,
+      error as Error,
+      res.statusCode || 500
+    );
+    await sentryService.logApiCall(
+      req,
+      res,
+      startTime,
+      undefined,
+      error as Error
+    );
     // ------------------------
     // Error handling for DELETE /api/v1/quotes/:quoteNumber.
     // ------------------------

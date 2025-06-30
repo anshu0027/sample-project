@@ -1,91 +1,153 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
-const express_rate_limit_1 = __importDefault(require("express-rate-limit"));
-const dotenv = __importStar(require("dotenv"));
-// Load environment variables
-dotenv.config();
-// ------------------------
-// Rate limiter for login attempts to prevent brute-force attacks.
-// ------------------------
-const loginLimiter = (0, express_rate_limit_1.default)({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 10, // limit each IP to 10 requests per windowMs
-});
+const event_logger_service_1 = require("../../services/event-logger.service");
+const backend_1 = require("@clerk/backend");
+const dotenv_1 = __importDefault(require("dotenv"));
+dotenv_1.default.config();
 const router = express_1.default.Router();
+const clerkClient = (0, backend_1.createClerkClient)({
+    secretKey: process.env.CLERK_SECRET_KEY,
+});
+const logRequestInfo = (label, req) => {
+    const { userId, email, token } = req.body || {};
+    console.log(`🔍 ${label}`, {
+        hasUserId: !!userId,
+        hasEmail: !!email,
+        hasToken: !!token,
+        requestBody: {
+            userId,
+            email,
+            token: token ? "present" : "missing",
+        },
+    });
+};
+const validateRequestBody = (body) => {
+    return (typeof body.userId === "string" &&
+        typeof body.email === "string" &&
+        typeof body.token === "string");
+};
 // ------------------------
-// Get admin credentials from environment variables
+// POST / - Verify Admin Login
 // ------------------------
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
-// ------------------------
-// POST / - Handles admin login attempts.
-// Applies rate limiting.
-// ------------------------
-router.post("/", loginLimiter, (req, res) => {
-    const { id, password } = req.body;
-    // Check if environment variables are set
-    if (!ADMIN_EMAIL || !ADMIN_PASSWORD) {
-        console.error("Admin credentials not properly configured in environment variables");
-        res.status(500).json({
+router.post("/", async (req, res) => {
+    var _a;
+    logRequestInfo("🔑 Backend: Authentication verification request received", req);
+    const eventLogger = event_logger_service_1.EventLoggerService.getInstance();
+    if (!validateRequestBody(req.body)) {
+        console.error("❌ Missing required authentication fields");
+        await eventLogger.logAdminLogin(req, res, req.body.email || req.body.userId || "unknown", false);
+        res.status(400).json({
             success: false,
-            message: "Server configuration error",
+            message: "Missing required authentication fields",
         });
         return;
     }
-    // ------------------------
-    // Verify the provided credentials against environment variables
-    // ------------------------
-    if (id === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+    const { userId, email, token } = req.body;
+    try {
+        // Verify token - try session first, then JWT
+        let session;
+        try {
+            session = await clerkClient.sessions.verifySession(token, "");
+        }
+        catch (sessionError) {
+            // If session verification fails, try to verify as a JWT token
+            try {
+                const payload = await clerkClient.verifyToken(token);
+                if (payload) {
+                    // Token is valid, create a mock session object
+                    session = { id: payload.sub || "unknown" };
+                }
+                else {
+                    throw new Error("Invalid token");
+                }
+            }
+            catch (jwtError) {
+                console.error("Both session and JWT verification failed:", {
+                    sessionError,
+                    jwtError,
+                });
+                throw new Error("Token verification failed");
+            }
+        }
+        if (!session) {
+            console.error("❌ Invalid session token");
+            await eventLogger.logAdminLogin(req, res, email, false);
+            res.status(401).json({
+                success: false,
+                message: "Invalid authentication token",
+            });
+            return;
+        }
+        // Fetch user details
+        const user = await clerkClient.users.getUser(userId);
+        const userEmail = (_a = user === null || user === void 0 ? void 0 : user.emailAddresses[0]) === null || _a === void 0 ? void 0 : _a.emailAddress;
+        if (!user || userEmail !== email) {
+            console.error("❌ User verification failed", {
+                expected: email,
+                actual: userEmail,
+            });
+            await eventLogger.logAdminLogin(req, res, email, false);
+            res.status(401).json({
+                success: false,
+                message: "User verification failed",
+            });
+            return;
+        }
+        // Log success
+        await eventLogger.logAdminLogin(req, res, email, true);
+        console.log("✅ Authentication successful");
         res.status(200).json({
             success: true,
-            message: "Login successful",
+            message: "Authentication successful",
             route: "/admin",
+            userId,
+            email,
+            sessionId: session.id,
         });
-        return;
     }
-    // ------------------------
-    // If credentials do not match, return a 401 Unauthorized response.
-    // ------------------------
-    res.status(401).json({
-        success: false,
-        message: "Invalid credentials",
-    });
+    catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        console.error("❌ Authentication error:", message);
+        await eventLogger.logAdminLogin(req, res, email || userId || "unknown", false);
+        res.status(500).json({
+            success: false,
+            message: "Authentication failed",
+            error: message,
+        });
+    }
+});
+// ------------------------
+// POST /logout - Revoke Session
+// ------------------------
+router.post("/logout", async (req, res) => {
+    const { userId = "unknown", token } = req.body;
+    const eventLogger = event_logger_service_1.EventLoggerService.getInstance();
+    console.log("🚪 Logout request received", { userId, hasToken: !!token });
+    try {
+        if (token) {
+            await clerkClient.sessions.revokeSession(token);
+            console.log("✅ Session revoked successfully");
+        }
+        await eventLogger.logAdminLogout(req, res, userId);
+        res.status(200).json({
+            success: true,
+            message: "Logout successful",
+            sessionRevoked: !!token,
+        });
+    }
+    catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        console.error("❌ Logout error:", message);
+        res.status(500).json({
+            success: false,
+            message: "Logout failed",
+            error: message,
+        });
+    }
 });
 exports.default = router;
+//# sourceMappingURL=login.route.js.map

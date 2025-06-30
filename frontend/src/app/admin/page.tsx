@@ -3,11 +3,15 @@ import { useRouter } from 'next/navigation';
 import { DollarSign, Shield, PlusCircle, Clock } from 'lucide-react';
 import Card from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { useAuth } from '@clerk/nextjs';
 // import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
 interface Policy {
   createdAt: string;
+  quote?: {
+    quoteNumber?: string;
+  };
   // Add other relevant policy fields if needed elsewhere
 }
 
@@ -16,6 +20,7 @@ interface Quote {
   createdAt: string;
   totalPremium?: number;
   quoteNumber?: string;
+  status?: string;
   event?: {
     // Added for potentially nested eventType
     eventType?: string;
@@ -29,29 +34,38 @@ interface Quote {
 
 export default function AdminDashboard() {
   const router = useRouter();
-  const [policyStats, setPolicyStats] = useState({ current: 0, prev: 0, change: 0 });
-  const [quoteStats, setQuoteStats] = useState({ current: 0, prev: 0, change: 0 });
-  const [revenueStats, setRevenueStats] = useState({ current: 0, prev: 0, change: 0 });
-  const [recentQuotes, setRecentQuotes] = useState<Quote[]>([]); // Will be used for "Recent Transactions" card
+  const { isSignedIn, isLoaded, getToken } = useAuth();
+  const [policies, setPolicies] = useState<Policy[]>([]);
+  const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loading, setLoading] = useState(true);
+
   useEffect(() => {
+    // Check authentication first
+    if (isLoaded && !isSignedIn) {
+      router.replace('/admin/login');
+      return;
+    }
+
     async function fetchStats() {
       setLoading(true);
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
       try {
-        const now = new Date();
-        const currentPeriodStart = new Date(now);
-        currentPeriodStart.setDate(now.getDate() - 30);
-        const previousPeriodEnd = new Date(currentPeriodStart);
-        previousPeriodEnd.setDate(currentPeriodStart.getDate() - 1);
-        const previousPeriodStart = new Date(previousPeriodEnd);
-        previousPeriodStart.setDate(previousPeriodEnd.getDate() - 30);
+        // Get authentication token
+        const token = await getToken();
 
         // Fetch all policies and all quotes in parallel
         const [policiesRes, quotesRes] = await Promise.all([
-          fetch(`${apiUrl}/policy-list`), // Fetches all policies
-          fetch(`${apiUrl}/quotes?allQuotes=true`), // Fetches all quotes
+          fetch(`${apiUrl}/policies`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }), // Changed from policy-list to policies
+          fetch(`${apiUrl}/quotes?allQuotes=true`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }), // Fetches all quotes
         ]);
 
         if (!policiesRes.ok || !quotesRes.ok) {
@@ -60,108 +74,8 @@ export default function AdminDashboard() {
 
         const policiesData = await policiesRes.json();
         const quotesData = await quotesRes.json();
-        const policies: Policy[] = policiesData.policies || [];
-        const quotes: Quote[] = quotesData.quotes || [];
-
-        // --- Calculate Policy Stats ---
-        const currentPolicies = policies.filter(
-          (p: Policy) => new Date(p.createdAt) >= currentPeriodStart,
-        );
-        const prevPolicies = policies.filter(
-          (p: Policy) =>
-            new Date(p.createdAt) >= previousPeriodStart &&
-            new Date(p.createdAt) <= previousPeriodEnd,
-        );
-        const policyChange =
-          (prevPolicies.length || 0) === 0
-            ? currentPolicies.length > 0
-              ? 100
-              : 0
-            : parseFloat(
-                (
-                  ((currentPolicies.length - prevPolicies.length) / prevPolicies.length) *
-                  100
-                ).toFixed(1),
-              );
-        setPolicyStats({
-          current: currentPolicies.length,
-          prev: prevPolicies.length,
-          change: policyChange,
-        });
-
-        // --- Calculate Quote Stats ---
-        const currentQuotes = quotes.filter(
-          (q: Quote) => new Date(q.createdAt) >= currentPeriodStart,
-        );
-        const prevQuotes = quotes.filter(
-          (q: Quote) =>
-            new Date(q.createdAt) >= previousPeriodStart &&
-            new Date(q.createdAt) <= previousPeriodEnd,
-        );
-        const quoteChange =
-          (prevQuotes.length || 0) === 0
-            ? currentQuotes.length > 0
-              ? 100
-              : 0
-            : parseFloat(
-                (((currentQuotes.length - prevQuotes.length) / prevQuotes.length) * 100).toFixed(1),
-              );
-        setQuoteStats({
-          current: currentQuotes.length,
-          prev: prevQuotes.length,
-          change: quoteChange,
-        });
-
-        // --- Set Recent Quotes (Optimized for large datasets) ---
-        const mostRecentQuotes: Quote[] = [];
-        const K = 5; // Number of recent quotes to display
-
-        for (const quote of quotes) {
-          const quoteDate = new Date(quote.createdAt).getTime();
-          if (mostRecentQuotes.length < K) {
-            mostRecentQuotes.push(quote);
-            // Sort the small array after adding, to keep the oldest at the end if we reach K items
-            if (mostRecentQuotes.length === K) {
-              mostRecentQuotes.sort(
-                (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-              );
-            }
-          } else {
-            // Compare with the oldest in the current top K (at index K-1 due to descending sort)
-            if (quoteDate > new Date(mostRecentQuotes[K - 1].createdAt).getTime()) {
-              mostRecentQuotes[K - 1] = quote; // Replace the oldest
-              mostRecentQuotes.sort(
-                (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-              ); // Re-sort
-            }
-          }
-        }
-        // If there were fewer than K quotes in total, ensure the array is sorted.
-        if (mostRecentQuotes.length > 0 && mostRecentQuotes.length < K) {
-          mostRecentQuotes.sort(
-            (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-          );
-        }
-        setRecentQuotes(mostRecentQuotes);
-
-        // --- Calculate Revenue Stats ---
-        const currentRevenue = currentQuotes.reduce(
-          (sum: number, q: Quote) => sum + (q.totalPremium || 0),
-          0,
-        );
-        const prevRevenue = prevQuotes.reduce(
-          (sum: number, q: Quote) => sum + (q.totalPremium || 0),
-          0,
-        );
-        const revenueChange =
-          (prevRevenue || 0) === 0
-            ? currentRevenue > 0
-              ? 100
-              : 0
-            : parseFloat(
-                (((currentRevenue - prevRevenue) / (Math.abs(prevRevenue) || 1)) * 100).toFixed(1),
-              );
-        setRevenueStats({ current: currentRevenue, prev: prevRevenue, change: revenueChange });
+        setPolicies(policiesData.policies || []);
+        setQuotes(quotesData.quotes || []);
       } catch (error) {
         console.error('Failed to fetch stats:', error);
       } finally {
@@ -169,7 +83,174 @@ export default function AdminDashboard() {
       }
     }
     fetchStats();
-  }, []);
+  }, [router, isSignedIn, isLoaded, getToken]);
+
+  // Memoize expensive calculations
+  const { policyStats, quoteStats, revenueStats, recentQuotes, recentTransactions } =
+    useMemo(() => {
+      if (loading || (policies.length === 0 && quotes.length === 0)) {
+        return {
+          policyStats: { current: 0, prev: 0, change: 0 },
+          quoteStats: { current: 0, prev: 0, change: 0 },
+          revenueStats: { current: 0, prev: 0, change: 0 },
+          recentQuotes: [],
+          recentTransactions: [],
+        };
+      }
+
+      const now = new Date();
+      const currentPeriodStart = new Date(now);
+      currentPeriodStart.setDate(now.getDate() - 30);
+      const previousPeriodEnd = new Date(currentPeriodStart);
+      previousPeriodEnd.setDate(currentPeriodStart.getDate() - 1);
+      const previousPeriodStart = new Date(previousPeriodEnd);
+      previousPeriodStart.setDate(previousPeriodEnd.getDate() - 30);
+
+      // --- Calculate Policy Stats ---
+      const currentPolicies = policies.filter((policy) => {
+        const policyDate = new Date(policy.createdAt);
+        return policyDate >= currentPeriodStart;
+      });
+      const prevPolicies = policies.filter((policy) => {
+        const policyDate = new Date(policy.createdAt);
+        return policyDate >= previousPeriodStart && policyDate <= previousPeriodEnd;
+      });
+      const policyChange =
+        prevPolicies.length === 0
+          ? currentPolicies.length > 0
+            ? 100
+            : 0
+          : Math.round(
+              ((currentPolicies.length - prevPolicies.length) / prevPolicies.length) * 100,
+            );
+
+      // --- Calculate Quote Stats ---
+      const currentQuotes = quotes.filter((quote) => {
+        const quoteDate = new Date(quote.createdAt);
+        return quoteDate >= currentPeriodStart;
+      });
+      const prevQuotes = quotes.filter((quote) => {
+        const quoteDate = new Date(quote.createdAt);
+        return quoteDate >= previousPeriodStart && quoteDate <= previousPeriodEnd;
+      });
+      const quoteChange =
+        prevQuotes.length === 0
+          ? currentQuotes.length > 0
+            ? 100
+            : 0
+          : Math.round(((currentQuotes.length - prevQuotes.length) / prevQuotes.length) * 100);
+
+      // --- Set Recent Quotes (Optimized for large datasets) ---
+      const completedQuotes = quotes.filter((q: Quote) => q.status === 'COMPLETE');
+      const mostRecentQuotes: Quote[] = [];
+      const K = 5; // Number of recent quotes to display
+
+      for (const quote of completedQuotes) {
+        const quoteDate = new Date(quote.createdAt).getTime();
+        if (mostRecentQuotes.length < K) {
+          mostRecentQuotes.push(quote);
+          // Sort the small array after adding, to keep the oldest at the end if we reach K items
+          if (mostRecentQuotes.length === K) {
+            mostRecentQuotes.sort(
+              (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+            );
+          }
+        } else {
+          // Compare with the oldest in the current top K (at index K-1 due to descending sort)
+          if (quoteDate > new Date(mostRecentQuotes[K - 1].createdAt).getTime()) {
+            mostRecentQuotes[K - 1] = quote; // Replace the oldest
+            mostRecentQuotes.sort(
+              (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+            ); // Re-sort
+          }
+        }
+      }
+      // If there were fewer than K quotes in total, ensure the array is sorted.
+      if (mostRecentQuotes.length > 0 && mostRecentQuotes.length < K) {
+        mostRecentQuotes.sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        );
+      }
+
+      // --- Calculate Revenue Stats and Recent Transactions ---
+      // Create a map of quote numbers that have policies
+      const quoteNumbersWithPolicies = new Set(
+        policies.map((policy: Policy) => policy.quote?.quoteNumber).filter(Boolean),
+      );
+
+      // Filter quotes that have corresponding policies and are COMPLETE
+      const transactionQuotes = quotes.filter(
+        (q: Quote) => q.status === 'COMPLETE' && quoteNumbersWithPolicies.has(q.quoteNumber),
+      );
+
+      // Get recent transactions (quotes with policies)
+      const mostRecentTransactions: Quote[] = [];
+      for (const quote of transactionQuotes) {
+        const quoteDate = new Date(quote.createdAt).getTime();
+        if (mostRecentTransactions.length < K) {
+          mostRecentTransactions.push(quote);
+          if (mostRecentTransactions.length === K) {
+            mostRecentTransactions.sort(
+              (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+            );
+          }
+        } else {
+          if (quoteDate > new Date(mostRecentTransactions[K - 1].createdAt).getTime()) {
+            mostRecentTransactions[K - 1] = quote;
+            mostRecentTransactions.sort(
+              (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+            );
+          }
+        }
+      }
+      if (mostRecentTransactions.length > 0 && mostRecentTransactions.length < K) {
+        mostRecentTransactions.sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        );
+      }
+
+      // Calculate revenue from transactions (quotes with policies)
+      const currentRevenue = transactionQuotes
+        .filter((q: Quote) => {
+          const quoteDate = new Date(q.createdAt);
+          return quoteDate >= currentPeriodStart;
+        })
+        .reduce((sum: number, q: Quote) => sum + (q.totalPremium || 0), 0);
+
+      const prevRevenue = transactionQuotes
+        .filter((q: Quote) => {
+          const quoteDate = new Date(q.createdAt);
+          return quoteDate >= previousPeriodStart && quoteDate <= previousPeriodEnd;
+        })
+        .reduce((sum: number, q: Quote) => sum + (q.totalPremium || 0), 0);
+
+      const revenueChange =
+        prevRevenue === 0
+          ? currentRevenue > 0
+            ? 100
+            : 0
+          : Math.round(((currentRevenue - prevRevenue) / prevRevenue) * 100);
+
+      return {
+        policyStats: {
+          current: currentPolicies.length,
+          prev: prevPolicies.length,
+          change: policyChange,
+        },
+        quoteStats: {
+          current: currentQuotes.length,
+          prev: prevQuotes.length,
+          change: quoteChange,
+        },
+        revenueStats: {
+          current: currentRevenue,
+          prev: prevRevenue,
+          change: revenueChange,
+        },
+        recentQuotes: mostRecentQuotes,
+        recentTransactions: mostRecentTransactions,
+      };
+    }, [policies, quotes, loading]);
 
   // Skeleton Components
   const StatCardSkeleton = () => (
@@ -348,7 +429,7 @@ export default function AdminDashboard() {
                     </p>
                   </div>
                   <span className="text-sm text-gray-500">
-                    {new Date(quote.createdAt).toLocaleString()}
+                    {new Date(quote.createdAt).toLocaleDateString()}
                   </span>
                 </div>
               ))
@@ -358,7 +439,7 @@ export default function AdminDashboard() {
 
         <Card
           title="Recent Transactions"
-          subtitle="Latest quote activities"
+          subtitle="Latest Transactions"
           icon={<DollarSign size={20} />}
           className="text-gray-800"
           footer={
@@ -375,10 +456,10 @@ export default function AdminDashboard() {
           }
         >
           <div className="divide-y divide-gray-100">
-            {recentQuotes.length === 0 ? (
+            {recentTransactions.length === 0 ? (
               <div className="py-2 text-gray-500">No recent transactions</div>
             ) : (
-              recentQuotes.map((quote) => (
+              recentTransactions.map((quote) => (
                 <div key={quote.id || quote.quoteNumber} className="py-1">
                   <div className="flex items-center justify-between">
                     <p
@@ -389,26 +470,17 @@ export default function AdminDashboard() {
                     </p>
                   </div>
                   <div className="flex items-center justify-between text-sm">
-                    <span
-                      className="text-gray-500 truncate"
-                      title={
-                        `${quote.policyHolder?.firstName || ''} ${quote.policyHolder?.lastName || ''}`.trim() ||
-                        'Unknown Customer'
-                      }
-                    >
+                    <span className="text-gray-500 truncate">
                       {`${quote.policyHolder?.firstName || ''} ${quote.policyHolder?.lastName || ''}`.trim() ||
                         'Unknown Customer'}
                     </span>
-                    <span className="font-medium text-gray-800">
+                    <span className="font-medium mb-4 text-gray-800 ">
                       $
                       {(quote.totalPremium || 0).toLocaleString(undefined, {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
                       })}
                     </span>
-                  </div>
-                  <div className="text-xs text-gray-400 mt-1 text-right">
-                    {new Date(quote.createdAt).toLocaleDateString()}
                   </div>
                 </div>
               ))

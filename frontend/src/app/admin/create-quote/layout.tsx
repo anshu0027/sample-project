@@ -1,32 +1,13 @@
 'use client';
 import { QuoteProvider } from '@/context/QuoteContext';
 import ProgressTracker from '@/components/ProgressTracker';
-import { usePathname } from 'next/navigation';
+// import { usePathname } from 'next/navigation';
 import clsx from 'clsx';
 import { useState, useEffect } from 'react';
 
-// ------------------------
-// Layout component for the multi-step quote creation process in the admin area.
-// It provides a consistent structure with a progress tracker and manages
-// different container styles based on the current step.
-// ------------------------
 export default function CreateQuoteLayout({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
 
-  // ------------------------
-  // Dynamically sets container classes based on the current route.
-  // Steps 2 and 3 have a different layout to accommodate a sidebar/preview.
-  // ------------------------
-  // Default style for step 1, step 4, and any other potential sub-pages (centered with max-width)
-  let pageContainerSpecificClasses = 'max-w-5xl mx-auto';
-
-  // Steps 2 and 3 accommodate the QuotePreview and use a different layout
-  if (pathname === '/admin/create-quote/step2' || pathname === '/admin/create-quote/step3') {
-    // Adjusted max-width to 60rem and corrected right margin for w-96 (24rem) QuotePreview
-    // This creates space on the right for a fixed QuotePreview component.
-    pageContainerSpecificClasses =
-      'max-w-[60rem] w-full ml-auto mr-auto lg:ml-4 lg:mr-[calc(24rem+3.25rem+1rem)]'; // equates to lg:mr-[28.25rem]
-  }
+  const pageContainerSpecificClasses = 'max-w-5xl mx-auto';
   const [layoutReady, setLayoutReady] = useState(false);
 
   // ------------------------

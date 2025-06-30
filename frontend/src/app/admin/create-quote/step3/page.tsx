@@ -6,7 +6,14 @@ import { useQuote } from '@/context/QuoteContext';
 import { Button } from '@/components/ui/Button';
 import Checkbox from '@/components/ui/Checkbox';
 import { US_STATES, RELATIONSHIP_OPTIONS, REFERRAL_OPTIONS } from '@/utils/constants';
-import { isEmpty, isValidPhone, isValidZip, formatPhoneNumber } from '@/utils/validators';
+import {
+  isEmpty,
+  isValidPhone,
+  isValidZip,
+  formatPhoneNumber,
+  isValidName,
+} from '@/utils/validators';
+import { useAuth } from '@clerk/nextjs';
 // import dynamic from 'next/dynamic';
 // import { Toaster } from "@/components/ui/toaster";
 import { toast } from '@/hooks/use-toast';
@@ -25,20 +32,15 @@ export default function PolicyHolder() {
   // ===== State and Context Hooks =====
   // =============================
   const { state, dispatch } = useQuote();
+  const { isSignedIn, isLoaded, getToken } = useAuth();
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formattedPhone, setFormattedPhone] = useState(state.phone);
   const [pageReady, setPageReady] = useState(false);
 
   useEffect(() => {
-    const isAdminAuthenticated = () => {
-      // =============================
-      // ===== Admin Authentication Check =====
-      // =============================
-      return typeof window !== 'undefined' && localStorage.getItem('admin_logged_in') === 'true';
-    };
-
     const timer = setTimeout(() => {
-      if (!isAdminAuthenticated()) {
+      // Check if admin is authenticated
+      if (isLoaded && !isSignedIn) {
         router.replace('/admin/login');
         return;
       }
@@ -54,7 +56,7 @@ export default function PolicyHolder() {
     }, 200); // Short delay for skeleton visibility
 
     return () => clearTimeout(timer);
-  }, [router, state.step2Complete]);
+  }, [router, state.step2Complete, isLoaded, isSignedIn]);
 
   // ==========================================
   // ===== Phone Number Formatting Effect =====
@@ -91,12 +93,46 @@ export default function PolicyHolder() {
   };
 
   // =============================
+  // ===== Name Input Keydown Handler =====
+  // =============================
+  // Restricts name inputs to letters and spaces only
+  const handleNameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Allow: backspace, delete, tab, escape, enter, arrows, home, end
+    if (
+      [
+        'Backspace',
+        'Delete',
+        'Tab',
+        'Escape',
+        'Enter',
+        'ArrowLeft',
+        'ArrowRight',
+        'Home',
+        'End',
+      ].includes(e.key) ||
+      // Allow: Ctrl+A, Command+A, Ctrl+C, Ctrl+V, Ctrl+X
+      ((e.ctrlKey || e.metaKey) && ['a', 'c', 'v', 'x'].includes(e.key.toLowerCase()))
+    ) {
+      return; // Let it happen
+    }
+
+    // Allow only letters and spaces
+    if (!/^[a-zA-Z\s]$/.test(e.key)) {
+      e.preventDefault();
+    }
+  };
+
+  // =============================
   // ===== Form Validation =====
   // =============================
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
     if (isEmpty(state.firstName)) newErrors.firstName = 'Please enter your first name';
+    else if (!isValidName(state.firstName))
+      newErrors.firstName = 'First name must contain only letters and spaces';
     if (isEmpty(state.lastName)) newErrors.lastName = 'Please enter your last name';
+    else if (!isValidName(state.lastName))
+      newErrors.lastName = 'Last name must contain only letters and spaces';
     if (isEmpty(state.phone)) newErrors.phone = 'Please enter your phone number';
     else if (!isValidPhone(state.phone)) newErrors.phone = 'Please enter a valid phone number';
     if (isEmpty(state.relationship))
@@ -109,6 +145,8 @@ export default function PolicyHolder() {
     if (!state.legalNotices)
       newErrors.legalNotices = 'You must accept the legal notices to proceed';
     if (isEmpty(state.completingFormName)) newErrors.completingFormName = 'Please enter your name';
+    else if (!isValidName(state.completingFormName))
+      newErrors.completingFormName = 'Name must contain only letters and spaces';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -138,9 +176,13 @@ export default function PolicyHolder() {
         // =============================
         // ===== API Call: Update Quote with Policy Holder Info =====
         // =============================
+        const token = await getToken();
         const res = await fetch(`${apiUrl}/quotes/${quoteNumber}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
           body: JSON.stringify({
             // Policy holder fields at root level
             firstName: state.firstName,
@@ -317,6 +359,7 @@ export default function PolicyHolder() {
                   id="firstName"
                   value={state.firstName}
                   onChange={(e) => handleInputChange('firstName', e.target.value)}
+                  onKeyDown={handleNameKeyDown}
                   className={`w-full border text-left rounded-md py-2 px-4 ${
                     errors.firstName ? 'border-red-500' : 'border-gray-300'
                   } focus:outline-none focus:ring-2 focus:ring-indigo-500`}
@@ -337,6 +380,7 @@ export default function PolicyHolder() {
                   id="lastName"
                   value={state.lastName}
                   onChange={(e) => handleInputChange('lastName', e.target.value)}
+                  onKeyDown={handleNameKeyDown}
                   className={`w-full border text-left rounded-md py-2 px-4 ${
                     errors.lastName ? 'border-red-500' : 'border-gray-300'
                   } focus:outline-none focus:ring-2 focus:ring-indigo-500`}
@@ -648,6 +692,7 @@ export default function PolicyHolder() {
                 type="text"
                 value={state.completingFormName}
                 onChange={(e) => handleInputChange('completingFormName', e.target.value)}
+                onKeyDown={handleNameKeyDown}
                 placeholder="Full Name"
                 className={`block w-[60%] text-left mx-auto rounded-md shadow-sm text-base font-medium transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 border pl-4 pr-4 py-2 ${
                   // Matched customer page

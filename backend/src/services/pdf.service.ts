@@ -14,7 +14,7 @@ const basePdfPath = path.join(process.cwd(), "public", "base.pdf");
 // Stores the base64 encoded logo image to avoid reading and converting it multiple times.
 // ------------------------
 let logoImageDataBase64Cache: string | null = null;
-const logoImagePath = path.join(process.cwd(), "public", "logo.png");
+const logoImagePath = path.join(process.cwd(), "public", "logo_black.png");
 
 // ------------------------
 // IMPORTANT: Create a 'public' folder in the root of 'my-backend'

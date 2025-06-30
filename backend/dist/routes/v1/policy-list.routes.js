@@ -5,6 +5,8 @@ const express_1 = require("express");
 const data_source_1 = require("../../data-source");
 const policy_entity_1 = require("../../entities/policy.entity");
 const enums_1 = require("../../entities/enums");
+const event_logger_service_1 = require("../../services/event-logger.service");
+const sentry_error_service_1 = require("../../services/sentry-error.service");
 // ------------------------
 // Router for handling policy list related API endpoints.
 // Base path: /api/v1/policy-list
@@ -12,8 +14,11 @@ const enums_1 = require("../../entities/enums");
 // formatted for display in a list or table in the frontend.
 // ------------------------
 const router = (0, express_1.Router)();
+const eventLogger = event_logger_service_1.EventLoggerService.getInstance();
+const sentryErrorService = sentry_error_service_1.SentryErrorService.getInstance();
 // --- GET /api/v1/policy-list --- Handles fetching a paginated list of policies.
 router.get("/", async (req, res) => {
+    const startTime = Date.now();
     try {
         // 1. Parse pagination parameters from the query string
         const page = parseInt(req.query.page || "1", 10);
@@ -54,7 +59,7 @@ router.get("/", async (req, res) => {
             // console.log("Policy event:", policy.event);
             // console.log("Policy holder:", policy.policyHolder);
             // console.log("Policy payments:", policy.payments);
-            var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
+            var _a, _b, _c, _d, _e, _f, _g, _h;
             // Get the relevant data from either quote or direct policy
             // A policy might be directly created or created from a quote.
             // This logic ensures data is sourced correctly.
@@ -84,9 +89,7 @@ router.get("/", async (req, res) => {
             // Get the total premium from either the quote or the first payment
             // For admin quotes, prioritize the quote's total premium
             // ------------------------
-            const totalPremium = ((_e = policy.quote) === null || _e === void 0 ? void 0 : _e.source) === enums_1.QuoteSource.ADMIN
-                ? (_f = policy.quote) === null || _f === void 0 ? void 0 : _f.totalPremium
-                : ((payment === null || payment === void 0 ? void 0 : payment.amount) || ((_g = policy.quote) === null || _g === void 0 ? void 0 : _g.totalPremium) || 0);
+            const totalPremium = ((_e = policy.quote) === null || _e === void 0 ? void 0 : _e.totalPremium) || 0;
             // ------------------------
             // Construct the formatted policy object.
             // ------------------------
@@ -94,8 +97,8 @@ router.get("/", async (req, res) => {
                 id: policy.id,
                 policyId: policy.id,
                 policyNumber: policy.policyNumber,
-                quoteNumber: (_h = policy.quote) === null || _h === void 0 ? void 0 : _h.quoteNumber,
-                email: (_j = policy.quote) === null || _j === void 0 ? void 0 : _j.email,
+                quoteNumber: (_f = policy.quote) === null || _f === void 0 ? void 0 : _f.quoteNumber,
+                email: (_g = policy.quote) === null || _g === void 0 ? void 0 : _g.email,
                 customer: policyHolder
                     ? `${policyHolder.firstName || ""} ${policyHolder.lastName || ""}`.trim()
                     : null,
@@ -114,7 +117,7 @@ router.get("/", async (req, res) => {
                 status: paymentStatus,
                 createdAt: policy.createdAt,
                 updatedAt: policy.updatedAt,
-                payments: ((_k = policy.payments) === null || _k === void 0 ? void 0 : _k.map((p) => ({
+                payments: ((_h = policy.payments) === null || _h === void 0 ? void 0 : _h.map((p) => ({
                     amount: p.amount,
                     status: p.status,
                     method: p.method,
@@ -142,9 +145,12 @@ router.get("/", async (req, res) => {
         // Log the final response for debugging.
         // ------------------------
         // console.log("Final response:", JSON.stringify(response, null, 2));
+        await eventLogger.logApiCall(req, res, startTime, response);
         res.json(response);
     }
     catch (error) {
+        await sentryErrorService.captureRequestError(req, res, error, res.statusCode || 500);
+        await eventLogger.logApiCall(req, res, startTime, undefined, error);
         // ------------------------
         // Error handling for GET /api/v1/policy-list.
         // ------------------------
@@ -158,3 +164,4 @@ router.get("/", async (req, res) => {
 // Therefore, we will NOT include the DELETE handler here to maintain a clean API design.
 // ------------------------
 exports.default = router;
+//# sourceMappingURL=policy-list.routes.js.map

@@ -67,3 +67,4 @@ exports.Payment = Payment = __decorate([
     (0, typeorm_1.Index)(['status']),
     (0, typeorm_1.Index)(['quoteId'])
 ], Payment);
+//# sourceMappingURL=payment.entity.js.map

@@ -41,3 +41,4 @@ exports.PolicyVersion = PolicyVersion = __decorate([
     (0, typeorm_1.Entity)('POLICY_VERSIONS'),
     (0, typeorm_1.Index)(['policyId'])
 ], PolicyVersion);
+//# sourceMappingURL=policy-version.entity.js.map

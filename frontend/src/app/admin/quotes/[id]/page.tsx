@@ -36,6 +36,7 @@ interface Quote {
   liquorLiabilityPremium?: number | null;
   createdAt?: string | null;
   status?: string | null;
+  convertedToPolicy?: boolean | null;
   honoree1FirstName?: string | null;
   honoree1LastName?: string | null;
   honoree2FirstName?: string | null;
@@ -119,6 +120,7 @@ function flattenQuote(quote: any): Quote | null {
     liquorLiabilityPremium: quote.liquorLiabilityPremium,
     createdAt: quote.createdAt,
     status: quote.status,
+    convertedToPolicy: quote.convertedToPolicy || false,
     honoree1FirstName: quote.event?.honoree1FirstName || '',
     honoree1LastName: quote.event?.honoree1LastName || '',
     honoree2FirstName: quote.event?.honoree2FirstName || '',
@@ -195,6 +197,7 @@ export default function QuoteDetail() {
   const [quote, setQuote] = useState<Quote | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isConverted] = useState(false);
 
   // ==================================================================
   // ===== API CHANGE #1: Fetching the quote data ===================
@@ -223,78 +226,11 @@ export default function QuoteDetail() {
       }
     }
     if (id) fetchQuote();
-  }, [id]);
+  }, [id, isConverted]);
 
   const handleBack = () => {
     router.push('/admin/quotes');
   };
-
-  // const handleEdit = () => {
-  //     router.push(`/admin/quotes/${id}/edit`);
-  // };
-
-  // ==================================================================
-  // ===== API CHANGE #2: Converting the quote to a policy ==========
-  // ==================================================================
-  const handleConvertToPolicy = async () => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-    try {
-      const res = await fetch(`${apiUrl}/policies/from-quote`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          quoteNumber: id,
-          forceConvert: true,
-        }),
-      });
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || 'Failed to convert quote to policy');
-      }
-      const data = await res.json();
-      toast.success(`Quote converted to policy successfully! Policy Number: ${data.policyNumber}`);
-      router.push(`/admin/policies/${data.policyNumber}`);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to convert quote to policy.';
-      toast.error(message);
-      setError(message);
-    }
-  };
-
-  // ==================================================================
-  // ===== API CHANGE #3: Sending the quote email ===================
-  // ==================================================================
-  // const handleEmailQuote = async () => {
-  //     const recipientEmail = quote?.email;
-  //     if (!recipientEmail) {
-  //         toast.error("No email found for this quote.");
-  //         return;
-  //     }
-  //     setIsEmailSent(true);
-  //     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  //     try {
-  //         const res = await fetch(`${apiUrl}/email/send`, {
-  //             method: "POST",
-  //             headers: { "Content-Type": "application/json" },
-  //             body: JSON.stringify({
-  //                 to: recipientEmail,
-  //                 type: 'quote',
-  //                 data: quote // Send the entire quote object
-  //             })
-  //         });
-  //         if (res.ok) {
-  //             toast.success("Quote emailed successfully!");
-  //         } else {
-  //             const data = await res.json();
-  //             throw new Error(data.error || "Failed to send email");
-  //         }
-  //     } catch (err) {
-  //         const message = err instanceof Error ? err.message : "An unknown error occurred.";
-  //         toast.error(message);
-  //     } finally {
-  //         setIsEmailSent(false);
-  //     }
-  // };
 
   // ==================================================================
   // ===== API CHANGE #4: Deleting the quote ========================
@@ -458,7 +394,9 @@ export default function QuoteDetail() {
                           ? 'bg-blue-100 text-blue-800'
                           : quote.status === 'Converted'
                             ? 'bg-green-100 text-green-800'
-                            : 'bg-gray-100 text-gray-800'
+                            : quote.status === 'EXPIRED'
+                              ? 'bg-red-100 text-red-800'
+                              : 'bg-gray-100 text-gray-800'
                     }`}
                   >
                     {quote.status}
@@ -467,27 +405,6 @@ export default function QuoteDetail() {
               </div>
             </div>
             <div className="flex flex-wrap gap-2 sm:gap-3">
-              {/* <Button
-                                variant="outline"
-                                onClick={handleEmailQuote}
-                                disabled={isEmailSent}
-                                className="text-sm"
-                            >
-                                <Mail size={16} className="mr-2" />
-                                {isEmailSent ? "Sending..." : "Email Quote"}
-                            </Button> */}
-              {/* <Button
-                                variant="outline"
-                                onClick={handleEdit}
-                                className="text-sm"
-                            >
-                                <Edit size={16} className="mr-2" />
-                                Edit Quote
-                            </Button> */}
-              <Button variant="default" onClick={handleConvertToPolicy} className="text-sm">
-                <DollarSign size={16} className="mr-2" />
-                Convert to Policy
-              </Button>
               <Button
                 variant="outline"
                 className="text-sm text-red-600 border-red-200 hover:bg-red-50"

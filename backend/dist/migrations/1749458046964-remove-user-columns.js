@@ -481,3 +481,4 @@ class RemoveUserColumns1749458046964 {
     }
 }
 exports.RemoveUserColumns1749458046964 = RemoveUserColumns1749458046964;
+//# sourceMappingURL=1749458046964-remove-user-columns.js.map

@@ -1,0 +1,146 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# API Patterns & Endpoints Guide
+
+## API Structure Overview
+
+### Base Configuration
+- **Server**: Express.js with TypeScript
+- **Base URL**: `http://localhost:8000` (dev) / `https://localhost:8000` (HTTPS)
+- **API Version**: `/api/v1/`
+- **Health Check**: `/api/health` - System status endpoint
+
+### Route Organization
+All routes are mounted in [backend/src/index.ts](mdc:backend/src/index.ts):
+
+```typescript
+app.use("/api/v1/quotes", quoteRoutes);
+app.use("/api/v1/email", emailRoutes);
+app.use("/api/v1/policies", policyRoutes);
+app.use("/api/v1/policy-list", policyListRoutes);
+app.use("/api/v1/admin", adminRoutes);
+app.use("/api/v1/payment", paymentRoutes);
+app.use("/api/v1/login", loginRoutes);
+```
+
+## API Endpoints by Module
+
+### Quote Management
+**Route File**: [backend/src/routes/v1/quote.routes.ts](mdc:backend/src/routes/v1/quote.routes.ts)
+- `POST /api/v1/quotes` - Create new quote
+- `GET /api/v1/quotes/:id` - Get quote by ID
+- `PUT /api/v1/quotes/:id` - Update quote
+- `DELETE /api/v1/quotes/:id` - Delete quote
+- `GET /api/v1/quotes` - List quotes with filters
+
+### Policy Management
+**Route File**: [backend/src/routes/v1/policy.routes.ts](mdc:backend/src/routes/v1/policy.routes.ts)
+- `POST /api/v1/policies` - Create new policy
+- `GET /api/v1/policies/:id` - Get policy by ID
+- `PUT /api/v1/policies/:id` - Update policy
+- `GET /api/v1/policies/:id/versions` - Get policy versions
+- `POST /api/v1/policies/:id/versions` - Create new version
+
+### Policy Listing
+**Route File**: [backend/src/routes/v1/policy-list.routes.ts](mdc:backend/src/routes/v1/policy-list.routes.ts)
+- `GET /api/v1/policy-list` - List policies with search/filter
+- `GET /api/v1/policy-list/:id` - Get policy details
+- `GET /api/v1/policy-list/export` - Export policies
+
+### Payment Processing
+**Route File**: [backend/src/routes/v1/payment.routes.ts](mdc:backend/src/routes/v1/payment.routes.ts)
+- `POST /api/v1/payment/process` - Process payment
+- `GET /api/v1/payment/:id` - Get payment details
+- `POST /api/v1/payment/refund` - Process refund
+- `GET /api/v1/payment/history` - Payment history
+
+### Admin Operations
+**Route File**: [backend/src/routes/v1/admin.routes.ts](mdc:backend/src/routes/v1/admin.routes.ts)
+- `GET /api/v1/admin/dashboard` - Admin dashboard data
+- `GET /api/v1/admin/users` - List users
+- `POST /api/v1/admin/users` - Create user
+- `PUT /api/v1/admin/users/:id` - Update user
+- `DELETE /api/v1/admin/users/:id` - Delete user
+
+### Email Services
+**Route File**: [backend/src/routes/v1/email.routes.ts](mdc:backend/src/routes/v1/email.routes.ts)
+- `POST /api/v1/email/send` - Send email
+- `POST /api/v1/email/template` - Send templated email
+- `GET /api/v1/email/history` - Email history
+
+### Authentication
+**Route File**: [backend/src/routes/v1/login.route.ts](mdc:backend/src/routes/v1/login.route.ts)
+- `POST /api/v1/login` - User login
+- `POST /api/v1/login/logout` - User logout
+- `GET /api/v1/login/verify` - Verify token
+
+## Common API Patterns
+
+### Request/Response Structure
+```typescript
+// Success Response
+{
+  success: true,
+  data: any,
+  message?: string
+}
+
+// Error Response
+{
+  success: false,
+  error: string,
+  details?: any
+}
+```
+
+### Error Handling
+- **400**: Bad Request - Invalid input data
+- **401**: Unauthorized - Authentication required
+- **403**: Forbidden - Insufficient permissions
+- **404**: Not Found - Resource not found
+- **500**: Internal Server Error - Server error
+
+### Middleware Stack
+1. **CORS** - Cross-origin resource sharing
+2. **Rate Limiting** - Request throttling
+3. **JSON Parsing** - Request body parsing
+4. **Static Files** - Public file serving
+5. **Route Handlers** - Business logic
+
+### Database Operations
+- **TypeORM** for database interactions
+- **Repository Pattern** for entity operations
+- **Transactions** for complex operations
+- **Migrations** for schema changes
+
+### File Handling
+- **Static Files**: Served from [backend/public/](mdc:backend/public)
+- **Uploads**: Stored in [backend/uploads/](mdc:backend/uploads)
+- **PDFs**: Generated and stored with versioning
+
+### Security Features
+- **Rate Limiting**: 500 requests per 15 minutes per IP
+- **CORS**: Configured for specific origins
+- **Input Validation**: Request data validation
+- **Authentication**: Clerk integration
+- **CSRF Protection**: Enabled for forms
+
+## Integration with Frontend
+
+### API Calls
+- **Base URL**: Configured in frontend environment
+- **Authentication**: Clerk tokens in headers
+- **Error Handling**: Toast notifications for errors
+- **Loading States**: UI feedback during requests
+
+### Data Flow
+1. Frontend form submission
+2. API endpoint call
+3. Backend validation and processing
+4. Database operation
+5. Response to frontend
+6. UI update and user feedback
+

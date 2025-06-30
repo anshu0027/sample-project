@@ -12,10 +12,18 @@ import { createPolicyFromQuote } from "../../services/policy.service";
 import { VersionPdfService } from "../../services/versionPdf.service";
 import fs from "fs";
 import path from "path";
+import { SentryService } from "../../services/sentry.service";
+import { SentryErrorService } from "../../services/sentry-error.service";
+import { createClerkClient, verifyToken } from "@clerk/backend";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 // Router for handling policy-related API endpoints.
 // Base path: /api/v1/policies
 const router = Router();
+const sentryService = SentryService.getInstance();
+const sentryErrorService = SentryErrorService.getInstance();
 
 // --- GET /api/v1/policies ---
 // --- GET /api/v1/policies/:id ---
@@ -23,6 +31,7 @@ const router = Router();
 // Can optionally fetch only the versions of a policy.
 
 router.get("/:id", async (req: Request, res: Response) => {
+  const startTime = Date.now();
   try {
     const { id } = req.params;
     // const { versionsOnly } = req.query;
@@ -58,6 +67,7 @@ router.get("/:id", async (req: Request, res: Response) => {
     // If policy not found, return 404.
     if (!policy) {
       res.status(404).json({ error: "Policy not found" });
+      await sentryService.logApiCall(req, res, startTime, undefined);
       return;
     }
 
@@ -65,9 +75,22 @@ router.get("/:id", async (req: Request, res: Response) => {
     // Log the policy data being sent for debugging purposes.
     // console.log("Policy data being sent:", JSON.stringify(policy, null, 2));
     res.json({ policy });
+    await sentryService.logApiCall(req, res, startTime, { policy });
   } catch (error) {
+    await sentryErrorService.captureRequestError(
+      req,
+      res,
+      error as Error,
+      res.statusCode || 500
+    );
+    await sentryService.logApiCall(
+      req,
+      res,
+      startTime,
+      undefined,
+      error as Error
+    );
     // Error handling for GET /api/v1/policies/:id.
-    console.error("GET /api/policies/:id error:", error);
     res.status(500).json({ error: "Failed to fetch policy" });
   }
 });
@@ -75,6 +98,7 @@ router.get("/:id", async (req: Request, res: Response) => {
 // --- GET /api/v1/policies ---
 // Handles fetching ALL policies.
 router.get("/", async (req: Request, res: Response) => {
+  const startTime = Date.now();
   try {
     const policyRepository = AppDataSource.getRepository(Policy);
     const policies = await policyRepository.find({
@@ -92,8 +116,22 @@ router.get("/", async (req: Request, res: Response) => {
       ],
     });
     res.json({ policies });
-    console.log("Policies from database:", JSON.stringify(policies, null, 2));
+    await sentryService.logApiCall(req, res, startTime, { policies });
+    // console.log("Policies from database:", JSON.stringify(policies, null, 2));
   } catch (error) {
+    await sentryErrorService.captureRequestError(
+      req,
+      res,
+      error as Error,
+      res.statusCode || 500
+    );
+    await sentryService.logApiCall(
+      req,
+      res,
+      startTime,
+      undefined,
+      error as Error
+    );
     // Error handling for GET /api/v1/policies.
     console.error("GET /api/policies error:", error);
     res.status(500).json({ error: "Failed to fetch policies" });
@@ -105,6 +143,7 @@ router.get("/", async (req: Request, res: Response) => {
 // Handles the creation of a new policy directly (typically for customer-initiated flows where no prior quote exists or is being bypassed).
 // This is distinct from creating a policy from an existing quote.
 router.post("/", async (req: Request, res: Response) => {
+  const startTime = Date.now();
   try {
     const fields = req.body;
 
@@ -116,6 +155,7 @@ router.post("/", async (req: Request, res: Response) => {
       !fields.paymentAmount
     ) {
       res.status(400).json({ error: "Incomplete data for policy creation." });
+      await sentryService.logApiCall(req, res, startTime, undefined);
       return;
     }
 
@@ -134,6 +174,7 @@ router.post("/", async (req: Request, res: Response) => {
       res
         .status(400)
         .json({ error: "Policy with this number already exists." });
+      await sentryService.logApiCall(req, res, startTime, undefined);
       return;
     }
 
@@ -194,7 +235,23 @@ router.post("/", async (req: Request, res: Response) => {
     });
 
     res.status(201).json({ policy: completePolicy });
+    await sentryService.logApiCall(req, res, startTime, {
+      policy: completePolicy,
+    });
   } catch (error) {
+    await sentryErrorService.captureRequestError(
+      req,
+      res,
+      error as Error,
+      res.statusCode || 500
+    );
+    await sentryService.logApiCall(
+      req,
+      res,
+      startTime,
+      undefined,
+      error as Error
+    );
     // Error handling for POST /api/v1/policies.
     console.error("POST /api/policies error:", error);
     res.status(500).json({ error: "Server error during policy creation" });
@@ -208,6 +265,7 @@ router.post("/", async (req: Request, res: Response) => {
 // Manages and cleans up old versions if the number of versions exceeds a limit (10).
 
 router.put("/:id", async (req: Request, res: Response) => {
+  const startTime = Date.now();
   try {
     const { id } = req.params;
     const { versionMetadata, ...fields } = req.body;
@@ -222,6 +280,7 @@ router.put("/:id", async (req: Request, res: Response) => {
 
     if (!policyRecord) {
       res.status(404).json({ error: "Policy not found" });
+      await sentryService.logApiCall(req, res, startTime, undefined);
       return;
     }
 

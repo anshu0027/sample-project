@@ -13,11 +13,15 @@ const policy_entity_1 = require("../../entities/policy.entity");
 const enums_2 = require("../../entities/enums");
 const authorizenet_1 = require("authorizenet"); // Removed "Constants" as it was not used.
 const express_rate_limit_1 = __importDefault(require("express-rate-limit"));
+const event_logger_service_1 = require("../../services/event-logger.service");
+const sentry_error_service_1 = require("../../services/sentry-error.service");
 // ------------------------
 // Router for handling payment-related API endpoints.
 // Base path: /api/v1/payment
 // ------------------------
 const router = (0, express_1.Router)();
+const eventLogger = event_logger_service_1.EventLoggerService.getInstance();
+const sentryErrorService = sentry_error_service_1.SentryErrorService.getInstance();
 // ------------------------
 // Rate limiter for manual payment creation endpoint.
 // Limits each IP to 10 manual payment creations per hour.
@@ -74,6 +78,7 @@ const mapPaymentStatus = (payment) => {
 // Handles fetching a single payment by its ID.
 // ------------------------
 router.get("/:id", async (req, res) => {
+    const startTime = Date.now();
     try {
         const { id } = req.params;
         const paymentRepository = data_source_1.AppDataSource.getRepository(payment_entity_1.Payment);
@@ -96,11 +101,17 @@ router.get("/:id", async (req, res) => {
         // ------------------------
         if (!payment) {
             res.status(404).json({ error: "Payment not found" });
+            await eventLogger.logApiCall(req, res, startTime, undefined);
             return;
         }
         res.json({ payment: mapPaymentStatus(payment) });
+        await eventLogger.logApiCall(req, res, startTime, {
+            payment: mapPaymentStatus(payment),
+        });
     }
     catch (error) {
+        await sentryErrorService.captureRequestError(req, res, error, res.statusCode || 500);
+        await eventLogger.logApiCall(req, res, startTime, undefined, error);
         // ------------------------
         // Error handling for GET /api/v1/payment/:id.
         // ------------------------
@@ -115,6 +126,7 @@ router.get("/:id", async (req, res) => {
 // Supports optional filtering by policyId or quoteId.
 // ------------------------
 router.get("/", async (req, res) => {
+    const startTime = Date.now();
     try {
         const { policyId, quoteId } = req.query;
         const paymentRepository = data_source_1.AppDataSource.getRepository(payment_entity_1.Payment);
@@ -143,8 +155,13 @@ router.get("/", async (req, res) => {
         });
         const mappedPayments = payments.map(mapPaymentStatus);
         res.json({ payments: mappedPayments });
+        await eventLogger.logApiCall(req, res, startTime, {
+            payments: mappedPayments,
+        });
     }
     catch (error) {
+        await sentryErrorService.captureRequestError(req, res, error, res.statusCode || 500);
+        await eventLogger.logApiCall(req, res, startTime, undefined, error);
         // ------------------------
         // Error handling for GET /api/v1/payment.
         // ------------------------
@@ -160,6 +177,7 @@ router.post("/", manualPaymentLimiter, async (req, res) => {
     // Uses a transaction to ensure atomicity, especially if a quote needs to be converted to a policy.
     // Applies rate limiting.
     // ------------------------
+    const startTime = Date.now();
     const queryRunner = data_source_1.AppDataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -281,6 +299,9 @@ router.post("/", manualPaymentLimiter, async (req, res) => {
         });
         res.status(201).json({
             message: "Payment processed successfully",
+            payment: completePayment,
+        });
+        await eventLogger.logApiCall(req, res, startTime, {
             payment: completePayment,
         });
     }
@@ -544,3 +565,4 @@ router.post("/authorize-net", authorizeNetLimiter, async (req, res) => {
     }
 });
 exports.default = router;
+//# sourceMappingURL=payment.routes.js.map

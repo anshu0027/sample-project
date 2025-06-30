@@ -2,24 +2,8 @@
 import { AppDataSource } from "../data-source";
 import { Quote } from "../entities/quote.entity";
 import { Policy } from "../entities/policy.entity";
-import { generateUniqueId } from "../utils/helpers";
+// import { generateUniqueId } from "../utils/helpers";
 
-// ------------------------
-// Creates a new Policy entity from an existing Quote entity.
-// This function is typically called when a quote is finalized and paid for,
-// or when an admin manually converts a quote to a policy.
-// It uses a database transaction to ensure atomicity: either all operations
-// (creating policy, updating quote) succeed, or none do.
-//
-// Parameters:
-// - quoteId: The ID of the Quote to be converted into a Policy.
-//
-// Returns:
-// - A Promise that resolves to the newly created Policy entity, including its relations.
-//
-// Throws:
-// - An error if the quote is not found.
-// - An error if the created policy cannot be retrieved after saving.
 // ------------------------
 export async function createPolicyFromQuote(quoteId: number): Promise<Policy> {
   // ------------------------
@@ -58,8 +42,10 @@ export async function createPolicyFromQuote(quoteId: number): Promise<Policy> {
       //    - Generate a unique policy number.
       //    - Associate the quote, event, and policyHolder from the fetched quote.
       // ------------------------
-      const policyPrefix = "PI";
-      const policyNumber = generateUniqueId(policyPrefix);
+      const quoteNumberParts = quote.quoteNumber.split("-");
+      const policyIdentifier = quoteNumberParts[quoteNumberParts.length - 1];
+      const policyNumber = `PI-${policyIdentifier}`;
+
       const newPolicy = policyRepository.create({
         policyNumber,
         quote: quote,

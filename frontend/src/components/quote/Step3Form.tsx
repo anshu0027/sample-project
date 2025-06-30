@@ -1,9 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import { User, Phone, MapPin, ChevronDown, AlertCircle } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
+// import { Button } from '@/components/ui/Button';
 import Checkbox from '@/components/ui/Checkbox';
 import { US_STATES, RELATIONSHIP_OPTIONS, REFERRAL_OPTIONS } from '@/utils/constants';
+import { isValidPhone, formatPhoneNumber, isValidName } from '@/utils/validators';
 // ------------------------
 // Type definition for the props of Step3Form component.
 // state: An object representing the current form data.
@@ -29,9 +30,183 @@ export default function Step3Form({
   state,
   errors,
   onChange,
-  onSave,
+  // onSave,
   isRestored = false,
 }: Step3FormProps) {
+  // Phone validation state
+  const [phoneError, setPhoneError] = React.useState<string | undefined>(undefined);
+
+  // Phone number validation function
+  const validatePhone = (phone: string) => {
+    if (!phone) return undefined; // Don't show error for empty field
+    if (!isValidPhone(phone)) return 'Please enter a valid phone number';
+    return undefined;
+  };
+
+  // Handle phone number input with validation
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+
+    // Clear error when user starts typing
+    if (phoneError) {
+      setPhoneError(undefined);
+    }
+
+    // Format the phone number as user types
+    const digitsOnly = value.replace(/\D/g, '');
+    let formatted = value;
+
+    if (digitsOnly.length <= 3) {
+      formatted = digitsOnly;
+    } else if (digitsOnly.length <= 6) {
+      formatted = `(${digitsOnly.slice(0, 3)}) ${digitsOnly.slice(3)}`;
+    } else {
+      formatted = `(${digitsOnly.slice(0, 3)}) ${digitsOnly.slice(3, 6)}-${digitsOnly.slice(6, 10)}`;
+    }
+
+    onChange('phone', formatted);
+  };
+
+  // Handle phone number blur with validation
+  const handlePhoneBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    const error = validatePhone(value);
+    setPhoneError(error);
+
+    // Format the phone number if it's valid
+    if (!error && value) {
+      const formatted = formatPhoneNumber(value);
+      onChange('phone', formatted);
+    }
+  };
+
+  // Handle phone number keydown to restrict input
+  const handlePhoneKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Allow: backspace, delete, tab, escape, enter, arrows, home, end
+    if (
+      [
+        'Backspace',
+        'Delete',
+        'Tab',
+        'Escape',
+        'Enter',
+        'ArrowLeft',
+        'ArrowRight',
+        'Home',
+        'End',
+      ].includes(e.key) ||
+      // Allow: Ctrl+A, Command+A, Ctrl+C, Ctrl+V, Ctrl+X
+      ((e.ctrlKey || e.metaKey) && ['a', 'c', 'v', 'x'].includes(e.key.toLowerCase()))
+    ) {
+      return; // Let it happen
+    }
+
+    // Allow only digits, spaces, parentheses, hyphens, and plus sign
+    if (!/^[\d\s\(\)\-\+]$/.test(e.key)) {
+      e.preventDefault();
+      return;
+    }
+
+    // Limit to 10 digits maximum
+    const target = e.target as HTMLInputElement;
+    const currentDigits = target.value.replace(/\D/g, '');
+    if (currentDigits.length >= 10 && /^\d$/.test(e.key)) {
+      e.preventDefault();
+    }
+  };
+
+  // Handle ZIP code keydown to restrict input
+  const handleZipKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Allow: backspace, delete, tab, escape, enter, arrows, home, end
+    if (
+      [
+        'Backspace',
+        'Delete',
+        'Tab',
+        'Escape',
+        'Enter',
+        'ArrowLeft',
+        'ArrowRight',
+        'Home',
+        'End',
+      ].includes(e.key) ||
+      // Allow: Ctrl+A, Command+A, Ctrl+C, Ctrl+V, Ctrl+X
+      ((e.ctrlKey || e.metaKey) && ['a', 'c', 'v', 'x'].includes(e.key.toLowerCase()))
+    ) {
+      return; // Let it happen
+    }
+
+    // Allow only digits (no hyphens, no alphabets)
+    if (!/^[0-9]$/.test(e.key)) {
+      e.preventDefault();
+    }
+
+    // Limit to 5 digits maximum
+    const target = e.target as HTMLInputElement;
+    if (target.value.length >= 5 && !['Backspace', 'Delete'].includes(e.key)) {
+      e.preventDefault();
+    }
+  };
+
+  // Handle name input keydown to restrict to letters and spaces only
+  const handleNameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Allow: backspace, delete, tab, escape, enter, arrows, home, end
+    if (
+      [
+        'Backspace',
+        'Delete',
+        'Tab',
+        'Escape',
+        'Enter',
+        'ArrowLeft',
+        'ArrowRight',
+        'Home',
+        'End',
+      ].includes(e.key) ||
+      // Allow: Ctrl+A, Command+A, Ctrl+C, Ctrl+V, Ctrl+X
+      ((e.ctrlKey || e.metaKey) && ['a', 'c', 'v', 'x'].includes(e.key.toLowerCase()))
+    ) {
+      return; // Let it happen
+    }
+
+    // Allow only letters and spaces
+    if (!/^[a-zA-Z\s]$/.test(e.key)) {
+      e.preventDefault();
+    }
+  };
+
+  // Calculate final phone error (from props or local state)
+  const finalPhoneError = phoneError || errors.phone;
+
+  // Name validation
+  const firstNameError = (() => {
+    if (!state.firstName) return errors.firstName;
+    if (!isValidName(state.firstName)) return 'First name must contain only letters and spaces';
+    return errors.firstName;
+  })();
+
+  const lastNameError = (() => {
+    if (!state.lastName) return errors.lastName;
+    if (!isValidName(state.lastName)) return 'Last name must contain only letters and spaces';
+    return errors.lastName;
+  })();
+
+  const completingFormNameError = (() => {
+    if (!state.completingFormName) return errors.completingFormName;
+    if (!isValidName(state.completingFormName)) return 'Name must contain only letters and spaces';
+    return errors.completingFormName;
+  })();
+
+  // ZIP code validation
+  const zipError = (() => {
+    const zip = state.zip;
+    if (!zip) return errors.zip; // Don't show error for empty field
+    if (zip.length < 4) return 'ZIP code must be 4 or 5 digits';
+    if (zip.length > 5) return 'ZIP code must be 4 or 5 digits';
+    if (!/^\d{4,5}$/.test(zip)) return 'ZIP code must contain only digits';
+    return errors.zip;
+  })();
+
   return (
     <>
       {/* ------------------------ */}
@@ -86,11 +261,12 @@ export default function Step3Form({
                 id="firstName"
                 value={state.firstName}
                 onChange={(e) => onChange('firstName', e.target.value)}
+                onKeyDown={handleNameKeyDown}
                 className={`w-full border rounded-md py-2 px-4 mx-auto ${
-                  errors.firstName ? 'border-red-500' : 'border-gray-300'
+                  firstNameError ? 'border-red-500' : 'border-gray-300'
                 } focus:outline-none focus:ring-2 focus:ring-indigo-500`}
               />
-              {errors.firstName && <p className="text-sm text-red-500 mt-1">{errors.firstName}</p>}
+              {firstNameError && <p className="text-sm text-red-500 mt-1">{firstNameError}</p>}
             </div>
 
             {/* ------------------------ */}
@@ -104,11 +280,12 @@ export default function Step3Form({
                 id="lastName"
                 value={state.lastName}
                 onChange={(e) => onChange('lastName', e.target.value)}
+                onKeyDown={handleNameKeyDown}
                 className={`w-full border rounded-md py-2 px-4 mx-auto ${
-                  errors.lastName ? 'border-red-500' : 'border-gray-300'
+                  lastNameError ? 'border-red-500' : 'border-gray-300'
                 } focus:outline-none focus:ring-2 focus:ring-indigo-500`}
               />
-              {errors.lastName && <p className="text-sm text-red-500 mt-1">{errors.lastName}</p>}
+              {lastNameError && <p className="text-sm text-red-500 mt-1">{lastNameError}</p>}
             </div>
           </div>
         </div>
@@ -152,14 +329,16 @@ export default function Step3Form({
                 id="phone"
                 type="tel"
                 value={state.phone}
-                onChange={(e) => onChange('phone', e.target.value)}
+                onChange={handlePhoneChange}
+                onBlur={handlePhoneBlur}
+                onKeyDown={handlePhoneKeyDown}
                 placeholder="(123) 456-7890"
                 className={`text-center w-full border rounded-md py-2 pr-2 ${
-                  errors.phone ? 'border-red-500' : 'border-gray-300'
+                  finalPhoneError ? 'border-red-500' : 'border-gray-300'
                 } focus:outline-none focus:ring-2 focus:ring-blue-500`}
               />
             </div>
-            {errors.phone && <p className="text-sm text-red-500 mt-1">{errors.phone}</p>}
+            {finalPhoneError && <p className="text-sm text-red-500 mt-1">{finalPhoneError}</p>}
           </div>
 
           {/* ------------------------ */}
@@ -358,11 +537,12 @@ export default function Step3Form({
                 id="zip"
                 value={state.zip}
                 onChange={(e) => onChange('zip', e.target.value)}
+                onKeyDown={handleZipKeyDown}
                 className={`w-full border rounded-md py-2 px-3 ${
-                  errors.zip ? 'border-red-500' : 'border-gray-300'
+                  zipError ? 'border-red-500' : 'border-gray-300'
                 } focus:outline-none focus:ring-2 focus:ring-blue-500`}
               />
-              {errors.zip && <p className="text-sm text-red-500 mt-1">{errors.zip}</p>}
+              {zipError && <p className="text-sm text-red-500 mt-1">{zipError}</p>}
             </div>
           </div>
         </div>
@@ -450,33 +630,19 @@ export default function Step3Form({
               type="text"
               value={state.completingFormName}
               onChange={(e) => onChange('completingFormName', e.target.value)}
+              onKeyDown={handleNameKeyDown}
               placeholder="Full Name"
               className={`block w-[60%] text-center mx-auto rounded-md shadow-sm text-base font-medium transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 border pl-4 pr-4 py-2 ${
-                errors.completingFormName
+                completingFormNameError
                   ? 'border-red-400 text-red-900 placeholder-red-300 bg-red-50'
                   : 'border-gray-200 text-gray-900 placeholder-gray-400'
               }`}
             />
-            {errors.completingFormName && (
-              <p className="text-sm text-red-500 mt-1">{errors.completingFormName}</p>
+            {completingFormNameError && (
+              <p className="text-sm text-red-500 mt-1">{completingFormNameError}</p>
             )}
           </div>
         </div>
-      </div>
-      {/* ------------------------ */}
-      {/* Save Button (Optional, displayed if onSave prop is provided) */}
-      {/* ------------------------ */}
-      <div className="flex flex-col md:flex-row justify-end mt-8 gap-4 w-full">
-        {onSave && (
-          <Button
-            variant="outline"
-            size="lg"
-            onClick={onSave}
-            className="transition-transform duration-150 hover:scale-105"
-          >
-            Save
-          </Button>
-        )}
       </div>
     </>
   );

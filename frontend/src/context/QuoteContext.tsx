@@ -278,12 +278,9 @@ const quoteReducer = (state: QuoteState, action: QuoteAction): QuoteState => {
     // Updates the state with the calculated premiums and the new quote number.
     // ------------------------
     case 'CALCULATE_QUOTE':
-      // Generate a unique quote number
-      // This quote number is for UI display purposes and might differ from the one saved in DB.
-      const quoteNumber = getNextQuoteNumber();
+      // Only update premiums, quoteNumber will be set by backend response
       return {
         ...state,
-        quoteNumber,
         basePremium: action.payload?.basePremium || 0,
         liabilityPremium: action.payload?.liabilityPremium || 0,
         liquorLiabilityPremium: action.payload?.liquorLiabilityPremium || 0,
@@ -323,95 +320,39 @@ const quoteReducer = (state: QuoteState, action: QuoteAction): QuoteState => {
   }
 };
 
-// ------------------------
-// Helper functions for premium calculations
-// These functions are currently defined within the context but are not directly used by the reducer.
-// The premium calculation logic is expected to be handled externally (e.g., in the component calling dispatch).
-// ------------------------
-// const calculateBasePremium = (level: CoverageLevel | null): number => {
-//   if (!level) return 0;
-
-//   // Coverage level premium mapping
-//   const premiumMap: Record<CoverageLevel, number> = {
-//     1: 160, // $7,500 coverage
-//     2: 200,
-//     3: 250,
-//     4: 300,
-//     5: 355, // $50,000 coverage
-//     6: 450,
-//     7: 600,
-//     8: 750,
-//     9: 900,
-//     10: 1025, // $175,000 coverage
-//   };
-
-//   return premiumMap[level] || 0;
-// };
-
-// const calculateLiabilityPremium = (option: LiabilityOption | NewLiabilityOption): number => {
-//   switch (option) {
-//     case 'option1': // $1M liability with $25K property damage
-//       return 195; // Updated price
-//     case 'option2': // $1M liability with $250K property damage
-//       return 210; // Updated price
-//     case 'option3': // $1M liability with $1M property damage
-//       return 240; // Updated price
-//     case 'option4': // $1M/$2M Aggregate Liability with $25K PD
-//       return 240; // Price from constants
-//     case 'option5': // $1M/$2M Aggregate Liability with $250K PD
-//       return 255; // Price from constants
-//     case 'option6': // $1M/$2M Aggregate Liability with $1M PD
-//       return 265; // Price from constants
-//     default:
-//       return 0;
+// const getNextQuoteNumber = () => {
+//   // First check if a quote number already exists for this quote
+//   if (typeof window !== 'undefined') {
+//     const existingQuoteNumber = localStorage.getItem('currentQuoteNumber');
+//     if (existingQuoteNumber) {
+//       return existingQuoteNumber;
+//     }
 //   }
+
+//   // Generate a new quote number if none exists
+//   const today = new Date();
+//   const yyyy = today.getFullYear();
+//   const mm = String(today.getMonth() + 1).padStart(2, '0');
+//   const dd = String(today.getDate()).padStart(2, '0');
+//   const dateStr = `${yyyy}${mm}${dd}`;
+//   let seq = 1;
+//   if (typeof window !== 'undefined') {
+//     const lastDate = localStorage.getItem('quoteDate');
+//     const lastSeq = parseInt(localStorage.getItem('quoteSeq') || '0', 10);
+//     if (lastDate === dateStr) {
+//       seq = lastSeq + 1;
+//     }
+//     localStorage.setItem('quoteDate', dateStr);
+//     localStorage.setItem('quoteSeq', seq.toString());
+
+//     // Store the new quote number
+//     const newQuoteNumber = `${dateStr}-${seq}`;
+//     localStorage.setItem('currentQuoteNumber', newQuoteNumber);
+//     return newQuoteNumber;
+//   }
+
+//   return `${dateStr}-${seq}`;
 // };
-
-// const calculateLiquorLiabilityPremium = (
-//   hasLiquorLiability: boolean,
-//   guestRange: GuestRange,
-// ): number => {
-//   if (!hasLiquorLiability) return 0;
-
-//   // Guest count range premium mapping
-//   const premiumMap: Record<GuestRange, number> = {
-//     '1-50': 65,
-//     '51-100': 65,
-//     '101-150': 85,
-//     '151-200': 85,
-//     '201-250': 100,
-//     '251-300': 100,
-//     '301-350': 150,
-//     '351-400': 150,
-//   };
-
-//   return premiumMap[guestRange] || 0;
-// };
-
-// ------------------------
-// NOTE: getNextQuoteNumber is ONLY for display purposes and should NOT be used for DB operations. This is only for UI preview, not DB.
-// Generates a sequential quote number for display purposes, based on the current date and a sequence number stored in localStorage.
-// This is intended for UI preview and might not match the quote number generated and stored by the backend.
-// ------------------------
-const getNextQuoteNumber = () => {
-  const today = new Date();
-  const yyyy = today.getFullYear();
-  const mm = String(today.getMonth() + 1).padStart(2, '0');
-  const dd = String(today.getDate()).padStart(2, '0');
-  const dateStr = `${yyyy}${mm}${dd}`;
-  let seq = 1;
-  if (typeof window !== 'undefined') {
-    const lastDate = localStorage.getItem('quoteDate');
-    const lastSeq = parseInt(localStorage.getItem('quoteSeq') || '0', 10);
-    if (lastDate === dateStr) {
-      seq = lastSeq + 1;
-    }
-    localStorage.setItem('quoteDate', dateStr);
-    localStorage.setItem('quoteSeq', seq.toString());
-  }
-  // Default to PCI
-  return `PCI-${dateStr}-${seq}`;
-};
 
 // ------------------------
 // Interface for the QuoteContext value.

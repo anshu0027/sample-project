@@ -9,6 +9,13 @@ import dynamic from 'next/dynamic';
 import { PolicyVersion, PolicyVersionData } from '@/types/policy';
 import { EditPolicySkeleton } from '@/components/ui/EditPolicySkeleton';
 import { ChevronDown, History, Download } from 'lucide-react';
+import {
+  CORE_COVERAGE_PREMIUMS,
+  LIABILITY_COVERAGE_PREMIUMS,
+  LIABILITY_OPTIONS,
+  LIQUOR_LIABILITY_PREMIUMS,
+  LIQUOR_LIABILITY_PREMIUMS_NEW,
+} from '@/utils/constants';
 
 const StepFormLoading = () => <div className="p-8 text-center text-gray-500">Loading form...</div>;
 const Step1Form = dynamic(() => import('@/components/quote/Step1Form'), {
@@ -27,6 +34,19 @@ const Step4Form = dynamic(() => import('@/components/quote/Step4Form'), {
   ssr: false,
   loading: StepFormLoading,
 });
+
+type GuestRange =
+  | '1-50'
+  | '51-100'
+  | '101-150'
+  | '151-200'
+  | '201-250'
+  | '251-300'
+  | '301-350'
+  | '351-400'
+  | '';
+type CoverageLevel = number;
+type LiabilityOption = string;
 
 function flattenPolicy(policy: any): PolicyVersionData | null {
   if (!policy) return null;
@@ -132,6 +152,40 @@ function flattenPolicy(policy: any): PolicyVersionData | null {
     pdfUrl: policy.pdfUrl,
   };
 }
+
+const calculateBasePremium = (level: CoverageLevel | null, guestRange: GuestRange | ''): number => {
+  if (!level || !guestRange) return 0;
+  const premiums = CORE_COVERAGE_PREMIUMS[guestRange as keyof typeof CORE_COVERAGE_PREMIUMS];
+  return (premiums as any)?.[level] ?? 0;
+};
+
+const calculateLiabilityPremium = (
+  option: LiabilityOption | null,
+  guestRange: GuestRange | '',
+): number => {
+  if (!option || !guestRange || option === 'none') return 0;
+  const premiums =
+    LIABILITY_COVERAGE_PREMIUMS[guestRange as keyof typeof LIABILITY_COVERAGE_PREMIUMS];
+  return premiums?.[option as keyof typeof premiums] ?? 0;
+};
+
+const calculateLiquorLiabilityPremium = (
+  hasLiquorLiability: boolean,
+  guestRange: GuestRange,
+  liabilityOption: LiabilityOption | null,
+): number => {
+  if (!hasLiquorLiability || !guestRange || !liabilityOption) return 0;
+
+  const selectedLiability = LIABILITY_OPTIONS.find((opt) => opt.value === liabilityOption);
+
+  if (selectedLiability?.isNew) {
+    const premiums = LIQUOR_LIABILITY_PREMIUMS_NEW;
+    return premiums[guestRange as keyof typeof premiums] || 0;
+  }
+  const premiums = LIQUOR_LIABILITY_PREMIUMS;
+  return premiums[guestRange as keyof typeof premiums] || 0;
+};
+
 // Validation functions
 const validateStep1 = (formState: PolicyVersionData) => {
   const newErrors: Record<string, string> = {};
@@ -156,6 +210,52 @@ const validateStep2 = (formState: PolicyVersionData) => {
   if (!formState.venueCity) newErrors.venueCity = 'Required';
   if (!formState.venueState) newErrors.venueState = 'Required';
   if (!formState.venueZip) newErrors.venueZip = 'Required';
+
+  // For weddings, all additional venue sections are required
+  if (formState.eventType === 'wedding') {
+    // Reception Venue - Required for weddings
+    if (!formState.receptionLocationType) newErrors.receptionLocationType = 'Required';
+    if (!formState.receptionIndoorOutdoor) newErrors.receptionIndoorOutdoor = 'Required';
+    if (!formState.receptionVenueName) newErrors.receptionVenueName = 'Required';
+    if (!formState.receptionVenueAddress1) newErrors.receptionVenueAddress1 = 'Required';
+    if (!formState.receptionVenueCountry) newErrors.receptionVenueCountry = 'Required';
+    if (!formState.receptionVenueCity) newErrors.receptionVenueCity = 'Required';
+    if (!formState.receptionVenueState) newErrors.receptionVenueState = 'Required';
+    if (!formState.receptionVenueZip) newErrors.receptionVenueZip = 'Required';
+
+    // Brunch Venue - Required for weddings
+    if (!formState.brunchLocationType) newErrors.brunchLocationType = 'Required';
+    if (!formState.brunchIndoorOutdoor) newErrors.brunchIndoorOutdoor = 'Required';
+    if (!formState.brunchVenueName) newErrors.brunchVenueName = 'Required';
+    if (!formState.brunchVenueAddress1) newErrors.brunchVenueAddress1 = 'Required';
+    if (!formState.brunchVenueCountry) newErrors.brunchVenueCountry = 'Required';
+    if (!formState.brunchVenueCity) newErrors.brunchVenueCity = 'Required';
+    if (!formState.brunchVenueState) newErrors.brunchVenueState = 'Required';
+    if (!formState.brunchVenueZip) newErrors.brunchVenueZip = 'Required';
+
+    // Rehearsal Venue - Required for weddings
+    if (!formState.rehearsalLocationType) newErrors.rehearsalLocationType = 'Required';
+    if (!formState.rehearsalIndoorOutdoor) newErrors.rehearsalIndoorOutdoor = 'Required';
+    if (!formState.rehearsalVenueName) newErrors.rehearsalVenueName = 'Required';
+    if (!formState.rehearsalVenueAddress1) newErrors.rehearsalVenueAddress1 = 'Required';
+    if (!formState.rehearsalVenueCountry) newErrors.rehearsalVenueCountry = 'Required';
+    if (!formState.rehearsalVenueCity) newErrors.rehearsalVenueCity = 'Required';
+    if (!formState.rehearsalVenueState) newErrors.rehearsalVenueState = 'Required';
+    if (!formState.rehearsalVenueZip) newErrors.rehearsalVenueZip = 'Required';
+
+    // Rehearsal Dinner Venue - Required for weddings
+    if (!formState.rehearsalDinnerLocationType) newErrors.rehearsalDinnerLocationType = 'Required';
+    if (!formState.rehearsalDinnerIndoorOutdoor)
+      newErrors.rehearsalDinnerIndoorOutdoor = 'Required';
+    if (!formState.rehearsalDinnerVenueName) newErrors.rehearsalDinnerVenueName = 'Required';
+    if (!formState.rehearsalDinnerVenueAddress1)
+      newErrors.rehearsalDinnerVenueAddress1 = 'Required';
+    if (!formState.rehearsalDinnerVenueCountry) newErrors.rehearsalDinnerVenueCountry = 'Required';
+    if (!formState.rehearsalDinnerVenueCity) newErrors.rehearsalDinnerVenueCity = 'Required';
+    if (!formState.rehearsalDinnerVenueState) newErrors.rehearsalDinnerVenueState = 'Required';
+    if (!formState.rehearsalDinnerVenueZip) newErrors.rehearsalDinnerVenueZip = 'Required';
+  }
+
   return newErrors;
 };
 
@@ -344,6 +444,22 @@ export default function EditPolicy() {
       // First, generate and download the PDF of the current version
       await handleDownloadVersionPdf();
 
+      // Recalculate premiums before saving
+      const basePremium = calculateBasePremium(
+        formState.coverageLevel,
+        formState.maxGuests as GuestRange,
+      );
+      const liabilityPremium = calculateLiabilityPremium(
+        formState.liabilityCoverage,
+        formState.maxGuests as GuestRange,
+      );
+      const liquorLiabilityPremium = calculateLiquorLiabilityPremium(
+        formState.liquorLiability,
+        formState.maxGuests as GuestRange,
+        formState.liabilityCoverage,
+      );
+      const totalPremium = basePremium + liabilityPremium + liquorLiabilityPremium;
+
       // Then proceed with saving the updated policy
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
       // Structure the data according to the backend's expectations
@@ -436,10 +552,10 @@ export default function EditPolicy() {
         covidDisclosure: formState.covidDisclosure,
         specialActivities: formState.specialActivities,
         residentState: formState.residentState,
-        totalPremium: formState.totalPremium,
-        basePremium: formState.basePremium,
-        liabilityPremium: formState.liabilityPremium,
-        liquorLiabilityPremium: formState.liquorLiabilityPremium,
+        totalPremium,
+        basePremium,
+        liabilityPremium,
+        liquorLiabilityPremium,
         status: formState.status,
         // Version metadata
         // versionMetadata: restoredFromVersion
@@ -462,17 +578,9 @@ export default function EditPolicy() {
         throw new Error(errorData.error || 'Failed to update policy');
       }
 
-      // setRestoredFromVersion(null);
-      // setSelectedVersion(null);
-
-      // // Re-fetch versions to show the newly created one
-      // const versionsRes = await fetch(`${apiUrl}/policies/${currentPolicyId}?versionsOnly=true`);
-      // if (versionsRes.ok) {
-      //   const versionsData = await versionsRes.json();
-      //   setPolicyVersions(versionsData.versions);
-      // }
-
+      const responseData = await response.json();
       toast({ title: 'Policy updated successfully!', variant: 'default' });
+      router.refresh();
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       toast({ title: 'Failed to update policy', description: message, variant: 'destructive' });
@@ -499,78 +607,6 @@ export default function EditPolicy() {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-
-  // const fetchEventData = async () => {
-  //     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  //     try {
-  //         const res = await fetch(`${apiUrl}/policies/${id}/event`);
-  //         if (!res.ok) {
-  //             throw new Error("Failed to fetch event data");
-  //         }
-  //         const data = await res.json();
-  //         // Update state with event data
-  //         setFormState((prev) => ({ ...prev, ...data.event }));
-  //     } catch (error) {
-  //         console.error("Error fetching event data:", error);
-  //         toast({ title: "Failed to fetch event data", description: error.message, variant: "destructive" });
-  //     }
-  // };
-
-  // const fetchPolicyHolderData = async () => {
-  //     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  //     try {
-  //         const res = await fetch(`${apiUrl}/policies/${id}/policy-holder`);
-  //         if (!res.ok) {
-  //             throw new Error("Failed to fetch policy holder data");
-  //         }
-  //         const data = await res.json();
-  //         // Update state with policy holder data
-  //         setFormState((prev) => ({ ...prev, ...data.policyHolder }));
-  //     } catch (error) {
-  //         console.error("Error fetching policy holder data:", error);
-  //         toast({ title: "Failed to fetch policy holder data", description: error.message, variant: "destructive" });
-  //     }
-  // };
-
-  // const fetchPaymentsData = async () => {
-  //     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  //     try {
-  //         const res = await fetch(`${apiUrl}/policies/${id}/payments`);
-  //         if (!res.ok) {
-  //             throw new Error("Failed to fetch payments data");
-  //         }
-  //         const data = await res.json();
-  //         // Update state with payments data
-  //         setFormState((prev) => ({ ...prev, payments: data.payments }));
-  //     } catch (error) {
-  //         console.error("Error fetching payments data:", error);
-  //         toast({ title: "Failed to fetch payments data", description: error.message, variant: "destructive" });
-  //     }
-  // };
-
-  // useEffect(() => {
-  //     async function fetchPolicy() {
-  //         setIsLoading(true);
-  //         const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  //         try {
-  //             // Fetch the main policy data
-  //             const res = await fetch(`${apiUrl}/policies/${id}`);
-  //             if (!res.ok) {
-  //                 throw new Error("Policy not found.");
-  //             }
-  //             const data = await res.json();
-  //             setFormState(flattenPolicy(data.policy));
-  //         } catch (error) {
-  //             const message = error instanceof Error ? error.message : "Unknown error";
-  //             toast({ title: "Failed to fetch policy data", description: message, variant: "destructive" });
-  //         } finally {
-  //             setIsLoading(false);
-  //         }
-  //     }
-  //     if (id) {
-  //         fetchPolicy();
-  //     }
-  // }, [id]);
 
   const handleDownloadVersionPdfById = async (versionId: number, fileName: string) => {
     try {
@@ -712,8 +748,6 @@ export default function EditPolicy() {
               onContinue={() => setStep(2)}
               showQuoteResults={showQuoteResults}
               handleCalculateQuote={() => setShowQuoteResults(true)}
-              onSave={handleSave}
-              // isRestored={!!restoredFromVersion}
             />
           )}
           {step === 2 && (
@@ -723,18 +757,10 @@ export default function EditPolicy() {
               onChange={handleInputChange}
               onValidate={handleValidateStep2}
               onContinue={() => setStep(3)}
-              onSave={handleSave}
-              // isRestored={!!restoredFromVersion}
             />
           )}
           {step === 3 && (
-            <Step3Form
-              state={formState as any}
-              errors={errors}
-              onChange={handleInputChange}
-              onSave={handleSave}
-              // isRestored={!!restoredFromVersion}
-            />
+            <Step3Form state={formState as any} errors={errors} onChange={handleInputChange} />
           )}
           {step === 4 && (
             <Step4Form
@@ -745,6 +771,10 @@ export default function EditPolicy() {
               onEmail={() => setEmailSent(true)}
               isRetrievedQuote={!!formState?.quoteNumber}
               isAdmin={true}
+              onValidateStep1={handleValidateStep1}
+              onValidateStep2={handleValidateStep2}
+              onValidateStep3={handleValidateStep3}
+              onSetStep={setStep}
             />
           )}
         </>

@@ -74,3 +74,4 @@ __decorate([
 exports.Event = Event = __decorate([
     (0, typeorm_1.Entity)('EVENTS')
 ], Event);
+//# sourceMappingURL=event.entity.js.map

@@ -13,6 +13,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { useQuote } from '@/context/QuoteContext';
+import type { QuoteState } from '@/context/QuoteContext';
 import Card from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import {
@@ -54,9 +55,11 @@ function ReviewSection({
 
 function ReviewItem({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="py-2 flex justify-between border-b border-gray-100 last:border-0">
-      <span className="text-sm text-gray-500">{label}:</span>
-      <span className="text-sm font-medium text-gray-800">{value || 'Not provided'}</span>
+    <div className="py-2 sm:py-3 flex flex-col sm:flex-row sm:justify-between sm:items-center border-b border-gray-100 last:border-0 gap-1 sm:gap-2">
+      <span className="text-xs sm:text-sm text-gray-500 font-medium">{label}:</span>
+      <span className="text-sm sm:text-sm font-medium text-gray-800 break-words">
+        {value || 'Not provided'}
+      </span>
     </div>
   );
 }
@@ -71,15 +74,21 @@ function validateAllFields(state: Record<string, unknown>) {
     'liabilityCoverage',
     'venueName',
     'venueAddress1',
-    'venueCountry',
     'venueCity',
-    'venueState',
-    'venueZip',
     'firstName',
     'lastName',
     'email',
     // Add all other required fields as per backend validation
   ];
+
+  // Check if it's a cruise ship venue
+  const isCruiseShip = state.ceremonyLocationType === 'cruise_ship';
+
+  // Only require country, state, zip if it's not a cruise ship
+  if (!isCruiseShip) {
+    requiredFields.push('venueCountry', 'venueState', 'venueZip');
+  }
+
   for (const field of requiredFields) {
     if (!state[field]) return false;
   }
@@ -105,15 +114,16 @@ async function validateRetrievedQuoteFields(quoteNumber: string): Promise<boolea
       'liabilityCoverage',
       'venueName',
       'venueAddress1',
-      'venueCountry',
       'venueCity',
-      'venueState',
-      'venueZip',
       'firstName',
       'lastName',
       'email',
     ] as const;
-    type FlatQuote = { [K in (typeof requiredFields)[number]]: any };
+    type FlatQuote = { [K in (typeof requiredFields)[number]]: any } & {
+      venueCountry?: any;
+      venueState?: any;
+      venueZip?: any;
+    };
 
     const flat: FlatQuote = {
       eventType: quote.event?.eventType,
@@ -123,14 +133,21 @@ async function validateRetrievedQuoteFields(quoteNumber: string): Promise<boolea
       liabilityCoverage: quote.liabilityCoverage,
       venueName: quote.event?.venue?.name,
       venueAddress1: quote.event?.venue?.address1,
-      venueCountry: quote.event?.venue?.country,
       venueCity: quote.event?.venue?.city,
-      venueState: quote.event?.venue?.state,
-      venueZip: quote.event?.venue?.zip,
       firstName: quote.policyHolder?.firstName,
       lastName: quote.policyHolder?.lastName,
       email: quote?.email,
     };
+
+    // Check if it's a cruise ship venue
+    const isCruiseShip = quote.event?.venue?.ceremonyLocationType === 'cruise_ship';
+
+    // Only require country, state, zip if it's not a cruise ship
+    if (!isCruiseShip) {
+      flat.venueCountry = quote.event?.venue?.country;
+      flat.venueState = quote.event?.venue?.state;
+      flat.venueZip = quote.event?.venue?.zip;
+    }
 
     for (const field of requiredFields) {
       if (!flat[field]) return false;
@@ -335,7 +352,14 @@ function ReviewClientContent() {
 
   // Handle back button
   const handleBack = () => {
-    router.push('/customer/policy-holder');
+    const isRetrievedQuote = searchParams.get('retrieved') === 'true';
+    const quoteNumber = searchParams.get('qn');
+
+    if (isRetrievedQuote && quoteNumber) {
+      router.push(`/customer/edit/${quoteNumber}`);
+    } else {
+      router.push('/customer/policy-holder');
+    }
   };
 
   // Generate PDF quote
@@ -343,90 +367,244 @@ function ReviewClientContent() {
     setIsGeneratingPdf(true);
     const jsPDF = (await import('jspdf')).default;
     try {
-      const doc = new jsPDF();
+      const doc = new jsPDF({ unit: 'pt', format: 'a4' });
       const pageWidth = doc.internal.pageSize.getWidth();
-      // Header
-      doc.setFillColor(35, 63, 150);
-      doc.rect(0, 0, pageWidth, 30, 'F');
-      doc.setTextColor(255, 255, 255);
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 40;
+      const contentWidth = pageWidth - margin * 2;
+      const columnWidth = (contentWidth - 30) / 2;
+      const leftColX = margin;
+      const rightColX = margin + columnWidth + 30;
+
+      // --- Colors and Fonts ---
+      const primaryColor = '#233F96'; // Deep Blue
+      const secondaryColor = '#F0F4FF'; // Light Blue background
+      const textColor = '#333333';
+      const labelColor = '#555555';
+      const white = '#FFFFFF';
+      doc.setFont('helvetica');
+
+      // --- Header ---
+      doc.setFillColor(primaryColor);
+      doc.rect(0, 0, pageWidth, 60, 'F');
+      doc.setTextColor(white);
       doc.setFontSize(18);
-      doc.text('WeddingGuard Insurance Quote', pageWidth / 2, 15, {
-        align: 'center',
-      });
-      // Quote info
-      doc.setTextColor(0, 0, 0);
-      doc.setFontSize(12);
-      doc.text(`Policy #: ${policyNumber}`, 15, 40);
-      doc.text(`Date: ${new Date().toLocaleDateString()}`, 15, 48);
-      // Separator line
-      doc.setDrawColor(200, 200, 200);
-      doc.line(15, 55, pageWidth - 15, 55);
-      // Premium summary
-      doc.setFontSize(16);
-      doc.text('Premium Summary', 15, 65);
-      doc.setFontSize(12);
-      doc.text(`Total Premium: ${formatCurrency(state.totalPremium)}`, pageWidth - 15, 65, {
+      doc.setFont('helvetica', 'bold');
+      doc.text('Insurance Quote', margin, 38);
+
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Quote #: ${state.quoteNumber}`, pageWidth - margin, 30, { align: 'right' });
+      doc.text(`Date: ${new Date().toLocaleDateString()}`, pageWidth - margin, 42, {
         align: 'right',
       });
-      doc.text(`Core Coverage: ${formatCurrency(state.basePremium)}`, 20, 75);
+
+      let leftY = 90;
+      let rightY = 90;
+
+      // --- Helper Functions ---
+      const drawSectionTitle = (title: string, x: number, y: number, w: number) => {
+        doc.setFillColor(secondaryColor);
+        doc.rect(x, y - 12, w, 18, 'F');
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(primaryColor);
+        doc.text(title, x + 10, y);
+        return y + 25;
+      };
+
+      const drawField = (
+        label: string,
+        value: string | undefined | null,
+        x: number,
+        y: number,
+        w: number,
+      ) => {
+        if (!value) return y;
+        doc.setFontSize(8.5);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(labelColor);
+        doc.text(label, x, y);
+
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(textColor);
+        const valueLines = doc.splitTextToSize(value, w - 135);
+        doc.text(valueLines, x + 140, y);
+        const lineCount = Array.isArray(valueLines) ? valueLines.length : 1;
+        return y + lineCount * 11 + 4;
+      };
+
+      // --- Right Column: Premium & Policyholder ---
+      rightY = drawSectionTitle('Premium Summary', rightColX, rightY, columnWidth);
+      rightY = drawField(
+        'Total Premium:',
+        formatCurrency(state.totalPremium),
+        rightColX,
+        rightY,
+        columnWidth,
+      );
+      rightY = drawField(
+        'Core Coverage:',
+        formatCurrency(state.basePremium),
+        rightColX,
+        rightY,
+        columnWidth,
+      );
       if (state.liabilityCoverage !== 'none') {
-        doc.text(`Liability Coverage: ${formatCurrency(state.liabilityPremium)}`, 20, 83);
+        rightY = drawField(
+          'Liability Premium:',
+          formatCurrency(state.liabilityPremium),
+          rightColX,
+          rightY,
+          columnWidth,
+        );
       }
       if (state.liquorLiability) {
-        doc.text(`Host Liquor Liability: ${formatCurrency(state.liquorLiabilityPremium)}`, 20, 91);
+        rightY = drawField(
+          'Host Liquor Premium:',
+          formatCurrency(state.liquorLiabilityPremium),
+          rightColX,
+          rightY,
+          columnWidth,
+        );
       }
-      // Separator line
-      doc.line(15, 100, pageWidth - 15, 100);
-      // Coverage details
-      doc.setFontSize(16);
-      doc.text('Coverage Details', 15, 110);
-      doc.setFontSize(12);
-      doc.text(`Event Type: ${eventTypeLabel}`, 20, 120);
-      doc.text(`Event Date: ${formattedEventDate}`, 20, 128);
-      doc.text(`Guest Count: ${guestRangeLabel}`, 20, 136);
-      doc.text(`Core Coverage: ${coverageLevelLabel}`, 20, 144);
-      doc.text(`Liability Coverage: ${liabilityOptionLabel}`, 20, 152);
-      doc.text(
-        `Host Liquor Liability: ${state.liquorLiability ? 'Included' : 'Not Included'}`,
-        20,
-        160,
+
+      rightY += 15;
+      rightY = drawSectionTitle('Policyholder Details', rightColX, rightY, columnWidth);
+      rightY = drawField(
+        'Name:',
+        `${state.firstName} ${state.lastName}`,
+        rightColX,
+        rightY,
+        columnWidth,
       );
-      // Separator line
-      doc.line(15, 170, pageWidth - 15, 170);
-      // Event details
-      doc.setFontSize(16);
-      doc.text('Event Details', 15, 180);
-      doc.setFontSize(12);
-      doc.text(
-        `Honorees: ${state.honoree1FirstName} ${state.honoree1LastName}${
-          state.honoree2FirstName ? ` & ${state.honoree2FirstName} ${state.honoree2LastName}` : ''
-        }`,
-        20,
-        190,
+      rightY = drawField('Relationship:', relationshipLabel, rightColX, rightY, columnWidth);
+      rightY = drawField('Email:', state.email, rightColX, rightY, columnWidth);
+      rightY = drawField('Phone:', state.phone, rightColX, rightY, columnWidth);
+      rightY = drawField('Address:', `${state.address}`, rightColX, rightY, columnWidth);
+      rightY = drawField(
+        'Location:',
+        `${state.city}, ${state.state} ${state.zip}`,
+        rightColX,
+        rightY,
+        columnWidth,
       );
-      doc.text(`Venue: ${state.venueName}`, 20, 198);
-      doc.text(
-        `Location: ${state.venueAddress1}, ${state.venueCity}, ${state.venueState} ${state.venueZip}`,
-        20,
-        206,
+
+      // --- Left Column: Event & Coverage ---
+      leftY = drawSectionTitle('Event & Coverage', leftColX, leftY, columnWidth);
+      leftY = drawField('Event Type:', eventTypeLabel, leftColX, leftY, columnWidth);
+      leftY = drawField('Event Date:', formattedEventDate, leftColX, leftY, columnWidth);
+      leftY = drawField('Guest Count:', guestRangeLabel, leftColX, leftY, columnWidth);
+      leftY = drawField('Core Coverage:', coverageLevelLabel, leftColX, leftY, columnWidth);
+      leftY = drawField('Liability Coverage:', liabilityOptionLabel, leftColX, leftY, columnWidth);
+      leftY = drawField(
+        'Host Liquor:',
+        state.liquorLiability ? 'Included' : 'Not Included',
+        leftColX,
+        leftY,
+        columnWidth,
       );
-      // Footer
-      doc.setFillColor(240, 240, 240);
-      doc.rect(0, 270, pageWidth, 25, 'F');
-      doc.setFontSize(10);
-      doc.setTextColor(100, 100, 100);
-      doc.text(
-        'This quote is valid for 30 days from the date of issue. Terms and conditions apply.',
-        pageWidth / 2,
-        280,
-        { align: 'center' },
+
+      leftY += 15;
+      leftY = drawSectionTitle('Ceremony Venue', leftColX, leftY, columnWidth);
+      leftY = drawField('Venue Name:', state.venueName, leftColX, leftY, columnWidth);
+      leftY = drawField('Venue Type:', venueTypeLabel, leftColX, leftY, columnWidth);
+      leftY = drawField('Indoor/Outdoor:', indoorOutdoorLabel, leftColX, leftY, columnWidth);
+      const venueAddress = `${state.venueAddress1}${state.venueAddress2 ? `, ${state.venueAddress2}` : ''}`;
+      leftY = drawField('Address:', venueAddress, leftColX, leftY, columnWidth);
+      leftY = drawField(
+        'Location:',
+        `${state.venueCity}, ${state.venueState} ${state.venueZip}`,
+        leftColX,
+        leftY,
+        columnWidth,
       );
-      doc.text(
-        'WeddingGuard Insurance - 1-800-555-0123 - support@weddingguard.com',
-        pageWidth / 2,
-        285,
-        { align: 'center' },
+      leftY = drawField(
+        'As Additional Insured:',
+        state.venueAsInsured ? 'Yes' : 'No ',
+        leftColX,
+        leftY,
+        columnWidth,
       );
+
+      // --- Full Width Section for Additional Venues ---
+      let y = Math.max(leftY, rightY) + 15;
+
+      if (state.eventType === 'wedding') {
+        const venues = [
+          {
+            type: 'Reception',
+            name: state.receptionVenueName,
+            address: `${state.receptionVenueAddress1}${state.receptionVenueAddress2 ? `, ${state.receptionVenueAddress2}` : ''}`,
+            location: `${state.receptionVenueCity}, ${state.receptionVenueState} ${state.receptionVenueZip}`,
+            locationType: VENUE_TYPES.find((o) => o.value === state.receptionLocationType)?.label,
+            indoorOutdoor: INDOOR_OUTDOOR_OPTIONS.find(
+              (o) => o.value === state.receptionIndoorOutdoor,
+            )?.label,
+            asInsured: state.receptionVenueAsInsured ? 'Yes' : 'No ',
+          },
+          {
+            type: 'Brunch',
+            name: state.brunchVenueName,
+            address: `${state.brunchVenueAddress1}${state.brunchVenueAddress2 ? `, ${state.brunchVenueAddress2}` : ''}`,
+            location: `${state.brunchVenueCity}, ${state.brunchVenueState} ${state.brunchVenueZip}`,
+            locationType: VENUE_TYPES.find((o) => o.value === state.brunchLocationType)?.label,
+            indoorOutdoor: INDOOR_OUTDOOR_OPTIONS.find((o) => o.value === state.brunchIndoorOutdoor)
+              ?.label,
+            asInsured: state.brunchVenueAsInsured ? 'Yes' : 'No ',
+          },
+          {
+            type: 'Rehearsal',
+            name: state.rehearsalVenueName,
+            address: `${state.rehearsalVenueAddress1}${state.rehearsalVenueAddress2 ? `, ${state.rehearsalVenueAddress2}` : ''}`,
+            location: `${state.rehearsalVenueCity}, ${state.rehearsalVenueState} ${state.rehearsalVenueZip}`,
+            locationType: VENUE_TYPES.find((o) => o.value === state.rehearsalLocationType)?.label,
+            indoorOutdoor: INDOOR_OUTDOOR_OPTIONS.find(
+              (o) => o.value === state.rehearsalIndoorOutdoor,
+            )?.label,
+            asInsured: state.rehearsalVenueAsInsured ? 'Yes' : 'No ',
+          },
+          {
+            type: 'Rehearsal Dinner',
+            name: state.rehearsalDinnerVenueName,
+            address: `${state.rehearsalDinnerVenueAddress1}${state.rehearsalDinnerVenueAddress2 ? `, ${state.rehearsalDinnerVenueAddress2}` : ''}`,
+            location: `${state.rehearsalDinnerVenueCity}, ${state.rehearsalDinnerVenueState} ${state.rehearsalDinnerVenueZip}`,
+            locationType: VENUE_TYPES.find((o) => o.value === state.rehearsalDinnerLocationType)
+              ?.label,
+            indoorOutdoor: INDOOR_OUTDOOR_OPTIONS.find(
+              (o) => o.value === state.rehearsalDinnerIndoorOutdoor,
+            )?.label,
+            asInsured: state.rehearsalDinnerVenueAsInsured ? 'Yes' : 'No ',
+          },
+        ].filter((v) => v.name);
+
+        if (venues.length > 0) {
+          y = drawSectionTitle('Additional Venues', margin, y, contentWidth);
+          for (const venue of venues) {
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(textColor);
+            doc.text(`${venue.type} Venue`, margin, y);
+            y += 12;
+            y = drawField('Name:', venue.name, margin, y, contentWidth);
+            y = drawField('Address:', venue.address, margin, y, contentWidth);
+            y = drawField('Location:', venue.location, margin, y, contentWidth);
+            y = drawField('Venue Type:', venue.locationType, margin, y, contentWidth);
+            y = drawField('Indoor/Outdoor:', venue.indoorOutdoor, margin, y, contentWidth);
+            y = drawField('As Additional Insured:', venue.asInsured, margin, y, contentWidth);
+            y += 8;
+          }
+        }
+      }
+
+      // --- Footer ---
+      doc.setFillColor(secondaryColor);
+      doc.rect(0, pageHeight - 40, pageWidth, 40, 'F');
+      doc.setFontSize(8);
+      doc.setTextColor(labelColor);
+      const footerText = `This quote is valid for 30 days. Terms and conditions apply. | WeddingGuard Insurance - 1-800-555-0123`;
+      doc.text(footerText, pageWidth / 2, pageHeight - 18, { align: 'center' });
+
       // Save the PDF
       doc.save(`WeddingGuard_Quote_${state.quoteNumber}.pdf`);
     } catch (error) {
@@ -462,11 +640,74 @@ function ReviewClientContent() {
       }
 
       try {
+        // Create a proper payload that handles cruise ship venues correctly
+        const isCruiseShip = state.ceremonyLocationType === 'cruise_ship';
+
+        // Helper function to conditionally include venue fields based on venue type
+        const getVenueFields = (prefix: string) => {
+          const isCruiseShipVenue = (state as any)[`${prefix}LocationType`] === 'cruise_ship';
+
+          const baseFields = {
+            [`${prefix}LocationType`]: (state as any)[`${prefix}LocationType`],
+            [`${prefix}IndoorOutdoor`]: (state as any)[`${prefix}IndoorOutdoor`],
+            [`${prefix}VenueName`]: (state as any)[`${prefix}VenueName`],
+            [`${prefix}VenueAddress1`]: (state as any)[`${prefix}VenueAddress1`],
+            [`${prefix}VenueAddress2`]: (state as any)[`${prefix}VenueAddress2`],
+            [`${prefix}VenueAsInsured`]: (state as any)[`${prefix}VenueAsInsured`],
+            [`${prefix}VenueCity`]: (state as any)[`${prefix}VenueCity`] || '',
+          };
+
+          if (!isCruiseShipVenue) {
+            return {
+              ...baseFields,
+              [`${prefix}VenueCountry`]: (state as any)[`${prefix}VenueCountry`] || '',
+              [`${prefix}VenueState`]: (state as any)[`${prefix}VenueState`] || '',
+              [`${prefix}VenueZip`]: (state as any)[`${prefix}VenueZip`] || '',
+            };
+          }
+
+          return baseFields;
+        };
+
+        // Base payload with ceremony venue fields
+        const payload: Partial<QuoteState> & { status: string } = {
+          eventType: state.eventType,
+          eventDate: state.eventDate,
+          maxGuests: state.maxGuests,
+          honoree1FirstName: state.honoree1FirstName,
+          honoree1LastName: state.honoree1LastName,
+          honoree2FirstName: state.honoree2FirstName,
+          honoree2LastName: state.honoree2LastName,
+          venueName: state.venueName,
+          venueAddress1: state.venueAddress1,
+          venueAddress2: state.venueAddress2,
+          venueCity: state.venueCity,
+          ceremonyLocationType: state.ceremonyLocationType,
+          indoorOutdoor: state.indoorOutdoor,
+          venueAsInsured: state.venueAsInsured,
+          status: 'COMPLETE',
+        };
+
+        // Only include country, state, zip for ceremony venue if it's not a cruise ship
+        if (!isCruiseShip) {
+          payload.venueCountry = state.venueCountry;
+          payload.venueState = state.venueState;
+          payload.venueZip = state.venueZip;
+        }
+
+        // Add additional venue fields for weddings
+        if (state.eventType === 'wedding') {
+          Object.assign(payload, getVenueFields('reception'));
+          Object.assign(payload, getVenueFields('brunch'));
+          Object.assign(payload, getVenueFields('rehearsal'));
+          Object.assign(payload, getVenueFields('rehearsalDinner'));
+        }
+
         // 1. Update quote to COMPLETE status (using quoteNumberFromParams)
         const quoteRes = await fetch(`${apiUrl}/quotes/${quoteNumberFromParams}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: 'COMPLETE' }),
+          body: JSON.stringify(payload),
         });
 
         const quoteData = await quoteRes.json();
@@ -542,6 +783,45 @@ function ReviewClientContent() {
           setPolicySaved(true);
           // Force a re-render to show the policy number
           setShowPolicyNumber(true);
+
+          // 3. Check if policy exists and send policy email
+          try {
+            // Fetch the quote with policy relation to check if policy was created
+            const quoteWithPolicyRes = await fetch(
+              `${apiUrl}/quotes?quoteNumber=${quoteNumberFromParams}`,
+            );
+            if (quoteWithPolicyRes.ok) {
+              const quoteWithPolicyData = await quoteWithPolicyRes.json();
+              const quoteWithPolicy = quoteWithPolicyData.quote;
+
+              // Check if policy exists for this quote
+              if (quoteWithPolicy && quoteWithPolicy.policy) {
+                // Send policy email
+                const emailRes = await fetch(`${apiUrl}/email/send`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    to: state.email,
+                    type: 'policy',
+                    data: {
+                      quoteNumber: quoteWithPolicy.quoteNumber,
+                      policyHolder: quoteWithPolicy.policyHolder,
+                      totalPremium: quoteWithPolicy.totalPremium,
+                      policy: quoteWithPolicy.policy,
+                    },
+                  }),
+                });
+
+                if (emailRes.ok) {
+                  console.log('Policy email sent successfully');
+                } else {
+                  console.error('Failed to send policy email');
+                }
+              }
+            }
+          } catch (emailError) {
+            console.error('Error sending policy email:', emailError);
+          }
         } else {
           console.error(
             'Policy number extraction failed. \nAttempted convertData.policyNumber:',
@@ -652,20 +932,42 @@ function ReviewClientContent() {
   // Fetch quote if qn param is present
   useEffect(() => {
     const qn = searchParams.get('qn');
+    const isRetrieved = searchParams.get('retrieved') === 'true';
+
     if (qn) {
       const fetchQuote = async () => {
         try {
           const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-          const res = await fetch(`${apiUrl}/quotes?quoteNumber=${qn}`);
+          const res = await fetch(`${apiUrl}/quotes?quoteNumber=${qn}`, { cache: 'no-store' });
           if (res.ok) {
             const data = await res.json();
             const flatQuote = flattenQuote(data.quote);
             dispatch({ type: 'SET_ENTIRE_QUOTE_STATE', payload: flatQuote });
             setQuoteLoaded(true);
           } else {
+            // For retrieved quotes, don't redirect - just show an error
+            if (isRetrieved) {
+              toast({
+                title: 'Error',
+                description: 'Failed to load quote details. Please try again or contact support.',
+                variant: 'destructive',
+              });
+              setQuoteLoaded(true); // Set to true to stop loading
+              return;
+            }
             router.replace('/customer/quote-generator');
           }
         } catch {
+          // For retrieved quotes, don't redirect - just show an error
+          if (isRetrieved) {
+            toast({
+              title: 'Error',
+              description: 'Failed to load quote details. Please try again or contact support.',
+              variant: 'destructive',
+            });
+            setQuoteLoaded(true); // Set to true to stop loading
+            return;
+          }
           router.replace('/customer/quote-generator');
         }
       };
@@ -675,6 +977,46 @@ function ReviewClientContent() {
     }
   }, [searchParams, dispatch, router]);
 
+  const handleGoToPayment = async () => {
+    const quoteNumber = state.quoteNumber;
+    if (!quoteNumber) {
+      toast({
+        title: 'Error',
+        description: 'Quote number is missing. Cannot proceed.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      const res = await fetch(`${apiUrl}/quotes/${quoteNumber}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(state), // Send the entire state
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Failed to update quote before payment.');
+      }
+
+      // Check if this is a retrieved quote and pass the parameter
+      const isRetrieved = searchParams.get('retrieved') === 'true';
+      const paymentUrl = isRetrieved ? '/customer/payment?retrieved=true' : '/customer/payment';
+
+      // If save is successful, then navigate
+      router.push(paymentUrl);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'An unknown error occurred.';
+      toast({
+        title: 'Save Error',
+        description: `Could not save quote details. ${message}`,
+        variant: 'destructive',
+      });
+    }
+  };
+
   if (!quoteLoaded) return <ReviewPageSkeleton />;
 
   if (!pageReady) {
@@ -683,7 +1025,7 @@ function ReviewClientContent() {
 
   // Add a function to render additional venue information if eventType is 'wedding'
   const renderAdditionalVenues = () => {
-    if (state.eventType !== 'wedding') return null;
+    if (state.eventType !== 'wedding' || paymentSuccess) return null;
     return (
       <>
         <ReviewSection
@@ -692,8 +1034,8 @@ function ReviewClientContent() {
           }
           icon={<Calendar size={20} className="text-blue-600" />}
         >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 w-full">
-            <div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 w-full">
+            <div className="space-y-3">
               <ReviewItem label="Reception Venue Name" value={state.receptionVenueName} />
               <ReviewItem
                 label="Reception Venue Address"
@@ -713,7 +1055,7 @@ function ReviewClientContent() {
                 value={`${state.brunchVenueCity}, ${state.brunchVenueState} ${state.brunchVenueZip}`}
               />
             </div>
-            <div>
+            <div className="space-y-3">
               <ReviewItem label="Rehearsal Venue Name" value={state.rehearsalVenueName} />
               <ReviewItem
                 label="Rehearsal Venue Address"
@@ -748,16 +1090,12 @@ function ReviewClientContent() {
       <div className="flex flex-col lg:flex-row lg:gap-x-8">
         {/* Main content area */}
         <div className="w-full lg:flex-1">
-          {' '}
-          {/* Removed pb-12 as Card likely has its own bottom margin */}
-          <div className="flex flex-col gap-8 pb-12 w-full mt-8">
-            {' '}
-            {/* md:flex-row removed, px removed as layout handles it */}
+          <div className="flex flex-col gap-6 sm:gap-8 pb-8 sm:pb-12 w-full mt-6 sm:mt-8">
             <div className="flex-1 min-w-0">
               {paymentSuccess ? (
                 <Card
                   title={
-                    <span className="text-2xl font-bold text-green-700">
+                    <span className="text-xl sm:text-2xl font-bold text-green-700">
                       {showPolicyNumber ? 'Payment Successful' : 'Processing Payment'}
                     </span>
                   }
@@ -768,21 +1106,24 @@ function ReviewClientContent() {
                   }
                   icon={
                     showPolicyNumber ? (
-                      <CheckCircle size={28} className="text-green-600" />
+                      <CheckCircle size={24} className="sm:w-7 sm:h-7 text-green-600" />
                     ) : (
-                      <DollarSign size={28} className="text-blue-600" />
+                      <DollarSign size={24} className="sm:w-7 sm:h-7 text-blue-600" />
                     )
                   }
-                  className={`mb-8 shadow-lg border-0 bg-white ${
+                  className={`mb-6 sm:mb-8 shadow-lg border-0 bg-white ${
                     showPolicyNumber ? 'border-green-100' : 'border-blue-100'
                   }`}
                 >
-                  <div className="text-center py-10">
+                  <div className="text-center py-8 sm:py-10">
                     {showPolicyNumber ? (
-                      <div className="space-y-8">
-                        <div className="bg-green-50 border border-green-100 rounded-xl p-8">
-                          <CheckCircle size={48} className="text-green-500 mx-auto mb-4" />
-                          <h3 className="text-2xl font-semibold text-gray-800 mb-2">
+                      <div className="space-y-6 sm:space-y-8">
+                        <div className="bg-green-50 border border-green-100 rounded-xl p-6 sm:p-8">
+                          <CheckCircle
+                            size={40}
+                            className="sm:w-12 sm:h-12 text-green-500 mx-auto mb-4"
+                          />
+                          <h3 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-2">
                             Your Policy is Active
                           </h3>
                           <p className="text-gray-700 mb-4">
@@ -801,7 +1142,7 @@ function ReviewClientContent() {
                             </p>
                           </div>
                         </div>
-                        <div className="flex flex-col sm:flex-row justify-center gap-4">
+                        <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
                           <Button
                             variant="outline"
                             onClick={generatePdf}
@@ -841,46 +1182,50 @@ function ReviewClientContent() {
                 <>
                   <Card
                     title={
-                      <span className="text-2xl font-bold text-blue-800">Review Your Quote</span>
+                      <span className="text-xl sm:text-2xl font-bold text-blue-800">
+                        Review Your Quote
+                      </span>
                     }
                     subtitle={
-                      <span className="text-base text-gray-600">Quote #{state.quoteNumber}</span>
+                      <span className="text-sm sm:text-base text-gray-600">
+                        Quote #{state.quoteNumber}
+                      </span>
                     }
-                    icon={<FileCog size={28} className="text-blue-600" />}
-                    className="mb-8 shadow-lg border-0 bg-white"
+                    icon={<FileCog size={24} className="sm:w-7 sm:h-7 text-blue-600" />}
+                    className="mb-6 sm:mb-8 shadow-lg border-0 bg-white"
                   >
-                    <div className="bg-yellow-50 border-l-4 border-yellow-400 rounded-lg p-4 mb-8 flex items-start gap-3">
-                      <AlertTriangle size={20} className="text-yellow-500 mt-1" />
+                    <div className="bg-yellow-50 border-l-4 border-yellow-400 rounded-lg p-4 mb-6 sm:mb-8 flex items-start gap-3">
+                      <AlertTriangle size={18} className="sm:w-5 sm:h-5 text-yellow-500 mt-1" />
                       <div>
-                        <p className="text-sm text-yellow-800 font-semibold">
+                        <p className="text-xs sm:text-sm text-yellow-800 font-semibold">
                           Please review all information carefully before proceeding to payment. You
                           can go back to make changes if needed.
                         </p>
                       </div>
                     </div>
-                    <div className="mb-8">
-                      <div className="bg-gray-50 rounded-xl p-6 border border-gray-200 mb-6">
+                    <div className="mb-6 sm:mb-8">
+                      <div className="bg-gray-50 rounded-xl p-4 sm:p-6 border border-gray-200 mb-6">
                         <div className="text-center mb-4">
-                          <h3 className="text-xl font-semibold text-gray-800 mb-1">
+                          <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-1">
                             Total Premium
                           </h3>
-                          <p className="text-3xl font-bold text-blue-700">
+                          <p className="text-2xl sm:text-3xl font-bold text-blue-700">
                             {formatCurrency(state.totalPremium)}
                           </p>
                         </div>
                         <div className="pt-4 border-t border-gray-100">
-                          <h4 className="text-sm font-medium text-gray-700 mb-2">
+                          <h4 className="text-xs sm:text-sm font-medium text-gray-700 mb-2">
                             Premium Breakdown:
                           </h4>
                           <div className="space-y-2 text-gray-700">
-                            <div className="flex justify-between text-sm">
+                            <div className="flex justify-between text-xs sm:text-sm">
                               <span>Core Coverage:</span>
                               <span className="font-medium">
                                 {formatCurrency(state.basePremium)}
                               </span>
                             </div>
                             {state.liabilityCoverage !== 'none' && (
-                              <div className="flex justify-between text-sm">
+                              <div className="flex justify-between text-xs sm:text-sm">
                                 <span>Liability Coverage:</span>
                                 <span className="font-medium">
                                   {formatCurrency(state.liabilityPremium)}
@@ -888,7 +1233,7 @@ function ReviewClientContent() {
                               </div>
                             )}
                             {state.liquorLiability && (
-                              <div className="flex justify-between text-sm">
+                              <div className="flex justify-between text-xs sm:text-sm">
                                 <span>Host Liquor Liability:</span>
                                 <span className="font-medium">
                                   {formatCurrency(state.liquorLiabilityPremium)}
@@ -918,13 +1263,13 @@ function ReviewClientContent() {
                     }
                     icon={<Shield size={20} className="text-blue-600" />}
                   >
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 w-full">
-                      <div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 w-full">
+                      <div className="space-y-3">
                         <ReviewItem label="Event Type" value={eventTypeLabel} />
                         <ReviewItem label="Guest Count" value={guestRangeLabel} />
                         <ReviewItem label="Event Date" value={formattedEventDate} />
                       </div>
-                      <div>
+                      <div className="space-y-3">
                         <ReviewItem label="Core Coverage" value={coverageLevelLabel} />
                         <ReviewItem label="Liability Coverage" value={liabilityOptionLabel} />
                         <ReviewItem
@@ -940,8 +1285,8 @@ function ReviewClientContent() {
                     }
                     icon={<Calendar size={20} className="text-blue-600" />}
                   >
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 w-full">
-                      <div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 w-full">
+                      <div className="space-y-3">
                         <ReviewItem
                           label="Honorees"
                           value={`${state.honoree1FirstName} ${state.honoree1LastName}${
@@ -953,7 +1298,7 @@ function ReviewClientContent() {
                         <ReviewItem label="Venue Type" value={venueTypeLabel} />
                         <ReviewItem label="Indoor/Outdoor" value={indoorOutdoorLabel} />
                       </div>
-                      <div>
+                      <div className="space-y-3">
                         <ReviewItem label="Venue Name" value={state.venueName} />
                         <ReviewItem
                           label="Venue Address"
@@ -976,8 +1321,8 @@ function ReviewClientContent() {
                     }
                     icon={<User size={20} className="text-blue-600" />}
                   >
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 w-full">
-                      <div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 w-full">
+                      <div className="space-y-3">
                         <ReviewItem
                           label="Policyholder"
                           value={`${state.firstName} ${state.lastName}`}
@@ -986,7 +1331,7 @@ function ReviewClientContent() {
                         <ReviewItem label="Email" value={state.email} />
                         <ReviewItem label="Phone" value={state.phone} />
                       </div>
-                      <div>
+                      <div className="space-y-3">
                         <ReviewItem label="Address" value={state.address} />
                         <ReviewItem
                           label="Location"
@@ -1000,35 +1345,35 @@ function ReviewClientContent() {
                       <span className="text-lg font-bold text-blue-800">Payment Information</span>
                     }
                     subtitle={
-                      <span className="text-base text-gray-600">
+                      <span className="text-sm sm:text-base text-gray-600">
                         Complete your purchase securely
                       </span>
                     }
-                    icon={<DollarSign size={24} className="text-blue-600" />}
-                    className="mb-8 shadow-lg border-0 bg-white"
+                    icon={<DollarSign size={20} className="sm:w-6 sm:h-6 text-blue-600" />}
+                    className="mb-6 sm:mb-8 shadow-lg border-0 bg-white"
                   >
-                    <div className="py-10 text-center">
-                      <p className="text-gray-700 mb-4">
+                    <div className="py-8 sm:py-10 text-center">
+                      <p className="text-sm sm:text-base text-gray-700 mb-4 px-4">
                         For this demonstration, we&apos;ve simplified the payment process. Click the
                         button below to simulate payment and complete your policy purchase.
                       </p>
                       <Button
                         variant="primary"
                         size="lg"
-                        onClick={() => router.push('/customer/payment')}
+                        onClick={handleGoToPayment}
                         onMouseEnter={() => router.prefetch('/customer/payment')}
                         className="min-w-44 transition-transform duration-150 hover:scale-105"
                       >
                         <DollarSign size={18} />
                         Complete Purchase
                       </Button>
-                      <p className="text-xs text-gray-500 mt-4">
+                      <p className="text-xs text-gray-500 mt-4 px-4">
                         Your total charge will be {formatCurrency(state.totalPremium)}. In a real
                         application, this would include a secure payment form.
                       </p>
                     </div>
                   </Card>
-                  <div className="flex justify-between mt-10 gap-4">
+                  <div className="flex justify-between mt-8 sm:mt-10 gap-4">
                     <Button
                       variant="secondary"
                       onClick={handleBack}

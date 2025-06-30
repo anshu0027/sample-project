@@ -64,6 +64,91 @@ export const US_STATES = [
 ];
 
 // ------------------------
+// Array of Canadian provinces for dropdowns.
+// ------------------------
+export const CA_PROVINCES = [
+  { value: 'AB', label: 'Alberta' },
+  { value: 'BC', label: 'British Columbia' },
+  { value: 'MB', label: 'Manitoba' },
+  { value: 'NB', label: 'New Brunswick' },
+  { value: 'NL', label: 'Newfoundland and Labrador' },
+  { value: 'NS', label: 'Nova Scotia' },
+  { value: 'ON', label: 'Ontario' },
+  { value: 'PE', label: 'Prince Edward Island' },
+  { value: 'QC', label: 'Quebec' },
+  { value: 'SK', label: 'Saskatchewan' },
+  { value: 'NT', label: 'Northwest Territories' },
+  { value: 'NU', label: 'Nunavut' },
+  { value: 'YT', label: 'Yukon' },
+];
+
+// ------------------------
+// Array of Mexican states for dropdowns.
+export const MX_STATES = [
+  { value: 'AG', label: 'Aguascalientes' },
+  { value: 'BC', label: 'Baja California' },
+  { value: 'BS', label: 'Baja California Sur' },
+  { value: 'CM', label: 'Campeche' },
+  { value: 'CS', label: 'Chiapas' },
+  { value: 'CH', label: 'Chihuahua' },
+  { value: 'CO', label: 'Coahuila' },
+  { value: 'CL', label: 'Colima' },
+  { value: 'DG', label: 'Durango' },
+  { value: 'GT', label: 'Guanajuato' },
+  { value: 'GR', label: 'Guerrero' },
+  { value: 'HG', label: 'Hidalgo' },
+  { value: 'JA', label: 'Jalisco' },
+  { value: 'MX', label: 'México State' },
+  { value: 'MI', label: 'Michoacán' },
+  { value: 'MO', label: 'Morelos' },
+  { value: 'NA', label: 'Nayarit' },
+  { value: 'NL', label: 'Nuevo León' },
+  { value: 'OA', label: 'Oaxaca' },
+  { value: 'PU', label: 'Puebla' },
+  { value: 'QT', label: 'Querétaro' },
+  { value: 'QR', label: 'Quintana Roo' },
+  { value: 'SL', label: 'San Luis Potosí' },
+  { value: 'SI', label: 'Sinaloa' },
+  { value: 'SO', label: 'Sonora' },
+  { value: 'TB', label: 'Tabasco' },
+  { value: 'TM', label: 'Tamaulipas' },
+  { value: 'TL', label: 'Tlaxcala' },
+  { value: 'VE', label: 'Veracruz' },
+  { value: 'YU', label: 'Yucatán' },
+  { value: 'ZA', label: 'Zacatecas' },
+  { value: 'DF', label: 'Ciudad de México' },
+];
+
+// Array of example international regions for 'Other (International)'
+export const O_REGIONS = [
+  { value: 'ENG', label: 'England' },
+  { value: 'SCT', label: 'Scotland' },
+  { value: 'WLS', label: 'Wales' },
+  { value: 'NIR', label: 'Northern Ireland' },
+  { value: 'DEU', label: 'Germany' },
+  { value: 'FRA', label: 'France' },
+  { value: 'AUS', label: 'Australia' },
+  { value: 'NZL', label: 'New Zealand' },
+  { value: 'IND', label: 'India' },
+  { value: 'CHN', label: 'China' },
+  { value: 'JPN', label: 'Japan' },
+  { value: 'BRA', label: 'Brazil' },
+  { value: 'ZAF', label: 'South Africa' },
+  { value: 'OTHER', label: 'Other/Not Listed' },
+];
+
+// ------------------------
+// A mapping from country code to its states/provinces list.
+// ------------------------
+export const STATES_BY_COUNTRY: Record<string, { value: string; label: string }[]> = {
+  US: US_STATES,
+  CA: CA_PROVINCES,
+  MX: MX_STATES,
+  O: O_REGIONS,
+  // Add other countries here, e.g., 'GB': UK_COUNTIES
+};
+
+// ------------------------
 // Array of event types for dropdowns.
 // ------------------------
 // Event types
@@ -394,10 +479,10 @@ export const INDOOR_OUTDOOR_OPTIONS = [
 // ------------------------
 // Countries
 export const COUNTRIES = [
-  { value: 'United States', label: 'United States' },
-  { value: 'Canada', label: 'Canada' },
-  { value: 'Mexico', label: 'Mexico' },
-  { value: 'Other', label: 'Other (International)' },
+  { value: 'US', label: 'United States' },
+  { value: 'CA', label: 'Canada' },
+  { value: 'MX', label: 'Mexico' },
+  { value: 'O', label: 'Other (International)' },
 ];
 
 // ------------------------

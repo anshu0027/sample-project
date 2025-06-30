@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AlertCircle, DollarSign, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import Checkbox from '@/components/ui/Checkbox';
@@ -10,7 +10,7 @@ import {
   GUEST_RANGES,
   COVERAGE_LEVELS,
   LIABILITY_OPTIONS,
-  // PROHIBITED_ACTIVITIES,
+  PROHIBITED_ACTIVITIES,
   LIQUOR_LIABILITY_PREMIUMS,
   LIQUOR_LIABILITY_PREMIUMS_NEW,
   CORE_COVERAGE_PREMIUMS, // Added
@@ -80,10 +80,14 @@ export default function Step1Form({
   // onContinue,
   // showQuoteResults,
   handleCalculateQuote,
-  onSave,
-  isCustomerEdit = false,
+  // onSave,
+  // isCustomerEdit = false,
   isRestored = false,
 }: Step1FormProps) {
+  // Add state for modals
+  const [showSpecialActivitiesModal, setShowSpecialActivitiesModal] = useState(false);
+  const [showContactModal, setShowContactModal] = useState(false);
+
   // ------------------------
   // Date parsing and formatting functions (similar to quote-generator)
   // ------------------------
@@ -116,6 +120,15 @@ export default function Step1Form({
       onChange('liquorLiability', false);
     }
   }, [state.liabilityCoverage, onChange, state.liquorLiability]);
+
+  // Handle special activities change
+  const handleSpecialActivitiesChange = (checked: boolean) => {
+    if (checked) {
+      setShowSpecialActivitiesModal(true);
+    } else {
+      onChange('specialActivities', false);
+    }
+  };
 
   return (
     <div className="mb-8 shadow-lg border-0 bg-white p-8 sm:p-10 md:p-12 rounded-2xl w-full max-w-4xl mx-auto">
@@ -459,13 +472,12 @@ export default function Step1Form({
               </span>
             }
             checked={state.specialActivities}
-            onChange={(checked) => onChange('specialActivities', checked)}
+            onChange={handleSpecialActivitiesChange}
             description={
               <span className="text-left text-xs sm:text-base">
                 Examples: fireworks, bounce houses, live animals, etc.
               </span>
             }
-            disabled={isCustomerEdit}
             error={!!errors.specialActivities}
           />
           {errors.specialActivities && (
@@ -535,18 +547,114 @@ export default function Step1Form({
             <DollarSign size={18} />
             Calculate Quote
           </Button>
-          {onSave && (
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={onSave}
-              className="transition-transform duration-150 hover:scale-105"
-            >
-              Save
-            </Button>
-          )}
         </div>
       </div>
+
+      {/* Special Activities Modal */}
+      {showSpecialActivitiesModal && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center px-4 py-6 sm:px-6">
+          <div className="bg-white rounded-2xl shadow-xl w-full min-w-[300px] sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl max-h-[90vh] overflow-y-auto transition-transform duration-300 ease-out animate-fade-in">
+            <div className="p-6 sm:p-8">
+              <h3 className="text-xl sm:text-2xl font-semibold text-red-600 mb-4">
+                Special Activities Warning
+              </h3>
+              <p className="text-gray-700 mb-5 text-sm sm:text-base leading-relaxed">
+                The following activities are typically excluded from coverage. If your event
+                includes any of these, please contact our support team for special underwriting.
+              </p>
+
+              <ul className="list-disc pl-5 mb-6 space-y-1 text-sm text-gray-800">
+                {PROHIBITED_ACTIVITIES.map((activity, index) => (
+                  <li key={index}>{activity}</li>
+                ))}
+              </ul>
+
+              <div className="flex flex-col sm:flex-row sm:justify-end gap-3">
+                <Button
+                  variant="outline"
+                  className="w-full sm:w-auto"
+                  onClick={() => {
+                    onChange('specialActivities', false);
+                    setShowSpecialActivitiesModal(false);
+                  }}
+                >
+                  My event doesn&apos;t include these
+                </Button>
+                <Button
+                  variant="primary"
+                  className="w-full sm:w-auto"
+                  onClick={() => {
+                    setShowSpecialActivitiesModal(false);
+                    setShowContactModal(true);
+                  }}
+                >
+                  Contact me for special coverage
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Contact Modal */}
+      {showContactModal && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center px-4 py-6 sm:px-6">
+          <div className="bg-white rounded-2xl shadow-xl w-full min-w-[300px] sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl max-h-[90vh] overflow-y-auto transition-transform duration-300 ease-out animate-fade-in">
+            <div className="p-6 sm:p-8">
+              <h3 className="text-xl sm:text-2xl font-semibold text-blue-600 mb-4">
+                Contact Our Support Team
+              </h3>
+              <p className="text-gray-700 mb-5 text-sm sm:text-base leading-relaxed">
+                For special activities coverage, please contact our support team directly.
+                We&apos;ll work with you to provide the appropriate coverage for your event.
+              </p>
+
+              <div className="space-y-4 mb-6">
+                <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                  <h4 className="font-semibold text-blue-800 mb-2">Contact Information</h4>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center">
+                      <span className="font-medium text-gray-700 w-20">Email:</span>
+                      <span className="text-blue-600">support@weddinginsurance.com</span>
+                    </div>
+                    <div className="flex items-center">
+                      <span className="font-medium text-gray-700 w-20">Phone:</span>
+                      <span className="text-blue-600">1-800-WEDDING</span>
+                    </div>
+                    <div className="flex items-center">
+                      <span className="font-medium text-gray-700 w-20">Hours:</span>
+                      <span className="text-gray-600">Mon-Fri 9AM-6PM EST</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
+                  <h4 className="font-semibold text-yellow-800 mb-2">What to Include</h4>
+                  <ul className="text-sm text-gray-700 space-y-1">
+                    <li>• Description of your special activities</li>
+                    <li>• Event date and location</li>
+                    <li>• Number of guests</li>
+                    <li>• Any existing quote number</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row sm:justify-end gap-3">
+                <Button
+                  variant="outline"
+                  className="w-full sm:w-auto"
+                  onClick={() => {
+                    setShowContactModal(false);
+                    onChange('specialActivities', false);
+                  }}
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

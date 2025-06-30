@@ -14,6 +14,7 @@ import {
 import { Button } from '../ui/Button';
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { useAuth, useUser } from '@clerk/nextjs';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   // ------------------------
@@ -21,65 +22,65 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   // ------------------------
   const pathname = usePathname();
   const router = useRouter();
+
+  // ------------------------
+  // Clerk authentication hooks
+  // ------------------------
+  const { isSignedIn, isLoaded, signOut } = useAuth();
+  const { user } = useUser();
+
   // ------------------------
   // State for managing mobile sidebar visibility.
   // ------------------------
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  // ------------------------
-  // State to track if authentication check has been performed.
-  // ------------------------
-  const [authChecked, setAuthChecked] = useState(false);
-  // ------------------------
-  // State to track if the admin user is logged in.
-  // ------------------------
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
+  // ------------------------
+  // Handle sign out
+  // ------------------------
+  const handleSignOut = async () => {
+    try {
+      await signOut({ redirectUrl: '/admin/login' });
+      // Force a hard redirect to clear any cached state
+      window.location.href = '/admin/login';
+    } catch (error) {
+      console.error('Sign out error:', error);
+      // Fallback redirect even if signOut fails
+      window.location.href = '/admin/login';
+    }
+  };
+
+  // ------------------------
+  // Check authentication and redirect if needed
+  // ------------------------
   useEffect(() => {
-    // Only run on client
-    if (typeof window === 'undefined') return;
-    // Always check on mount and on route change
-    const checkAuth = () => {
-      // ------------------------
-      // Check if 'admin_logged_in' item exists in localStorage and is 'true'.
-      // Update isLoggedIn state and set authChecked to true.
-      // If not logged in and not on the login page, redirect to login.
-      // ------------------------
-      const loggedIn = localStorage.getItem('admin_logged_in') === 'true';
-      setIsLoggedIn(loggedIn);
-      setAuthChecked(true);
-      if (pathname !== '/admin/login' && !loggedIn) {
-        router.replace('/admin/login');
-      }
-    };
-    checkAuth();
-    // Listen for storage changes (e.g., logout in another tab)
-    // ------------------------
-    // Event listener for 'storage' event to handle auth changes in other tabs.
-    // ------------------------
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === 'admin_logged_in') {
-        checkAuth();
-      }
-    };
-    window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
-  }, [pathname, router]);
+    if (isLoaded && !isSignedIn && pathname !== '/admin/login') {
+      router.replace('/admin/login');
+    }
+  }, [isLoaded, isSignedIn, pathname, router]);
 
   // ------------------------
-  // If running on the server or auth check is not complete, show a loading spinner.
+  // Show loading spinner while Clerk is loading
   // ------------------------
-  if (typeof window === 'undefined' || !authChecked) {
+  if (!isLoaded) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <span className="animate-spin h-8 w-8 border-4 border-blue-400 border-t-transparent rounded-full"></span>
       </div>
     );
   }
+
   // ------------------------
-  // If not logged in and not on the login page, render null (redirect handled in useEffect).
+  // If not signed in and not on login page, don't render anything (redirect handled in useEffect)
   // ------------------------
-  if (!isLoggedIn && pathname !== '/admin/login') {
+  if (!isSignedIn && pathname !== '/admin/login') {
     return null;
+  }
+
+  // ------------------------
+  // If on login page, just render children without layout
+  // ------------------------
+  if (pathname === '/admin/login') {
+    return <>{children}</>;
   }
 
   const navigation = [
@@ -90,20 +91,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { name: 'Transactions', href: '/admin/transactions', icon: DollarSign },
   ];
   // ------------------------
-  // Handles admin logout. Removes 'admin_logged_in' from localStorage and redirects to login page.
-  // ------------------------
-  const handleLogout = () => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('admin_logged_in');
-      window.location.href = '/admin/login';
-    }
-  };
-  // ------------------------
   // Main layout structure. Includes sidebar and main content area.
   // ------------------------
   return (
     <div className="min-h-screen bg-gray-50">
-      {isLoggedIn && (
+      {isSignedIn && (
         <>
           {/* Mobile sidebar toggle */}
           <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 px-4 py-2">
@@ -133,7 +125,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 {/* ------------------------ */}
                 <Image
                   src="/logo.png"
-                  alt="Wedevent Focalat Logo"
+                  alt="Wedevent Logo"
                   width={32}
                   height={32}
                   className="h-8 w-8" // Adjust size as needed, 24px is h-6 w-6 in Tailwind
@@ -185,19 +177,28 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 {/* ------------------------ */}
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
-                    <Users size={20} className="text-gray-500" />
+                    {user?.imageUrl ? (
+                      <Image
+                        src={user.imageUrl}
+                        alt={user.fullName || 'Admin User'}
+                        width={40}
+                        height={40}
+                        className="w-10 h-10 rounded-full"
+                      />
+                    ) : (
+                      <Users size={20} className="text-gray-500" />
+                    )}
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-900">Admin User</p>
-                    <p className="text-xs text-gray-500">admin@weddingguard.com</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {user?.fullName || 'Admin User'}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {user?.primaryEmailAddress?.emailAddress || 'admin@weddingguard.com'}
+                    </p>
                   </div>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  //
-                  onClick={handleLogout}
-                >
+                <Button variant="outline" size="sm" onClick={handleSignOut}>
                   <LogOut size={16} />
                   Sign Out
                 </Button>
@@ -207,7 +208,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </>
       )}
       {/* Main content */}
-      <div className={`${isLoggedIn ? 'lg:pl-64' : ''} pt-14 lg:pt-0 min-h-screen bg-gray-50`}>
+      <div className={`${isSignedIn ? 'lg:pl-64' : ''} pt-14 lg:pt-0 min-h-screen bg-gray-50`}>
         {/* ------------------------ */}
         {/* Renders the children components (page content). */}
         {/* Adjusts left padding based on sidebar visibility for logged-in users. */}

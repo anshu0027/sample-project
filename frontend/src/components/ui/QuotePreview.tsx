@@ -2,6 +2,15 @@ import React from 'react';
 import { useQuote } from '@/context/QuoteContext';
 import { FileText } from 'lucide-react';
 
+// Helper function to capitalize words and replace underscores with spaces
+const capitalizeWords = (str: string | undefined | null): string => {
+  if (!str) return 'N/A';
+  // Replace underscores with spaces first, then capitalize each word
+  return str
+    .replace(/_/g, ' ')
+    .replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
+};
+
 const QuotePreview: React.FC = () => {
   const { state } = useQuote();
 
@@ -28,10 +37,11 @@ const QuotePreview: React.FC = () => {
             <span className="font-semibold text-blue-700">Quote #:</span> {state.quoteNumber}
           </div>
           <div>
-            <span className="font-semibold">Event Type:</span> {state.eventType}
+            <span className="font-semibold">Event Type:</span> {capitalizeWords(state.eventType)}
           </div>
           <div>
-            <span className="font-semibold">Event Date:</span> {state.eventDate}
+            <span className="font-semibold">Event Date:</span>{' '}
+            {new Date(state.eventDate).toISOString().split('T')[0]}
           </div>
           <div>
             <span className="font-semibold">Max Guests:</span> {state.maxGuests}
@@ -40,7 +50,8 @@ const QuotePreview: React.FC = () => {
             <span className="font-semibold">Coverage Level:</span> {state.coverageLevel}
           </div>
           <div>
-            <span className="font-semibold">Liability:</span> {state.liabilityCoverage}
+            <span className="font-semibold">Liability:</span>{' '}
+            {capitalizeWords(state.liabilityCoverage)}
           </div>
           <div>
             <span className="font-semibold">Liquor Liability:</span>{' '}

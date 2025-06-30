@@ -75,3 +75,4 @@ __decorate([
 exports.Policy = Policy = __decorate([
     (0, typeorm_1.Entity)('POLICIES')
 ], Policy);
+//# sourceMappingURL=policy.entity.js.map

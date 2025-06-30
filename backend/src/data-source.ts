@@ -9,6 +9,9 @@ import { PolicyHolder } from "./entities/policy-holder.entity";
 import { Policy } from "./entities/policy.entity";
 import { Payment } from "./entities/payment.entity";
 import { PolicyVersion } from "./entities/policy-version.entity";
+import { EventLog } from "./entities/event-log.entity";
+import { SentryError } from "./entities/sentry-error.entity";
+import { BackupLog } from "./entities/backup-log.entity";
 
 // ------------------------
 // Load environment variables from the .env file in the root of the project.
@@ -49,6 +52,9 @@ export const AppDataSource = new DataSource({
     Policy,
     Payment,
     PolicyVersion,
+    EventLog,
+    SentryError,
+    BackupLog,
   ],
   // ------------------------
   // synchronize: (Default: false) If true, automatically creates or updates database schema

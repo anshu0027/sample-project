@@ -5,23 +5,7 @@ exports.createPolicyFromQuote = createPolicyFromQuote;
 const data_source_1 = require("../data-source");
 const quote_entity_1 = require("../entities/quote.entity");
 const policy_entity_1 = require("../entities/policy.entity");
-const helpers_1 = require("../utils/helpers");
-// ------------------------
-// Creates a new Policy entity from an existing Quote entity.
-// This function is typically called when a quote is finalized and paid for,
-// or when an admin manually converts a quote to a policy.
-// It uses a database transaction to ensure atomicity: either all operations
-// (creating policy, updating quote) succeed, or none do.
-//
-// Parameters:
-// - quoteId: The ID of the Quote to be converted into a Policy.
-//
-// Returns:
-// - A Promise that resolves to the newly created Policy entity, including its relations.
-//
-// Throws:
-// - An error if the quote is not found.
-// - An error if the created policy cannot be retrieved after saving.
+// import { generateUniqueId } from "../utils/helpers";
 // ------------------------
 async function createPolicyFromQuote(quoteId) {
     // ------------------------
@@ -55,8 +39,9 @@ async function createPolicyFromQuote(quoteId) {
         //    - Generate a unique policy number.
         //    - Associate the quote, event, and policyHolder from the fetched quote.
         // ------------------------
-        const policyPrefix = "PI";
-        const policyNumber = (0, helpers_1.generateUniqueId)(policyPrefix);
+        const quoteNumberParts = quote.quoteNumber.split("-");
+        const policyIdentifier = quoteNumberParts[quoteNumberParts.length - 1];
+        const policyNumber = `PI-${policyIdentifier}`;
         const newPolicy = policyRepository.create({
             policyNumber,
             quote: quote,
@@ -93,3 +78,4 @@ async function createPolicyFromQuote(quoteId) {
         return completePolicy;
     });
 }
+//# sourceMappingURL=policy.service.js.map

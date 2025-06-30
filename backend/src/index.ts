@@ -1,14 +1,3 @@
-// import cookieParser from 'cookie-parser';
-// import csrf from 'csurf';
-// ------------------------
-// Import necessary modules.
-// express: Web framework for Node.js.
-// cors: Middleware for enabling Cross-Origin Resource Sharing.
-// rateLimit: Middleware for rate limiting requests.
-// path: Utility for working with file and directory paths.
-// AppDataSource: TypeORM data source for database connection.
-// Route modules: Import all defined API route handlers.
-// ------------------------
 import express from "express";
 import cors from "cors";
 import rateLimit from "express-rate-limit";
@@ -22,6 +11,14 @@ import policyListRoutes from "./routes/v1/policy-list.routes";
 import adminRoutes from "./routes/v1/admin.routes";
 import paymentRoutes from "./routes/v1/payment.routes";
 import loginRoutes from "./routes/v1/login.route";
+import { ScheduledTasksService } from "./services/scheduled-tasks.service";
+import { SentryService } from "./services/sentry.service";
+
+// ------------------------
+// Initialize Sentry
+// ------------------------
+const sentryService = SentryService.getInstance();
+sentryService.initialize();
 
 // ------------------------
 // Initialize the Express application.
@@ -38,6 +35,7 @@ app.use(
     origin: [
       "http://localhost:3000",
       "https://localhost:3000",
+      "https://localhost:3001",
       "http://192.168.1.8:3000",
       "https://192.168.1.8:3000",
       "http://localhost:8000",
@@ -67,7 +65,7 @@ app.use(
 // ------------------------
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 300, // Limit each IP to 100 requests per windowMs
+  max: 500, // Limit each IP to 100 requests per windowMs
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
 });
@@ -94,11 +92,77 @@ app.use(globalLimiter);
 
 // Health check route
 // ------------------------
-// A simple health check endpoint to verify if the API is running.
-// Returns a JSON response with status 'ok'.
+// A comprehensive health check endpoint to verify if the API is running.
+// Returns detailed information about the system status.
 // ------------------------
-app.get("/api/health", (_req, res) => {
-  res.json({ status: "ok" });
+app.get("/api/health", async (_req, res) => {
+  try {
+    const startTime = Date.now();
+
+    // Check database connection
+    const dbStatus = AppDataSource.isInitialized ? "connected" : "disconnected";
+
+    // Get system information
+    const uptime = process.uptime();
+    const memoryUsage = process.memoryUsage();
+    const nodeVersion = process.version;
+    const platform = process.platform;
+
+    // Test database query if connected
+    let dbTest = "not tested";
+    if (AppDataSource.isInitialized) {
+      try {
+        await AppDataSource.query("SELECT 1");
+        dbTest = "success";
+      } catch (error) {
+        dbTest = "failed";
+      }
+    }
+
+    const healthData = {
+      status: "ok",
+      timestamp: new Date().toISOString(),
+      uptime: {
+        seconds: Math.floor(uptime),
+        formatted: `${Math.floor(uptime / 3600)}h ${Math.floor(
+          (uptime % 3600) / 60
+        )}m ${Math.floor(uptime % 60)}s`,
+      },
+      database: {
+        status: dbStatus,
+        test: dbTest,
+      },
+      system: {
+        nodeVersion,
+        platform,
+        memory: {
+          rss: `${Math.round(memoryUsage.rss / 1024 / 1024)}MB`,
+          heapTotal: `${Math.round(memoryUsage.heapTotal / 1024 / 1024)}MB`,
+          heapUsed: `${Math.round(memoryUsage.heapUsed / 1024 / 1024)}MB`,
+          external: `${Math.round(memoryUsage.external / 1024 / 1024)}MB`,
+        },
+      },
+      environment: {
+        nodeEnv: process.env.NODE_ENV || "development",
+        port: process.env.PORT || 8000,
+      },
+      responseTime: `${Date.now() - startTime}ms`,
+    };
+
+    res.status(200).json(healthData);
+  } catch (error) {
+    res.status(500).json({
+      status: "error",
+      timestamp: new Date().toISOString(),
+      error: error instanceof Error ? error.message : "Unknown error",
+      uptime: {
+        seconds: Math.floor(process.uptime()),
+        formatted: `${Math.floor(process.uptime() / 3600)}h ${Math.floor(
+          (process.uptime() % 3600) / 60
+        )}m ${Math.floor(process.uptime() % 60)}s`,
+      },
+    });
+  }
 });
 
 // Root route
@@ -123,42 +187,49 @@ app.use("/api/v1/admin", adminRoutes);
 app.use("/api/v1/payment", paymentRoutes);
 app.use("/api/v1/login", loginRoutes);
 
-// Error handling middleware
-// ------------------------
-// A generic error handling middleware.
-// Catches any unhandled errors that occur during request processing.
-// Logs the error and returns a 500 Internal Server Error response.
-// ------------------------
+// Global error handler
 app.use(
   (
-    err: Error,
-    _req: express.Request,
+    error: any,
+    req: express.Request,
     res: express.Response,
-    _next: express.NextFunction
+    next: express.NextFunction
   ) => {
-    console.error("Unhandled error:", err);
-    res.status(500).json({ error: "Internal Server Error" });
+    console.error("Global error handler:", error);
+
+    // Log error to Sentry
+    sentryService.captureRequestError(req, res, error, res.statusCode || 500);
+
+    res.status(500).json({
+      error: "Internal Server Error",
+      message:
+        process.env.NODE_ENV === "development"
+          ? error.message
+          : "Something went wrong",
+    });
   }
 );
 
-AppDataSource.initialize()
-  .then(() => {
-    console.log("Data Source has been initialized!");
+// --- APP INITIALIZATION ---
+const startServer = async () => {
+  try {
+    // 1. Initialize Database
+    await AppDataSource.initialize();
+    console.log("✅ Data Source has been initialized!");
 
+    // 2. Initialize Services (like scheduled tasks)
+    await ScheduledTasksService.getInstance().initializeScheduledTasks();
+
+    // 3. Start the Express Server
     const PORT = process.env.PORT ? parseInt(process.env.PORT) : 8000;
-    // const LINK = "http://localhost:" + PORT;
-    // const HOST = LINK || process.env.NEXT_PUBLIC_FRONTEND_URL;
-
-    // ------------------------
-    // Start the Express server and listen on the configured port.
-    // ------------------------
     app.listen(PORT, "0.0.0.0", () => {
-      console.log(`Backend running on http://localhost:${PORT}`);
+      console.log(`🚀 Backend running on http://localhost:${PORT}`);
     });
-  })
-  .catch((error) => {
-    // ------------------------
-    // Log an error message if database initialization fails.
-    // ------------------------
-    console.error("Error during Data Source initialization:", error);
-  });
+  } catch (error) {
+    console.error("❌ Error during server initialization:", error);
+    process.exit(1); // Exit with failure
+  }
+};
+
+// Start the server
+startServer();

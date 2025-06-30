@@ -149,3 +149,4 @@ const policyEmailTemplate = ({ policyNumber, firstName, quoteNumber, totalPremiu
     };
 };
 exports.policyEmailTemplate = policyEmailTemplate;
+//# sourceMappingURL=emailTemplates.js.map

@@ -6,7 +6,14 @@ import { Button } from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 // import Select from "@/components/ui/Select";
 import Checkbox from '@/components/ui/Checkbox';
-import { VENUE_TYPES, INDOOR_OUTDOOR_OPTIONS, COUNTRIES, US_STATES } from '@/utils/constants';
+import {
+  VENUE_TYPES,
+  INDOOR_OUTDOOR_OPTIONS,
+  COUNTRIES,
+  STATES_BY_COUNTRY,
+} from '@/utils/constants';
+import { isValidName } from '@/utils/validators';
+// import { isValidZip } from '@/utils/validators';
 
 // Define the shape of the state data Step2Form actually needs for displaying and editing fields.
 // This is compatible with QuoteFormState from the edit page and a subset of QuoteState from context.
@@ -38,6 +45,7 @@ interface Step2FormData {
   receptionVenueState: string;
   receptionVenueZip: string;
   receptionVenueAsInsured: boolean;
+  receptionUseMainVenueAddress: boolean;
 
   brunchLocationType: string;
   brunchIndoorOutdoor: string;
@@ -49,6 +57,7 @@ interface Step2FormData {
   brunchVenueState: string;
   brunchVenueZip: string;
   brunchVenueAsInsured: boolean;
+  brunchUseMainVenueAddress: boolean;
 
   rehearsalLocationType: string;
   rehearsalIndoorOutdoor: string;
@@ -60,6 +69,7 @@ interface Step2FormData {
   rehearsalVenueState: string;
   rehearsalVenueZip: string;
   rehearsalVenueAsInsured: boolean;
+  rehearsalUseMainVenueAddress: boolean;
 
   rehearsalDinnerLocationType: string;
   rehearsalDinnerIndoorOutdoor: string;
@@ -71,6 +81,7 @@ interface Step2FormData {
   rehearsalDinnerVenueState: string;
   rehearsalDinnerVenueZip: string;
   rehearsalDinnerVenueAsInsured: boolean;
+  rehearsalDinnerUseMainVenueAddress: boolean;
   // Ensure all fields accessed via state[keyof QuoteState] or state.fieldName are listed here
   // For example, if renderVenueSection dynamically creates keys like `${prefix}VenueName`,
   // those effective keys need to be part of this interface if type safety is desired for them.
@@ -98,9 +109,9 @@ export default function Step2Form({
   state,
   errors,
   onChange,
-  //  onValidate,
+  // onValidate,
   onContinue,
-  onSave,
+  // onSave,
   isRestored = false,
 }: Step2FormProps) {
   // ------------------------
@@ -132,6 +143,65 @@ export default function Step2Form({
     onChange(field, checked);
   };
 
+  const handleZipKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Allow: backspace, delete, tab, escape, enter, arrows, home, end
+    if (
+      [
+        'Backspace',
+        'Delete',
+        'Tab',
+        'Escape',
+        'Enter',
+        'ArrowLeft',
+        'ArrowRight',
+        'Home',
+        'End',
+      ].includes(e.key) ||
+      // Allow: Ctrl+A, Command+A, Ctrl+C, Ctrl+V, Ctrl+X
+      ((e.ctrlKey || e.metaKey) && ['a', 'c', 'v', 'x'].includes(e.key.toLowerCase()))
+    ) {
+      return; // Let it happen
+    }
+
+    // Allow only digits (no hyphens, no alphabets)
+    if (!/^[0-9]$/.test(e.key)) {
+      e.preventDefault();
+    }
+
+    // Limit to 5 digits maximum
+    const target = e.target as HTMLInputElement;
+    if (target.value.length >= 5 && !['Backspace', 'Delete'].includes(e.key)) {
+      e.preventDefault();
+    }
+  };
+
+  // Handle name input keydown to restrict to letters and spaces only
+  const handleNameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Allow: backspace, delete, tab, escape, enter, arrows, home, end
+    if (
+      [
+        'Backspace',
+        'Delete',
+        'Tab',
+        'Escape',
+        'Enter',
+        'ArrowLeft',
+        'ArrowRight',
+        'Home',
+        'End',
+      ].includes(e.key) ||
+      // Allow: Ctrl+A, Command+A, Ctrl+C, Ctrl+V, Ctrl+X
+      ((e.ctrlKey || e.metaKey) && ['a', 'c', 'v', 'x'].includes(e.key.toLowerCase()))
+    ) {
+      return; // Let it happen
+    }
+
+    // Allow only letters and spaces
+    if (!/^[a-zA-Z\s]$/.test(e.key)) {
+      e.preventDefault();
+    }
+  };
+
   // ------------------------
   // Reusable function to render a venue information section.
   // This helps to avoid repetitive code for different venue types (ceremony, reception, etc.).
@@ -139,6 +209,7 @@ export default function Step2Form({
   // - title: The title of the venue section.
   // - nameField, address1Field, etc.: Keys of the QuoteState for the respective venue fields.
   // - asInsuredField: Key of the QuoteState for the "add as additional insured" checkbox.
+  // - useMainVenueAddressField: Key of the QuoteState for the "use main venue address" checkbox.
   // ------------------------
   const renderVenueSection = (
     title: string,
@@ -150,165 +221,368 @@ export default function Step2Form({
     stateField: keyof Step2FormData,
     zipField: keyof Step2FormData,
     asInsuredField: keyof Step2FormData,
-  ) => (
-    <div className="mb-8 shadow-lg border-0 text-left bg-white p-8 sm:p-10 md:p-12 rounded-2xl w-full max-w-4xl mx-auto">
-      <div className="flex mb-4 gap-4">
-        <div className="flex-shrink-0">
-          <MapPin size={28} className="text-blue-600" />
+    locationTypeField: keyof Step2FormData,
+    indoorOutdoorField: keyof Step2FormData,
+    useMainVenueAddressField: keyof Step2FormData,
+  ) => {
+    const selectedCountry = state[countryField] as string;
+    const statesForCountry = STATES_BY_COUNTRY[selectedCountry] || [];
+    const isCruiseShipVenue = state[locationTypeField] === 'cruise_ship';
+    const useMainVenueAddress = state[useMainVenueAddressField] as boolean;
+
+    const validateZip = (zip: string) => {
+      if (!zip) return undefined; // Don't show error for empty field
+      if (zip.length < 4) return 'ZIP code must be 4 or 5 digits';
+      if (zip.length > 5) return 'ZIP code must be 4 or 5 digits';
+      if (!/^\d{4,5}$/.test(zip)) return 'ZIP code must contain only digits';
+      return undefined;
+    };
+
+    const zipError = validateZip(state[zipField] as string) || errors[zipField];
+
+    return (
+      <div className="mb-8 shadow-lg border-0 text-left bg-white p-8 sm:p-10 md:p-12 rounded-2xl w-full max-w-4xl mx-auto">
+        <div className="flex mb-4 gap-4">
+          <div className="flex-shrink-0">
+            <MapPin size={28} className="text-blue-600" />
+          </div>
+          <div>
+            <div className="text-xl md:text-2xl font-extrabold leading-tight mb-1">{title}</div>
+            <div className="text-base text-gray-500 font-medium leading-tight">
+              Details about where this portion of your event will be held
+            </div>
+          </div>
         </div>
-        <div>
-          <div className="text-xl md:text-2xl font-extrabold leading-tight mb-1">{title}</div>
-          <div className="text-base text-gray-500 font-medium leading-tight">
-            Details about where this portion of your event will be held
+        <div className="space-y-8 w-full px-2 sm:px-4 md:px-2">
+          {/* Add checkbox for using main venue address if eventType is 'wedding' */}
+          {state.eventType === 'wedding' && (
+            <div className="mb-4">
+              <Checkbox
+                id={`${String(nameField)}UseMainVenueAddress`}
+                label="Use main venue address for this venue"
+                checked={useMainVenueAddress}
+                onChange={(checked) => {
+                  onChange(String(useMainVenueAddressField), checked);
+                  if (checked) {
+                    // Copy all main venue fields to the current venue
+                    onChange(String(locationTypeField), state.ceremonyLocationType);
+                    onChange(String(indoorOutdoorField), state.indoorOutdoor);
+                    onChange(String(nameField), state.venueName);
+                    onChange(String(address1Field), state.venueAddress1);
+                    onChange(String(address2Field), state.venueAddress2);
+                    onChange(String(countryField), state.venueCountry);
+                    onChange(String(cityField), state.venueCity);
+                    onChange(String(stateField), state.venueState);
+                    onChange(String(zipField), state.venueZip);
+                    onChange(String(asInsuredField), state.venueAsInsured);
+                  }
+                }}
+                className="mb-4"
+              />
+            </div>
+          )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+            {/* Venue Type */}
+            <div className="space-y-2">
+              <label
+                htmlFor={String(locationTypeField)}
+                className="block text-sm font-medium text-gray-700"
+              >
+                Venue Type {isWedding && <span className="text-red-500">*</span>}
+              </label>
+              <div className="relative">
+                <select
+                  id={String(locationTypeField)}
+                  value={state[locationTypeField] as string}
+                  onChange={(e) => handleSelectChange(locationTypeField, e)}
+                  disabled={useMainVenueAddress}
+                  className={`w-full px-3 py-2 border rounded-xl appearance-none pr-10 ${errors[locationTypeField] ? 'border-red-500' : 'border-gray-300'} focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                >
+                  <option value="">Select venue type</option>
+                  {VENUE_TYPES.map((type) => (
+                    <option key={type.value} value={type.value}>
+                      {type.label}
+                    </option>
+                  ))}
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                  <ChevronDown className="w-5 h-5 text-gray-400" />
+                </div>
+              </div>
+              {errors[locationTypeField] && (
+                <p className="text-sm text-red-500">{errors[locationTypeField]}</p>
+              )}
+            </div>
+            {/* Indoor/Outdoor */}
+            <div className="space-y-2">
+              <label
+                htmlFor={String(indoorOutdoorField)}
+                className="block text-sm font-medium text-gray-700"
+              >
+                Indoor/Outdoor {isWedding && <span className="text-red-500">*</span>}
+              </label>
+              <div className="relative">
+                <select
+                  id={String(indoorOutdoorField)}
+                  value={state[indoorOutdoorField] as string}
+                  onChange={(e) => handleSelectChange(indoorOutdoorField, e)}
+                  disabled={useMainVenueAddress}
+                  className={`w-full px-3 py-2 border rounded-xl appearance-none pr-10 ${errors[indoorOutdoorField] ? 'border-red-500' : 'border-gray-300'} focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                >
+                  <option value="">Select option</option>
+                  {INDOOR_OUTDOOR_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                  <ChevronDown className="w-5 h-5 text-gray-400" />
+                </div>
+              </div>
+              {errors[indoorOutdoorField] && (
+                <p className="text-sm text-red-500">{errors[indoorOutdoorField]}</p>
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor={String(nameField)} className="block text-sm font-medium text-gray-700">
+              Venue Name {isWedding && <span className="text-red-500">*</span>}
+            </label>
+            <Input
+              id={String(nameField)}
+              value={state[nameField] as string}
+              onChange={(e) => handleInputChange(nameField, e)}
+              placeholder={isCruiseShipVenue ? 'Cruise Ship Name' : 'Venue Name'}
+              className={`w-full ${errors[nameField] ? 'border-red-500' : ''}`}
+              disabled={useMainVenueAddress}
+            />
+            {errors[nameField] && <p className="text-sm text-red-500">{errors[nameField]}</p>}
+          </div>
+
+          {isCruiseShipVenue ? (
+            // Cruise ship specific fields
+            <>
+              <div className="flex gap-4">
+                <div className="space-y-2 flex-1">
+                  <label
+                    htmlFor={String(address1Field)}
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Cruise Line Name *
+                  </label>
+                  <Input
+                    id={String(address1Field)}
+                    value={state[address1Field] as string}
+                    onChange={(e) => handleInputChange(address1Field, e)}
+                    placeholder="e.g., Royal Caribbean"
+                    className={`w-full ${errors[address1Field] ? 'border-red-500' : ''}`}
+                  />
+                  {errors[address1Field] && (
+                    <p className="text-sm text-red-500">{errors[address1Field]}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2 flex-1">
+                  <label
+                    htmlFor={String(cityField)}
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Departure Port / City *
+                  </label>
+                  <Input
+                    id={String(cityField)}
+                    value={state[cityField] as string}
+                    onChange={(e) => handleInputChange(cityField, e)}
+                    placeholder="e.g., Miami, Florida"
+                    className={`w-full ${errors[cityField] ? 'border-red-500' : ''}`}
+                  />
+                  {errors[cityField] && <p className="text-sm text-red-500">{errors[cityField]}</p>}
+                </div>
+              </div>
+            </>
+          ) : (
+            // Land venue fields
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+                <div className="mb-4 text-left">
+                  <label htmlFor={address1Field} className="block mb-1 font-medium text-gray-800">
+                    Address Line 1
+                  </label>
+                  <div className="w-full">
+                    <Input
+                      id={address1Field}
+                      value={state[address1Field] as string}
+                      onChange={(e) => handleInputChange(address1Field, e)}
+                      error={!!errors[address1Field]}
+                      placeholder="Street Address"
+                      className="text-left w-full"
+                      disabled={useMainVenueAddress}
+                    />
+                  </div>
+                  {errors[address1Field] && (
+                    <p className="text-sm text-red-500 mt-1">{errors[address1Field]}</p>
+                  )}
+                </div>
+                <div className="mb-4 text-left">
+                  <label htmlFor={address2Field} className="block mb-1 font-medium text-gray-800">
+                    Address Line 2
+                  </label>
+                  <div className="w-full">
+                    <Input
+                      id={address2Field}
+                      value={state[address2Field] as string}
+                      onChange={(e) => handleInputChange(address2Field, e)}
+                      placeholder="Apt, Suite, Building (optional)"
+                      className="text-left w-full"
+                      disabled={useMainVenueAddress}
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="mb-4 text-left flex gap-4">
+                <div className="flex-1">
+                  <label htmlFor={cityField} className="block mb-1 font-medium text-gray-800">
+                    City
+                  </label>
+                  <div className="w-full">
+                    <Input
+                      id={cityField}
+                      value={state[cityField] as string}
+                      onChange={(e) => handleInputChange(cityField, e)}
+                      error={!!errors[cityField]}
+                      className="text-left w-full"
+                      disabled={useMainVenueAddress}
+                    />
+                  </div>
+                  {errors[cityField] && (
+                    <p className="text-sm text-red-500 mt-1">{errors[cityField]}</p>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <label htmlFor={countryField} className="block mb-1 font-medium text-gray-800">
+                    Country
+                  </label>
+                  <div className="relative w-full">
+                    <select
+                      id={countryField}
+                      value={state[countryField] as string}
+                      onChange={(e) => handleSelectChange(countryField, e)}
+                      className={`block w-full rounded-md shadow-sm pl-3 pr-10 py-2 text-base border appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors[countryField] ? 'border-red-500 text-red-900' : 'border-gray-300 text-gray-900'} text-left`}
+                      disabled={useMainVenueAddress}
+                    >
+                      <option value="">Select country</option>
+                      {COUNTRIES.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                  </div>
+                  {errors[countryField] && (
+                    <p className="text-sm text-red-500 mt-1">{errors[countryField]}</p>
+                  )}
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+                <div className="mb-4 text-left">
+                  <label htmlFor={stateField} className="block mb-1 font-medium text-gray-800">
+                    State
+                  </label>
+                  <div className="relative w-full">
+                    <select
+                      id={stateField}
+                      value={state[stateField] as string}
+                      onChange={(e) => handleSelectChange(stateField, e)}
+                      disabled={!selectedCountry || useMainVenueAddress}
+                      className={`block w-full rounded-md shadow-sm pl-3 pr-10 py-2 text-base border appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors[stateField] ? 'border-red-500 text-red-900' : 'border-gray-300 text-gray-900'} text-left`}
+                    >
+                      <option value="">Select state</option>
+                      {statesForCountry.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                  </div>
+                  {errors[stateField] && (
+                    <p className="text-sm text-red-500 mt-1">{errors[stateField]}</p>
+                  )}
+                </div>
+                <div className="mb-4 text-left">
+                  <label htmlFor={zipField} className="block mb-1 font-medium text-gray-800">
+                    ZIP Code
+                  </label>
+                  <div className="w-full">
+                    <Input
+                      id={zipField}
+                      value={state[zipField] as string}
+                      onChange={(e) => handleInputChange(zipField, e)}
+                      onKeyDown={handleZipKeyDown}
+                      error={!!zipError}
+                      className="text-left w-full"
+                      disabled={useMainVenueAddress}
+                    />
+                  </div>
+                  {zipError && <p className="text-sm text-red-500 mt-1">{zipError}</p>}
+                </div>
+              </div>
+            </>
+          )}
+
+          <div className="mb-4 text-left">
+            <Checkbox
+              id={String(asInsuredField)}
+              label="Add this venue as an Additional Insured on my policy"
+              checked={state[asInsuredField] as boolean}
+              onChange={(checked) => handleCheckboxChange(asInsuredField, checked)}
+            />
           </div>
         </div>
       </div>
-      <div className="space-y-8 w-full px-2 sm:px-4 md:px-2">
-        <div className="space-y-2">
-          <label htmlFor={String(nameField)} className="block text-sm font-medium text-gray-700">
-            Venue Name
-          </label>
-          <Input
-            id={String(nameField)}
-            value={state[nameField] as string}
-            onChange={(e) => handleInputChange(nameField, e)}
-            placeholder="Venue Name"
-            className={`w-full ${errors[nameField] ? 'border-red-500' : ''}`}
-          />
-          {errors[nameField] && <p className="text-sm text-red-500">{errors[nameField]}</p>}
-        </div>
+    );
+  };
 
-        <div className="space-y-2">
-          <label
-            htmlFor={String(address1Field)}
-            className="block text-sm font-medium text-gray-700"
-          >
-            Address Line 1
-          </label>
-          <Input
-            id={String(address1Field)}
-            value={state[address1Field] as string}
-            onChange={(e) => handleInputChange(address1Field, e)}
-            placeholder="Street Address"
-            className={`w-full ${errors[address1Field] ? 'border-red-500' : ''}`}
-          />
-          {errors[address1Field] && <p className="text-sm text-red-500">{errors[address1Field]}</p>}
-        </div>
+  const ceremonyZipError = (() => {
+    const zip = state.venueZip;
+    if (!zip) return errors.venueZip; // Don't show error for empty field
+    if (zip.length < 4) return 'ZIP code must be 4 or 5 digits';
+    if (zip.length > 5) return 'ZIP code must be 4 or 5 digits';
+    if (!/^\d{4,5}$/.test(zip)) return 'ZIP code must contain only digits';
+    return errors.venueZip;
+  })();
 
-        <div className="space-y-2">
-          <label
-            htmlFor={String(address2Field)}
-            className="block text-sm font-medium text-gray-700"
-          >
-            Address Line 2
-          </label>
-          <Input
-            id={String(address2Field)}
-            value={state[address2Field] as string}
-            onChange={(e) => handleInputChange(address2Field, e)}
-            placeholder="Apt, Suite, Building (optional)"
-            className="w-full"
-          />
-        </div>
+  // Name validation
+  const honoree1FirstNameError = (() => {
+    if (!state.honoree1FirstName) return errors.honoree1FirstName;
+    if (!isValidName(state.honoree1FirstName))
+      return 'First name must contain only letters and spaces';
+    return errors.honoree1FirstName;
+  })();
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
-          <div className="space-y-2">
-            <label
-              htmlFor={String(countryField)}
-              className="block text-sm font-medium text-gray-700"
-            >
-              Country
-            </label>
-            <div className="relative">
-              <select
-                id={String(countryField)}
-                value={state[countryField] as string}
-                onChange={(e) => handleSelectChange(countryField, e)}
-                className={`w-full px-3 py-2 border rounded-xl appearance-none pr-10 ${
-                  errors[countryField] ? 'border-red-500' : 'border-gray-300'
-                } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-              >
-                <option value="">Select country</option>
-                {COUNTRIES.map((country) => (
-                  <option key={country.value} value={country.value}>
-                    {country.label}
-                  </option>
-                ))}
-              </select>
-              <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                <ChevronDown className="w-5 h-5 text-gray-400" />
-              </div>
-            </div>
-            {errors[countryField] && <p className="text-sm text-red-500">{errors[countryField]}</p>}
-          </div>
+  const honoree1LastNameError = (() => {
+    if (!state.honoree1LastName) return errors.honoree1LastName;
+    if (!isValidName(state.honoree1LastName))
+      return 'Last name must contain only letters and spaces';
+    return errors.honoree1LastName;
+  })();
 
-          <div className="space-y-2">
-            <label htmlFor={String(cityField)} className="block text-sm font-medium text-gray-700">
-              City
-            </label>
-            <Input
-              id={String(cityField)}
-              value={state[cityField] as string}
-              onChange={(e) => handleInputChange(cityField, e)}
-              className={errors[cityField] ? 'border-red-500' : ''}
-            />
-            {errors[cityField] && <p className="text-sm text-red-500">{errors[cityField]}</p>}
-          </div>
-        </div>
+  const honoree2FirstNameError = (() => {
+    if (!state.honoree2FirstName) return errors.honoree2FirstName;
+    if (!isValidName(state.honoree2FirstName))
+      return 'First name must contain only letters and spaces';
+    return errors.honoree2FirstName;
+  })();
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
-          <div className="space-y-2">
-            <label htmlFor={String(stateField)} className="block text-sm font-medium text-gray-700">
-              State
-            </label>
-            <div className="relative">
-              <select
-                id={String(stateField)}
-                value={state[stateField] as string}
-                onChange={(e) => handleSelectChange(stateField, e)}
-                className={`w-full px-3 py-2 border rounded-xl appearance-none pr-10 ${
-                  errors[stateField] ? 'border-red-500' : 'border-gray-300'
-                } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-              >
-                <option value="">Select state</option>
-                {US_STATES.map((state) => (
-                  <option key={state.value} value={state.value}>
-                    {state.label}
-                  </option>
-                ))}
-              </select>
-              <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                <ChevronDown className="w-5 h-5 text-gray-400" />
-              </div>
-            </div>
-            {errors[stateField] && <p className="text-sm text-red-500">{errors[stateField]}</p>}
-          </div>
-
-          <div className="space-y-2">
-            <label htmlFor={String(zipField)} className="block text-sm font-medium text-gray-700">
-              ZIP Code
-            </label>
-            <Input
-              id={String(zipField)}
-              value={state[zipField] as string}
-              onChange={(e) => handleInputChange(zipField, e)}
-              className={errors[zipField] ? 'border-red-500' : ''}
-            />
-            {errors[zipField] && <p className="text-sm text-red-500">{errors[zipField]}</p>}
-          </div>
-        </div>
-
-        <div className="mb-4 text-left">
-          <Checkbox
-            id={String(asInsuredField)}
-            label="Add this venue as an Additional Insured on my policy"
-            checked={state[asInsuredField] as boolean}
-            onChange={(checked) => handleCheckboxChange(asInsuredField, checked)}
-          />
-        </div>
-      </div>
-    </div>
-  );
+  const honoree2LastNameError = (() => {
+    if (!state.honoree2LastName) return errors.honoree2LastName;
+    if (!isValidName(state.honoree2LastName))
+      return 'Last name must contain only letters and spaces';
+    return errors.honoree2LastName;
+  })();
 
   return (
     <>
@@ -369,10 +643,11 @@ export default function Step2Form({
                   id="honoree1FirstName"
                   value={state.honoree1FirstName}
                   onChange={(e) => onChange('honoree1FirstName', e.target.value)}
-                  className={`w-full ${errors.honoree1FirstName ? 'border-red-500' : ''}`}
+                  onKeyDown={handleNameKeyDown}
+                  className={`w-full ${honoree1FirstNameError ? 'border-red-500' : ''}`}
                 />
-                {errors.honoree1FirstName && (
-                  <p className="text-sm text-red-500">{errors.honoree1FirstName}</p>
+                {honoree1FirstNameError && (
+                  <p className="text-sm text-red-500">{honoree1FirstNameError}</p>
                 )}
               </div>
               {/* Honoree 1 Last Name */}
@@ -387,10 +662,11 @@ export default function Step2Form({
                   id="honoree1LastName"
                   value={state.honoree1LastName}
                   onChange={(e) => onChange('honoree1LastName', e.target.value)}
-                  className={`w-full ${errors.honoree1LastName ? 'border-red-500' : ''}`}
+                  onKeyDown={handleNameKeyDown}
+                  className={`w-full ${honoree1LastNameError ? 'border-red-500' : ''}`}
                 />
-                {errors.honoree1LastName && (
-                  <p className="text-sm text-red-500">{errors.honoree1LastName}</p>
+                {honoree1LastNameError && (
+                  <p className="text-sm text-red-500">{honoree1LastNameError}</p>
                 )}
               </div>
             </div>
@@ -416,9 +692,13 @@ export default function Step2Form({
                   id="honoree2FirstName"
                   value={state.honoree2FirstName}
                   onChange={(e) => onChange('honoree2FirstName', e.target.value)}
+                  onKeyDown={handleNameKeyDown}
                   placeholder="John"
-                  className="w-full"
+                  className={`w-full ${honoree2FirstNameError ? 'border-red-500' : ''}`}
                 />
+                {honoree2FirstNameError && (
+                  <p className="text-sm text-red-500">{honoree2FirstNameError}</p>
+                )}
               </div>
               {/* Honoree 2 Last Name */}
               <div className="space-y-2">
@@ -432,9 +712,13 @@ export default function Step2Form({
                   id="honoree2LastName"
                   value={state.honoree2LastName}
                   onChange={(e) => onChange('honoree2LastName', e.target.value)}
+                  onKeyDown={handleNameKeyDown}
                   placeholder="Doe"
-                  className="w-full"
+                  className={`w-full ${honoree2LastNameError ? 'border-red-500' : ''}`}
                 />
+                {honoree2LastNameError && (
+                  <p className="text-sm text-red-500">{honoree2LastNameError}</p>
+                )}
               </div>
             </div>
           </div>
@@ -643,7 +927,11 @@ export default function Step2Form({
                     <select
                       id="venueCountry"
                       value={state.venueCountry}
-                      onChange={(e) => onChange('venueCountry', e.target.value)}
+                      onChange={(e) => {
+                        onChange('venueCountry', e.target.value);
+                        // Reset state when country changes
+                        onChange('venueState', '');
+                      }}
                       className={`w-full px-3 py-2 border rounded-xl appearance-none pr-10 ${
                         errors.venueCountry ? 'border-red-500' : 'border-gray-300'
                       } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
@@ -655,9 +943,7 @@ export default function Step2Form({
                         </option>
                       ))}
                     </select>
-                    <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                      <ChevronDown className="w-5 h-5 text-gray-400" />
-                    </div>
+                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
                   </div>
                   {errors.venueCountry && (
                     <p className="text-sm text-red-500">{errors.venueCountry}</p>
@@ -688,20 +974,19 @@ export default function Step2Form({
                       id="venueState"
                       value={state.venueState}
                       onChange={(e) => onChange('venueState', e.target.value)}
+                      disabled={!state.venueCountry}
                       className={`w-full px-3 py-2 border rounded-xl appearance-none pr-10 ${
                         errors.venueState ? 'border-red-500' : 'border-gray-300'
-                      } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                      } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100`}
                     >
                       <option value="">Select state</option>
-                      {US_STATES.map((state) => (
+                      {(STATES_BY_COUNTRY[state.venueCountry] || []).map((state) => (
                         <option key={state.value} value={state.value}>
                           {state.label}
                         </option>
                       ))}
                     </select>
-                    <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                      <ChevronDown className="w-5 h-5 text-gray-400" />
-                    </div>
+                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
                   </div>
                   {errors.venueState && <p className="text-sm text-red-500">{errors.venueState}</p>}
                 </div>
@@ -713,10 +998,12 @@ export default function Step2Form({
                   <Input
                     id="venueZip"
                     value={state.venueZip}
+                    onKeyDown={handleZipKeyDown}
                     onChange={(e) => onChange('venueZip', e.target.value)}
-                    className={`w-full ${errors.venueZip ? 'border-red-500' : ''}`}
+                    className={`w-full ${ceremonyZipError ? 'border-red-500' : ''}`}
+                    error={!!ceremonyZipError}
                   />
-                  {errors.venueZip && <p className="text-sm text-red-500">{errors.venueZip}</p>}
+                  {ceremonyZipError && <p className="text-sm text-red-500">{ceremonyZipError}</p>}
                 </div>
               </div>
             </>
@@ -756,6 +1043,9 @@ export default function Step2Form({
             'receptionVenueState',
             'receptionVenueZip',
             'receptionVenueAsInsured',
+            'receptionLocationType',
+            'receptionIndoorOutdoor',
+            'receptionUseMainVenueAddress',
           )}
 
           {/* ------------------------ */}
@@ -771,6 +1061,9 @@ export default function Step2Form({
             'brunchVenueState',
             'brunchVenueZip',
             'brunchVenueAsInsured',
+            'brunchLocationType',
+            'brunchIndoorOutdoor',
+            'brunchUseMainVenueAddress',
           )}
 
           {/* ------------------------ */}
@@ -786,6 +1079,9 @@ export default function Step2Form({
             'rehearsalVenueState',
             'rehearsalVenueZip',
             'rehearsalVenueAsInsured',
+            'rehearsalLocationType',
+            'rehearsalIndoorOutdoor',
+            'rehearsalUseMainVenueAddress',
           )}
 
           {/* ------------------------ */}
@@ -801,6 +1097,9 @@ export default function Step2Form({
             'rehearsalDinnerVenueState',
             'rehearsalDinnerVenueZip',
             'rehearsalDinnerVenueAsInsured',
+            'rehearsalDinnerLocationType',
+            'rehearsalDinnerIndoorOutdoor',
+            'rehearsalDinnerUseMainVenueAddress',
           )}
         </>
       )}
@@ -820,19 +1119,6 @@ export default function Step2Form({
             className="transition-transform duration-150 hover:scale-105 w-full md:w-auto"
           >
             Continue
-          </Button>
-        )}
-        {/* ------------------------ */}
-        {/* Save Quote Button (if onSave callback is provided) */}
-        {/* ------------------------ */}
-        {onSave && (
-          <Button
-            variant="outline"
-            size="lg"
-            onClick={onSave}
-            className="transition-transform duration-150 hover:scale-105 w-full md:w-auto"
-          >
-            Save Quote
           </Button>
         )}
       </div>
